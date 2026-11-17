@@ -29,10 +29,18 @@ builder.Services.AddScoped<
     ICategoriaRepository,
     CategoriaRepository>();
 
+builder.Services.AddScoped<
+    IMedicamentoRepository,
+    MedicamentoRepository>();
+
 // Registrar servicios
 builder.Services.AddScoped<
     ICategoriaService,
     CategoriaService>();
+
+builder.Services.AddScoped<
+    IMedicamentoService,
+    MedicamentoService>();
 
 // Construir la aplicación
 var app = builder.Build();
