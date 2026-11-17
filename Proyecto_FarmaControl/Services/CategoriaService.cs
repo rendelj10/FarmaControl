@@ -2,17 +2,13 @@
 using Proyecto_FarmaControl.Interfaces;
 using Proyecto_FarmaControl.Models;
 
-
-
-
 namespace Proyecto_FarmaControl.Services
 {
     public class CategoriaService : ICategoriaService
     {
         private readonly ICategoriaRepository _repository;
 
-        public CategoriaService(
-            ICategoriaRepository repository)
+        public CategoriaService(ICategoriaRepository repository)
         {
             _repository = repository;
         }
@@ -29,11 +25,13 @@ namespace Proyecto_FarmaControl.Services
 
         public async Task CrearAsync(Categoria categoria)
         {
-            categoria.Nombre = categoria.Nombre.Trim();
+            var nombre = categoria.Nombre?.Trim();
 
-            if (string.IsNullOrWhiteSpace(categoria.Nombre))
+            if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException(
                     "El nombre de la categoría es obligatorio.");
+
+            categoria.Nombre = nombre;
 
             if (await _repository.ExisteNombreAsync(categoria.Nombre))
                 throw new InvalidOperationException(
@@ -53,11 +51,13 @@ namespace Proyecto_FarmaControl.Services
                 throw new KeyNotFoundException(
                     "La categoría no existe.");
 
-            categoria.Nombre = categoria.Nombre.Trim();
+            var nombre = categoria.Nombre?.Trim();
 
-            if (string.IsNullOrWhiteSpace(categoria.Nombre))
+            if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException(
                     "El nombre de la categoría es obligatorio.");
+
+            categoria.Nombre = nombre;
 
             if (await _repository.ExisteNombreAsync(
                 categoria.Nombre, categoria.Id))
