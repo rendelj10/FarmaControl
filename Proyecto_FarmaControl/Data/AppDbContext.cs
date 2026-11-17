@@ -14,5 +14,24 @@ namespace Proyecto_FarmaControl.Data
 
         public DbSet<Categoria> Categorias { get; set; }
             = null!;
+
+        public DbSet<Medicamento> Medicamentos { get; set; }
+            = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Medicamento>(entity =>
+            {
+                entity.HasIndex(m => m.Codigo)
+                    .IsUnique();
+
+                entity.HasOne(m => m.Categoria)
+                    .WithMany()
+                    .HasForeignKey(m => m.CategoriaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+        }
     }
 }
