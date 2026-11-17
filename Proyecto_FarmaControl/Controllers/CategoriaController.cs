@@ -6,9 +6,7 @@ using Proyecto_FarmaControl.Models;
 
 namespace Proyecto_FarmaControl.Controllers
 {
-    [Route("api/categorias")]
-    [ApiController]
-    public class CategoriaController : ControllerBase
+    public class CategoriaController : Controller
     {
         private readonly ICategoriaService _service;
 
@@ -17,9 +15,8 @@ namespace Proyecto_FarmaControl.Controllers
             _service = service;
         }
 
-        // GET: api/categorias
-        [HttpGet]
-        public async Task<IActionResult> ObtenerTodas()
+        // GET: Categoria/Index
+        public async Task<IActionResult> Index()
         {
             var categorias = await _service.ObtenerTodasAsync();
 
@@ -29,37 +26,27 @@ namespace Proyecto_FarmaControl.Controllers
                 Nombre = c.Nombre,
                 Descripcion = c.Descripcion,
                 Activo = c.Activo
-            });
+            }).ToList();
 
-            return Ok(resultado);
+            return View(resultado);
         }
 
-        // GET: api/categorias/1
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> ObtenerPorId(int id)
+        // GET: Categoria/Crear
+        [HttpGet]
+        public IActionResult Crear()
         {
-            var categoria = await _service.ObtenerPorIdAsync(id);
-
-            if (categoria == null)
-                return NotFound(new
-                {
-                    mensaje = "Categoría no encontrada."
-                });
-
-            return Ok(new CategoriaDto
-            {
-                Id = categoria.Id,
-                Nombre = categoria.Nombre,
-                Descripcion = categoria.Descripcion,
-                Activo = categoria.Activo
-            });
+            return View(new CategoriaGuardarDto());
         }
 
-        // POST: api/categorias
+        // POST: Categoria/Crear
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(
-            [FromBody] CategoriaGuardarDto dto)
+            CategoriaGuardarDto dto)
         {
+            if (!ModelState.IsValid)
+                return View(dto);
+
             try
             {
                 var categoria = new Categoria
@@ -70,33 +57,53 @@ namespace Proyecto_FarmaControl.Controllers
 
                 await _service.CrearAsync(categoria);
 
-                return CreatedAtAction(
-                    nameof(ObtenerPorId),
-                    new { id = categoria.Id },
-                    new CategoriaDto
-                    {
-                        Id = categoria.Id,
-                        Nombre = categoria.Nombre,
-                        Descripcion = categoria.Descripcion,
-                        Activo = categoria.Activo
-                    });
+                TempData["Mensaje"] =
+                    "Categoría registrada correctamente.";
+
+                return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { mensaje = ex.Message });
+                ModelState.AddModelError(
+                    string.Empty, ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                return Conflict(new { mensaje = ex.Message });
+                ModelState.AddModelError(
+                    string.Empty, ex.Message);
             }
+
+            return View(dto);
         }
 
-        // PUT: api/categorias/1
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> Actualizar(
-            int id,
-            [FromBody] CategoriaGuardarDto dto)
+        // GET: Categoria/Editar/1
+        [HttpGet]
+        public async Task<IActionResult> Editar(int id)
         {
+            var categoria = await _service.ObtenerPorIdAsync(id);
+
+            if (categoria == null)
+                return NotFound();
+
+            var dto = new CategoriaGuardarDto
+            {
+                Nombre = categoria.Nombre,
+                Descripcion = categoria.Descripcion
+            };
+
+            return View(dto);
+        }
+
+        // POST: Categoria/Editar/1
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Editar(
+            int id,
+            CategoriaGuardarDto dto)
+        {
+            if (!ModelState.IsValid)
+                return View(dto);
+
             try
             {
                 var categoria = new Categoria
@@ -108,37 +115,47 @@ namespace Proyecto_FarmaControl.Controllers
 
                 await _service.ActualizarAsync(categoria);
 
-                return NoContent();
+                TempData["Mensaje"] =
+                    "Categoría actualizada correctamente.";
+
+                return RedirectToAction(nameof(Index));
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new { mensaje = ex.Message });
+                return NotFound(ex.Message);
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { mensaje = ex.Message });
+                ModelState.AddModelError(
+                    string.Empty, ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                return Conflict(new { mensaje = ex.Message });
+                ModelState.AddModelError(
+                    string.Empty, ex.Message);
             }
+
+            return View(dto);
         }
 
-        // DELETE: api/categorias/1
-        [HttpDelete("{id:int}")]
+        // POST: Categoria/Desactivar/1
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Desactivar(int id)
         {
             try
             {
                 await _service.DesactivarAsync(id);
 
-                return NoContent();
+                TempData["Mensaje"] =
+                    "Categoría desactivada correctamente.";
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(new { mensaje = ex.Message });
+                TempData["Error"] = ex.Message;
             }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
-    
