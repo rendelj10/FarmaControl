@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -12,6 +13,9 @@ using Proyecto_FarmaControl.Services;
 using Proyecto_FarmaControl.Models.settings;
 using Proyecto_FarmaControl.Middlewares;
 using Proyecto_FarmaControl.Mapping;
+using Proyecto_FarmaControl.Entensions;
+
+using static Proyecto_FarmaControl.Authorication.JwtPermissionPolicies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -135,6 +139,14 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddSingleton<
+    IAuthorizationPolicyProvider,
+    Proyecto_FarmaControl.Authorication.JwtPermissionPolicies.PermissionPolicyProvider>();
+
+builder.Services.AddScoped<
+    IAuthorizationHandler,
+    Proyecto_FarmaControl.Authorication.JwtPermissionPolicies.PermissionAuthorizationHandler>();
+
 // ========================================
 // 5. CONFIGURACION SMTP
 // ========================================
@@ -164,6 +176,10 @@ builder.Services.AddScoped<
     MedicamentoRepository>();
 
 builder.Services.AddScoped<
+    ILoteRepository,
+    LoteRepository>();
+
+builder.Services.AddScoped<
     IUsuarioRepository,
     UsuarioRepository>();
 
@@ -182,6 +198,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IMedicamentoService,
     MedicamentoService>();
+
+builder.Services.AddScoped<
+    ILoteService,
+    LoteService>();
 
 builder.Services.AddScoped<
     ITokenService,

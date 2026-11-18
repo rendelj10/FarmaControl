@@ -15,7 +15,10 @@ namespace Proyecto_FarmaControl.Controllers
             _service = service;
         }
 
-        // GET: Auth/Login
+        // =====================================
+        // INICIAR SESION
+        // =====================================
+
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Login()
@@ -23,12 +26,10 @@ namespace Proyecto_FarmaControl.Controllers
             return View(new LoginRequestDto());
         }
 
-        // POST: Auth/Login
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(
-            LoginRequestDto dto)
+        public async Task<IActionResult> Login(LoginRequestDto dto)
         {
             if (!ModelState.IsValid)
                 return View(dto);
@@ -74,7 +75,10 @@ namespace Proyecto_FarmaControl.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // GET: Auth/Register
+        // =====================================
+        // REGISTRAR USUARIO
+        // =====================================
+
         [HttpGet]
         [AllowAnonymous]
         public IActionResult Register()
@@ -82,7 +86,6 @@ namespace Proyecto_FarmaControl.Controllers
             return View(new RegisterRequestDto());
         }
 
-        // POST: Auth/Register
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -110,7 +113,157 @@ namespace Proyecto_FarmaControl.Controllers
             return RedirectToAction(nameof(Login));
         }
 
-        // POST: Auth/Logout
+        // =====================================
+        // CONFIRMAR CORREO ELECTRONICO
+        // =====================================
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ConfirmEmail(
+            string email,
+            string token)
+        {
+            if (string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(token))
+            {
+                TempData["Error"] = "El enlace de confirmación no es válido.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            var confirmado =
+                await _service.ConfirmEmailAsync(email, token);
+
+            if (confirmado)
+            {
+                TempData["Mensaje"] =
+                    "Tu correo ha sido confirmado correctamente. Ya puedes iniciar sesión.";
+            }
+            else
+            {
+                TempData["Error"] =
+                    "El enlace de confirmación no es válido o ya fue utilizado.";
+            }
+
+            return RedirectToAction(nameof(Login));
+        }
+
+        // =====================================
+        // SOLICITAR RECUPERACION DE CONTRASEÑA
+        // =====================================
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordDto());
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(
+            ForgotPasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+                return View(dto);
+
+            await _service.SendResetPasswordLinkAsync(dto.Email);
+
+            TempData["Mensaje"] =
+                "Si existe una cuenta con ese correo, recibirás instrucciones para restablecer tu contraseña.";
+
+            return RedirectToAction(nameof(Login));
+        }
+
+        // =====================================
+        // MOSTRAR FORMULARIO DE NUEVA CONTRASEÑA
+        // =====================================
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ResetPassword(
+            string email,
+            string token)
+        {
+            if (string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(token))
+            {
+                TempData["Error"] =
+                    "El enlace de recuperación no es válido.";
+
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+
+            var dto = new ResetPasswordRequestDto
+            {
+                Email = email,
+                Token = token
+            };
+
+            return View(dto);
+        }
+
+        // =====================================
+        // GUARDAR NUEVA CONTRASEÑA
+        // =====================================
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(
+            ResetPasswordRequestDto dto)
+        {
+            if (!ModelState.IsValid)
+                return View(dto);
+
+            var resultado =
+                await _service.ResetPasswordAsync(dto);
+
+            if (!resultado)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "El enlace es inválido o ha expirado. Solicita uno nuevo.");
+
+                return View(dto);
+            }
+
+            TempData["Mensaje"] =
+                "Tu contraseña fue actualizada correctamente. Ya puedes iniciar sesión.";
+
+            return RedirectToAction(nameof(Login));
+        }
+
+        // =====================================
+        // REENVIAR CONFIRMACION DE CORREO
+        // =====================================
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendConfirmationEmail(
+            ForgotPasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] =
+                    "Introduce un correo electrónico válido.";
+
+                return RedirectToAction(nameof(Login));
+            }
+
+            await _service.ResendConfirmationEmailAsync(dto.Email);
+
+            TempData["Mensaje"] =
+                "Si la cuenta existe y aún no está confirmada, recibirás un nuevo correo de confirmación.";
+
+            return RedirectToAction(nameof(Login));
+        }
+
+        // =====================================
+        // CERRAR SESION
+        // =====================================
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Logout()

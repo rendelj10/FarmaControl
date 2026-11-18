@@ -1,5 +1,6 @@
 ﻿
 using Proyecto_FarmaControl.Models;
+using Proyecto_FarmaControl.DTOs;
 
 namespace Proyecto_FarmaControl.Interfaces
 {
@@ -15,5 +16,8 @@ namespace Proyecto_FarmaControl.Interfaces
 
         Task<bool> ExisteNombreAsync(
             string nombre, int? excluirId = null);
+
+        Task<DataTablesResponseDto<CategoriaTablaDto>>
+            ObtenerPaginadasAsync(DataTablesRequestDto request);
     }
 }

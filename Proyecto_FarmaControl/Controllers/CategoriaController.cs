@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_FarmaControl.DTOs;
 using Proyecto_FarmaControl.Interfaces;
@@ -16,6 +17,8 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // GET: Categoria/Index
+        [Authorize(Policy = "categoria.ver")]
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             var categorias = await _service.ObtenerTodasAsync();
@@ -32,6 +35,7 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // GET: Categoria/Crear
+        [Authorize(Policy = "categoria.crear")]
         [HttpGet]
         public IActionResult Crear()
         {
@@ -39,6 +43,7 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // POST: Categoria/Crear
+        [Authorize(Policy = "categoria.crear")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(
@@ -77,9 +82,12 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // GET: Categoria/Editar/1
+        [Authorize(Policy = "categoria.actualizar")]
         [HttpGet]
         public async Task<IActionResult> Editar(int id)
         {
+            ViewData["Id"] = id;
+
             var categoria = await _service.ObtenerPorIdAsync(id);
 
             if (categoria == null)
@@ -95,12 +103,15 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // POST: Categoria/Editar/1
+        [Authorize(Policy = "categoria.actualizar")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Editar(
             int id,
             CategoriaGuardarDto dto)
         {
+            ViewData["Id"] = id;
+
             if (!ModelState.IsValid)
                 return View(dto);
 
@@ -139,6 +150,7 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // POST: Categoria/Desactivar/1
+        [Authorize(Policy = "categoria.borrar")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Desactivar(int id)

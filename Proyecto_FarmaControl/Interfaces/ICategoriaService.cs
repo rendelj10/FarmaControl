@@ -1,5 +1,6 @@
 ﻿
 using Proyecto_FarmaControl.Models;
+using Proyecto_FarmaControl.DTOs;
 
 namespace Proyecto_FarmaControl.Interfaces
 {
@@ -14,5 +15,8 @@ namespace Proyecto_FarmaControl.Interfaces
         Task ActualizarAsync(Categoria categoria);
 
         Task DesactivarAsync(int id);
+
+        Task<DataTablesResponseDto<CategoriaTablaDto>>
+            ObtenerPaginadasAsync(DataTablesRequestDto request);
     }
 }

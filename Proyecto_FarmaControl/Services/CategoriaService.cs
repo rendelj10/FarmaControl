@@ -1,6 +1,7 @@
 ﻿
 using Proyecto_FarmaControl.Interfaces;
 using Proyecto_FarmaControl.Models;
+using Proyecto_FarmaControl.DTOs;
 
 namespace Proyecto_FarmaControl.Services
 {
@@ -82,6 +83,16 @@ namespace Proyecto_FarmaControl.Services
             categoria.Activo = false;
 
             await _repository.ActualizarAsync(categoria);
+        }
+
+        // =====================================
+        // DATATABLES - CATEGORIAS PAGINADAS
+        // =====================================
+
+        public async Task<DataTablesResponseDto<CategoriaTablaDto>>
+            ObtenerPaginadasAsync(DataTablesRequestDto request)
+        {
+            return await _repository.ObtenerPaginadasAsync(request);
         }
     }
 }
