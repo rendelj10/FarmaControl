@@ -1,0 +1,146 @@
+
+@model List<Proyecto_FarmaControl.DTOs.CategoriaDto>
+
+@{
+    ViewData["Title"] = "Categorías";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Gestión de categorías</h2>
+            <p class="text-muted">
+                Administra las categorías de medicamentos.
+            </p>
+        </div>
+
+        <a asp-action="Crear" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            Nueva categoría
+        </a>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Mensaje"]
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Listado de categorías</h5>
+        </div>
+
+        <div class="card-body">
+
+            @if (Model == null || !Model.Any())
+            {
+                <div class="text-center py-5">
+                    <h5>No hay categorías registradas</h5>
+                    <p class="text-muted">
+                        Comienza agregando una nueva categoría.
+                    </p>
+
+                    <a asp-action="Crear" class="btn btn-primary">
+                        Crear categoría
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var categoria in Model)
+                            {
+                                <tr>
+                                    <td>@categoria.Id</td>
+
+                                    <td class="fw-semibold">
+                                        @categoria.Nombre
+                                    </td>
+
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(categoria.Descripcion)
+                                            ? "Sin descripción"
+                                            : categoria.Descripcion)
+                                    </td>
+
+                                    <td>
+                                        @if (categoria.Activo)
+                                        {
+                                            <span class="badge bg-success">
+                                                Activa
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                Inactiva
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <a asp-action="Editar"
+                                           asp-route-id="@categoria.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Editar
+                                        </a>
+
+                                        @if (categoria.Activo)
+                                        {
+                                            <form asp-action="Desactivar"
+                                                  asp-route-id="@categoria.Id"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('¿Deseas desactivar esta categoría?');">
+
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger">
+                                                    Desactivar
+                                                </button>
+
+                                            </form>
+                                        }
+
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
