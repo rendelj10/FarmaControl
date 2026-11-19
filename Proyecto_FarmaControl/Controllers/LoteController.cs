@@ -7,9 +7,7 @@ using Proyecto_FarmaControl.Models;
 
 namespace Proyecto_FarmaControl.Controllers
 {
-    [Route("api/lotes")]
-    [ApiController]
-    public class LoteController : ControllerBase
+    public class LoteController : Controller
     {
         private readonly ILoteService _service;
 
@@ -19,37 +17,68 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // ========================================
-        // GET: api/lotes
-        // CONSULTAR TODOS LOS LOTES
+        // VISTA PRINCIPAL
+        // GET: /Lote/Index
         // ========================================
 
         [Authorize(Policy = "lote.ver")]
         [HttpGet]
-        public async Task<IActionResult> ObtenerTodas()
+        public IActionResult Index()
         {
-            var lotes = await _service.ObtenerTodasAsync();
+            return View();
+        }
 
-            var resultado = lotes.Select(MapearDto).ToList();
+        // ========================================
+        // DATATABLES - PAGINACION SQL SERVER
+        // POST: /Lote/GetData
+        // ========================================
+
+        [Authorize(Policy = "lote.ver")]
+        [HttpPost]
+        public async Task<IActionResult> GetData(
+            [FromForm] DataTablesRequestDto request)
+        {
+            if (request == null)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Solicitud no válida."
+                });
+            }
+
+            var resultado =
+                await _service.ObtenerPaginadasAsync(request);
 
             return Ok(resultado);
         }
 
         // ========================================
-        // GET: api/lotes/1
         // CONSULTAR LOTE POR ID
+        // GET: /Lote/GetById?id=1
         // ========================================
 
         [Authorize(Policy = "lote.ver")]
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> ObtenerPorId(int id)
+        [HttpGet]
+        public async Task<IActionResult> GetById(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "El identificador no es válido."
+                });
+            }
+
             var lote = await _service.ObtenerPorIdAsync(id);
 
             if (lote == null)
             {
                 return NotFound(new
                 {
-                    mensaje = "Lote no encontrado."
+                    success = false,
+                    message = "Lote no encontrado."
                 });
             }
 
@@ -57,73 +86,97 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // ========================================
-        // POST: api/lotes
-        // REGISTRAR NUEVO LOTE
+        // CREAR LOTE
+        // POST: /Lote/Create
         // ========================================
 
         [Authorize(Policy = "lote.crear")]
         [HttpPost]
-        public async Task<IActionResult> Crear(
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(
             [FromBody] LoteGuardarDto dto)
         {
+            if (dto == null || !ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Los datos del lote no son válidos."
+                });
+            }
+
             try
             {
                 var lote = new Lote
                 {
                     MedicamentoId = dto.MedicamentoId,
                     NumeroLote = dto.NumeroLote,
-                    Almacen = dto.Almacen,
+                    AlmacenId = dto.AlmacenId,
+
                     CantidadInicial = dto.CantidadInicial,
                     CostoUnitario = dto.CostoUnitario,
+
                     FechaIngreso = dto.FechaIngreso,
                     FechaVencimiento = dto.FechaVencimiento
                 };
 
                 await _service.CrearAsync(lote);
 
-                var creado = await _service
-                    .ObtenerPorIdAsync(lote.Id);
-
-                if (creado == null)
+                return Ok(new
                 {
-                    return StatusCode(500, new
-                    {
-                        mensaje = "El lote fue registrado, pero no se pudo recuperar."
-                    });
-                }
-
-                return CreatedAtAction(
-                    nameof(ObtenerPorId),
-                    new { id = lote.Id },
-                    MapearDto(creado));
+                    success = true,
+                    id = lote.Id,
+                    message = "Lote registrado correctamente."
+                });
             }
             catch (ArgumentException ex)
             {
                 return BadRequest(new
                 {
-                    mensaje = ex.Message
+                    success = false,
+                    message = ex.Message
                 });
             }
             catch (InvalidOperationException ex)
             {
                 return Conflict(new
                 {
-                    mensaje = ex.Message
+                    success = false,
+                    message = ex.Message
                 });
             }
         }
 
         // ========================================
-        // PUT: api/lotes/1
         // ACTUALIZAR LOTE
+        // POST: /Lote/Update?id=1
         // ========================================
 
         [Authorize(Policy = "lote.actualizar")]
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> Actualizar(
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update(
             int id,
-            [FromBody] LoteGuardarDto dto)
+            [FromBody] LoteActualizarDto dto)
         {
+            if (id <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "El identificador no es válido."
+                });
+            }
+
+            if (dto == null || !ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Los datos del lote no son válidos."
+                });
+            }
+
             try
             {
                 var lote = new Lote
@@ -131,8 +184,8 @@ namespace Proyecto_FarmaControl.Controllers
                     Id = id,
                     MedicamentoId = dto.MedicamentoId,
                     NumeroLote = dto.NumeroLote,
-                    Almacen = dto.Almacen,
-                    CantidadInicial = dto.CantidadInicial,
+                    AlmacenId = dto.AlmacenId,
+
                     CostoUnitario = dto.CostoUnitario,
                     FechaIngreso = dto.FechaIngreso,
                     FechaVencimiento = dto.FechaVencimiento
@@ -140,58 +193,81 @@ namespace Proyecto_FarmaControl.Controllers
 
                 await _service.ActualizarAsync(lote);
 
-                return NoContent();
+                return Ok(new
+                {
+                    success = true,
+                    message = "Lote actualizado correctamente."
+                });
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new
                 {
-                    mensaje = ex.Message
+                    success = false,
+                    message = ex.Message
                 });
             }
             catch (ArgumentException ex)
             {
                 return BadRequest(new
                 {
-                    mensaje = ex.Message
+                    success = false,
+                    message = ex.Message
                 });
             }
             catch (InvalidOperationException ex)
             {
                 return Conflict(new
                 {
-                    mensaje = ex.Message
+                    success = false,
+                    message = ex.Message
                 });
             }
         }
 
         // ========================================
-        // DELETE: api/lotes/1
         // DESACTIVAR LOTE
+        // POST: /Lote/Delete?id=1
         // ========================================
 
         [Authorize(Policy = "lote.borrar")]
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Desactivar(int id)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "El identificador no es válido."
+                });
+            }
+
             try
             {
                 await _service.DesactivarAsync(id);
 
-                return NoContent();
+                return Ok(new
+                {
+                    success = true,
+                    message = "Lote desactivado correctamente."
+                });
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new
                 {
-                    mensaje = ex.Message
+                    success = false,
+                    message = ex.Message
                 });
             }
             catch (InvalidOperationException ex)
             {
                 return Conflict(new
                 {
-                    mensaje = ex.Message
+                    success = false,
+                    message = ex.Message
                 });
             }
         }
@@ -205,18 +281,24 @@ namespace Proyecto_FarmaControl.Controllers
             return new LoteDto
             {
                 Id = lote.Id,
-                MedicamentoId = lote.MedicamentoId,
 
-                MedicamentoNombre = lote.Medicamento?.Nombre
-                    ?? string.Empty,
+                MedicamentoId = lote.MedicamentoId,
+                MedicamentoNombre =
+                    lote.Medicamento?.Nombre ?? string.Empty,
 
                 NumeroLote = lote.NumeroLote,
-                Almacen = lote.Almacen,
+
+                AlmacenId = lote.AlmacenId,
+                AlmacenNombre =
+                    lote.Almacen?.Nombre ?? string.Empty,
+
                 CantidadInicial = lote.CantidadInicial,
                 Existencias = lote.Existencias,
                 CostoUnitario = lote.CostoUnitario,
+
                 FechaIngreso = lote.FechaIngreso,
                 FechaVencimiento = lote.FechaVencimiento,
+
                 Activo = lote.Activo
             };
         }

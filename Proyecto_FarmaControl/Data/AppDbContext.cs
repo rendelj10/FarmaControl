@@ -22,6 +22,10 @@ namespace Proyecto_FarmaControl.Data
 
         public DbSet<Lote> Lotes { get; set; } = null!;
 
+        public DbSet<Sucursal> Sucursales { get; set; } = null!;
+
+        public DbSet<Almacen> Almacenes { get; set; } = null!;
+
         // ========================================
         // MODULO DE SEGURIDAD
         // ========================================
@@ -36,7 +40,8 @@ namespace Proyecto_FarmaControl.Data
 
         public DbSet<UsuarioPermiso> UsuarioPermisos { get; set; } = null!;
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(
+            ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
@@ -63,7 +68,7 @@ namespace Proyecto_FarmaControl.Data
 
             modelBuilder.Entity<Permiso>().HasData(
 
-                // PERMISOS DE CATEGORIAS
+                // CATEGORIAS
 
                 new Permiso
                 {
@@ -90,7 +95,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Desactivar categorías"
                 },
 
-                // PERMISOS DE MEDICAMENTOS
+                // MEDICAMENTOS
 
                 new Permiso
                 {
@@ -117,7 +122,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Desactivar medicamentos"
                 },
 
-                // PERMISOS DE LOTES
+                // LOTES
 
                 new Permiso
                 {
@@ -144,7 +149,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Desactivar lotes de medicamentos"
                 },
 
-                // PERMISOS DE ROLES
+                // ROLES
 
                 new Permiso
                 {
@@ -165,7 +170,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Asignar permisos a roles"
                 },
 
-                // PERMISOS DE ADMINISTRACION DE PERMISOS
+                // ADMINISTRACION DE PERMISOS
 
                 new Permiso
                 {
@@ -192,7 +197,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Eliminar permisos"
                 },
 
-                // PERMISOS DE USUARIOS
+                // USUARIOS
 
                 new Permiso
                 {
@@ -213,69 +218,132 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Cambiar el rol de usuarios"
                 },
 
-                // PERMISO DEL PANEL ADMINISTRATIVO
+                // PANEL ADMINISTRATIVO
 
                 new Permiso
                 {
                     Id = 23,
                     Name = "admin.panel",
                     Description = "Acceder al panel administrativo"
+                },
+
+                // ========================================
+                // NUEVOS PERMISOS DE SUCURSALES
+                // ========================================
+
+                new Permiso
+                {
+                    Id = 24,
+                    Name = "sucursal.ver",
+                    Description = "Consultar sucursales"
+                },
+                new Permiso
+                {
+                    Id = 25,
+                    Name = "sucursal.crear",
+                    Description = "Registrar sucursales"
+                },
+                new Permiso
+                {
+                    Id = 26,
+                    Name = "sucursal.actualizar",
+                    Description = "Actualizar sucursales"
+                },
+                new Permiso
+                {
+                    Id = 27,
+                    Name = "sucursal.borrar",
+                    Description = "Desactivar sucursales"
+                },
+
+                // ========================================
+                // NUEVOS PERMISOS DE ALMACENES
+                // ========================================
+
+                new Permiso
+                {
+                    Id = 28,
+                    Name = "almacen.ver",
+                    Description = "Consultar almacenes"
+                },
+                new Permiso
+                {
+                    Id = 29,
+                    Name = "almacen.crear",
+                    Description = "Registrar almacenes"
+                },
+                new Permiso
+                {
+                    Id = 30,
+                    Name = "almacen.actualizar",
+                    Description = "Actualizar almacenes"
+                },
+                new Permiso
+                {
+                    Id = 31,
+                    Name = "almacen.borrar",
+                    Description = "Desactivar almacenes"
                 }
             );
 
             // ========================================
-            // 3. PERMISOS ASIGNADOS AL ADMINISTRADOR
+            // 3. PERMISOS DEL ADMINISTRADOR
             // ========================================
 
             modelBuilder.Entity<RolePermission>().HasData(
 
                 // CATEGORIAS
-
                 new { RoleId = 2, PermissionId = 1 },
                 new { RoleId = 2, PermissionId = 2 },
                 new { RoleId = 2, PermissionId = 3 },
                 new { RoleId = 2, PermissionId = 4 },
 
                 // MEDICAMENTOS
-
                 new { RoleId = 2, PermissionId = 5 },
                 new { RoleId = 2, PermissionId = 6 },
                 new { RoleId = 2, PermissionId = 7 },
                 new { RoleId = 2, PermissionId = 8 },
 
                 // LOTES
-
                 new { RoleId = 2, PermissionId = 9 },
                 new { RoleId = 2, PermissionId = 10 },
                 new { RoleId = 2, PermissionId = 11 },
                 new { RoleId = 2, PermissionId = 12 },
 
                 // ROLES
-
                 new { RoleId = 2, PermissionId = 13 },
                 new { RoleId = 2, PermissionId = 14 },
                 new { RoleId = 2, PermissionId = 15 },
 
                 // PERMISOS
-
                 new { RoleId = 2, PermissionId = 16 },
                 new { RoleId = 2, PermissionId = 17 },
                 new { RoleId = 2, PermissionId = 18 },
                 new { RoleId = 2, PermissionId = 19 },
 
                 // USUARIOS
-
                 new { RoleId = 2, PermissionId = 20 },
                 new { RoleId = 2, PermissionId = 21 },
                 new { RoleId = 2, PermissionId = 22 },
 
                 // PANEL ADMINISTRATIVO
+                new { RoleId = 2, PermissionId = 23 },
 
-                new { RoleId = 2, PermissionId = 23 }
+                // NUEVOS PERMISOS DE SUCURSALES
+                new { RoleId = 2, PermissionId = 24 },
+                new { RoleId = 2, PermissionId = 25 },
+                new { RoleId = 2, PermissionId = 26 },
+                new { RoleId = 2, PermissionId = 27 },
+
+                // NUEVOS PERMISOS DE ALMACENES
+                new { RoleId = 2, PermissionId = 28 },
+                new { RoleId = 2, PermissionId = 29 },
+                new { RoleId = 2, PermissionId = 30 },
+                new { RoleId = 2, PermissionId = 31 }
             );
 
             // ========================================
-            // 4. RELACION MEDICAMENTOS - CATEGORIAS
+            // 4. MEDICAMENTOS - CATEGORIAS
             // ========================================
 
             modelBuilder.Entity<Medicamento>(entity =>
@@ -290,7 +358,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 5. RELACION LOTES - MEDICAMENTOS
+            // 5. LOTES - MEDICAMENTOS Y ALMACENES
             // ========================================
 
             modelBuilder.Entity<Lote>(entity =>
@@ -299,6 +367,19 @@ namespace Proyecto_FarmaControl.Data
                     .WithMany()
                     .HasForeignKey(l => l.MedicamentoId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(l => l.Almacen)
+                    .WithMany()
+                    .HasForeignKey(l => l.AlmacenId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(l => new
+                {
+                    l.MedicamentoId,
+                    l.AlmacenId,
+                    l.NumeroLote
+                })
+                .IsUnique();
 
                 entity.Property(l => l.CostoUnitario)
                     .HasPrecision(18, 2);
@@ -311,7 +392,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 6. CONFIGURACION DE USUARIOS
+            // 6. USUARIOS
             // ========================================
 
             modelBuilder.Entity<Usuario>(entity =>
@@ -321,7 +402,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 7. RELACION ROLES - PERMISOS
+            // 7. ROLES - PERMISOS
             // ========================================
 
             modelBuilder.Entity<RolePermission>(entity =>
@@ -344,7 +425,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 8. RELACION USUARIOS - PERMISOS
+            // 8. USUARIOS - PERMISOS
             // ========================================
 
             modelBuilder.Entity<UsuarioPermiso>(entity =>
@@ -364,6 +445,35 @@ namespace Proyecto_FarmaControl.Data
                     .WithMany(p => p.UsuarioPermisos)
                     .HasForeignKey(up => up.PermissionId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ========================================
+            // 9. SUCURSALES
+            // ========================================
+
+            modelBuilder.Entity<Sucursal>(entity =>
+            {
+                entity.HasIndex(s => s.Codigo)
+                    .IsUnique();
+            });
+
+            // ========================================
+            // 10. ALMACENES - SUCURSALES
+            // ========================================
+
+            modelBuilder.Entity<Almacen>(entity =>
+            {
+                entity.HasIndex(a => new
+                {
+                    a.SucursalId,
+                    a.Codigo
+                })
+                .IsUnique();
+
+                entity.HasOne(a => a.Sucursal)
+                    .WithMany(s => s.Almacenes)
+                    .HasForeignKey(a => a.SucursalId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
