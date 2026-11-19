@@ -27,7 +27,7 @@ namespace Proyecto_FarmaControl.Repositorio
         Task ActualizarAsync(Almacen almacen);
 
         // ========================================
-        // VALIDACIONES
+        // VALIDACIONES EXISTENTES
         // ========================================
 
         Task<bool> ExisteCodigoAsync(
@@ -35,8 +35,17 @@ namespace Proyecto_FarmaControl.Repositorio
             string codigo,
             int? excluirId = null);
 
-        Task<bool> SucursalDisponibleAsync(int sucursalId);
+        Task<bool> SucursalDisponibleAsync(
+            int sucursalId);
 
-        Task<bool> TieneLotesAsync(int almacenId);
+        Task<bool> TieneLotesAsync(
+            int almacenId);
+
+        // ========================================
+        // NUEVA VALIDACION
+        // ========================================
+
+        Task<bool> TieneComprasPendientesAsync(
+            int almacenId);
     }
 }

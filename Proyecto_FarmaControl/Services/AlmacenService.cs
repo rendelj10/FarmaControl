@@ -18,7 +18,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // CONSULTAR TODOS LOS ALMACENES
+        // 1. CONSULTAR TODOS
         // ========================================
 
         public async Task<List<Almacen>> ObtenerTodosAsync()
@@ -27,7 +27,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // CONSULTAR ALMACEN POR ID
+        // 2. CONSULTAR POR ID
         // ========================================
 
         public async Task<Almacen?> ObtenerPorIdAsync(int id)
@@ -36,7 +36,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // PAGINACION SQL SERVER
+        // 3. PAGINACION
         // ========================================
 
         public async Task<DataTablesResponseDto<AlmacenDto>>
@@ -50,7 +50,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // CREAR ALMACEN
+        // 4. CREAR ALMACEN
         // ========================================
 
         public async Task CrearAsync(Almacen almacen)
@@ -58,13 +58,16 @@ namespace Proyecto_FarmaControl.Services
             ArgumentNullException.ThrowIfNull(almacen);
 
             NormalizarDatos(almacen);
+
             ValidarDatos(almacen);
 
-            await ValidarSucursalAsync(almacen.SucursalId);
+            await ValidarSucursalAsync(
+                almacen.SucursalId);
 
-            bool duplicado = await _repository.ExisteCodigoAsync(
-                almacen.SucursalId,
-                almacen.Codigo);
+            bool duplicado =
+                await _repository.ExisteCodigoAsync(
+                    almacen.SucursalId,
+                    almacen.Codigo);
 
             if (duplicado)
             {
@@ -79,7 +82,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // ACTUALIZAR ALMACEN
+        // 5. ACTUALIZAR ALMACEN
         // ========================================
 
         public async Task ActualizarAsync(Almacen almacen)
@@ -108,18 +111,24 @@ namespace Proyecto_FarmaControl.Services
             }
 
             NormalizarDatos(almacen);
+
             ValidarDatos(almacen);
 
-            await ValidarSucursalAsync(almacen.SucursalId);
+            await ValidarSucursalAsync(
+                almacen.SucursalId);
 
-            // Impedir trasladar un almacén con lotes
-            // a otra sucursal, para conservar
-            // la integridad del historial.
+            // ====================================
+            // CAMBIO DE SUCURSAL
+            // ====================================
 
             if (existente.SucursalId != almacen.SucursalId)
             {
+                // Validacion existente:
+                // no mover almacenes con lotes.
+
                 bool tieneLotes =
-                    await _repository.TieneLotesAsync(almacen.Id);
+                    await _repository.TieneLotesAsync(
+                        almacen.Id);
 
                 if (tieneLotes)
                 {
@@ -127,12 +136,34 @@ namespace Proyecto_FarmaControl.Services
                         "No se puede cambiar de sucursal " +
                         "un almacén que tiene lotes asociados.");
                 }
+
+                // NUEVA VALIDACION:
+                // no mover almacenes con compras
+                // que aun no se han recibido.
+
+                bool comprasPendientes =
+                    await _repository
+                        .TieneComprasPendientesAsync(
+                            almacen.Id);
+
+                if (comprasPendientes)
+                {
+                    throw new InvalidOperationException(
+                        "No se puede cambiar de sucursal " +
+                        "un almacén que tiene compras " +
+                        "pendientes de recepción.");
+                }
             }
 
-            bool duplicado = await _repository.ExisteCodigoAsync(
-                almacen.SucursalId,
-                almacen.Codigo,
-                excluirId: almacen.Id);
+            // ====================================
+            // CODIGO DUPLICADO
+            // ====================================
+
+            bool duplicado =
+                await _repository.ExisteCodigoAsync(
+                    almacen.SucursalId,
+                    almacen.Codigo,
+                    excluirId: almacen.Id);
 
             if (duplicado)
             {
@@ -140,6 +171,10 @@ namespace Proyecto_FarmaControl.Services
                     "Ya existe otro almacén con ese código " +
                     "dentro de la sucursal seleccionada.");
             }
+
+            // ====================================
+            // ACTUALIZAR CAMPOS PERMITIDOS
+            // ====================================
 
             existente.SucursalId = almacen.SucursalId;
             existente.Codigo = almacen.Codigo;
@@ -150,7 +185,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // DESACTIVAR ALMACEN
+        // 6. DESACTIVAR ALMACEN
         // ========================================
 
         public async Task DesactivarAsync(int id)
@@ -161,7 +196,8 @@ namespace Proyecto_FarmaControl.Services
                     "El identificador del almacén no es válido.");
             }
 
-            var almacen = await _repository.ObtenerPorIdAsync(id);
+            var almacen = await _repository
+                .ObtenerPorIdAsync(id);
 
             if (almacen == null)
             {
@@ -175,8 +211,27 @@ namespace Proyecto_FarmaControl.Services
                     "El almacén ya se encuentra inactivo.");
             }
 
-            // Por ahora se impide la desactivación
-            // si existe cualquier lote asociado.
+            // ====================================
+            // NUEVA VALIDACION:
+            // COMPRAS PENDIENTES
+            // ====================================
+
+            bool comprasPendientes =
+                await _repository
+                    .TieneComprasPendientesAsync(id);
+
+            if (comprasPendientes)
+            {
+                throw new InvalidOperationException(
+                    "No se puede desactivar el almacén " +
+                    "porque tiene compras pendientes " +
+                    "de recepción.");
+            }
+
+            // ====================================
+            // VALIDACION EXISTENTE:
+            // LOTES ASOCIADOS
+            // ====================================
 
             bool tieneLotes =
                 await _repository.TieneLotesAsync(id);
@@ -188,13 +243,17 @@ namespace Proyecto_FarmaControl.Services
                     "que tiene lotes asociados.");
             }
 
+            // ====================================
+            // DESACTIVACION LOGICA
+            // ====================================
+
             almacen.Activo = false;
 
             await _repository.ActualizarAsync(almacen);
         }
 
         // ========================================
-        // VALIDAR SUCURSAL
+        // 7. VALIDAR SUCURSAL
         // ========================================
 
         private async Task ValidarSucursalAsync(
@@ -213,7 +272,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // NORMALIZAR DATOS
+        // 8. NORMALIZAR DATOS
         // ========================================
 
         private static void NormalizarDatos(
@@ -225,22 +284,25 @@ namespace Proyecto_FarmaControl.Services
                     .ToUpperInvariant();
 
             almacen.Nombre =
-                (almacen.Nombre ?? string.Empty).Trim();
+                (almacen.Nombre ?? string.Empty)
+                    .Trim();
 
             almacen.Ubicacion =
-                string.IsNullOrWhiteSpace(almacen.Ubicacion)
+                string.IsNullOrWhiteSpace(
+                    almacen.Ubicacion)
                     ? null
                     : almacen.Ubicacion.Trim();
         }
 
         // ========================================
-        // VALIDAR DATOS
+        // 9. VALIDAR DATOS
         // ========================================
 
         private static void ValidarDatos(
             Almacen almacen)
         {
-            var resultados = new List<ValidationResult>();
+            var resultados =
+                new List<ValidationResult>();
 
             bool valido = Validator.TryValidateObject(
                 almacen,

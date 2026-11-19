@@ -214,6 +214,16 @@ builder.Services.AddScoped<
     IAlmacenRepository,
     AlmacenRepository>();
 
+// PROVEEDORES
+builder.Services.AddScoped<
+    IProveedorRepository,
+    ProveedorRepository>();
+
+// COMPRAS - NUEVO
+builder.Services.AddScoped<
+    ICompraRepository,
+    CompraRepository>();
+
 // USUARIOS
 builder.Services.AddScoped<
     IUsuarioRepository,
@@ -257,6 +267,16 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IAlmacenService,
     AlmacenService>();
+
+// PROVEEDORES
+builder.Services.AddScoped<
+    IProveedorService,
+    ProveedorService>();
+
+// COMPRAS - NUEVO
+builder.Services.AddScoped<
+    ICompraService,
+    CompraService>();
 
 // TOKENS
 builder.Services.AddScoped<

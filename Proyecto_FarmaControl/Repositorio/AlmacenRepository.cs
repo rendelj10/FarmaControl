@@ -16,7 +16,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // CONSULTAR TODOS LOS ALMACENES
+        // 1. CONSULTAR TODOS LOS ALMACENES
         // ========================================
 
         public async Task<List<Almacen>> ObtenerTodosAsync()
@@ -30,7 +30,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // CONSULTAR ALMACEN POR ID
+        // 2. CONSULTAR ALMACEN POR ID
         // ========================================
 
         public async Task<Almacen?> ObtenerPorIdAsync(int id)
@@ -41,7 +41,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // AGREGAR ALMACEN
+        // 3. AGREGAR ALMACEN
         // ========================================
 
         public async Task AgregarAsync(Almacen almacen)
@@ -52,21 +52,21 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // ACTUALIZAR ALMACEN
+        // 4. ACTUALIZAR ALMACEN
         // ========================================
 
         public async Task ActualizarAsync(Almacen almacen)
         {
-            // El servicio debe obtener previamente
-            // la entidad mediante ObtenerPorIdAsync.
-            // EF Core rastrea sus modificaciones.
+            // El servicio recupera previamente
+            // la entidad con ObtenerPorIdAsync.
+            // EF Core mantiene el seguimiento
+            // de sus modificaciones.
 
             await _context.SaveChangesAsync();
         }
 
         // ========================================
-        // COMPROBAR CODIGO DUPLICADO
-        // DENTRO DE LA MISMA SUCURSAL
+        // 5. COMPROBAR CODIGO DUPLICADO
         // ========================================
 
         public async Task<bool> ExisteCodigoAsync(
@@ -88,7 +88,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // COMPROBAR SUCURSAL ACTIVA
+        // 6. COMPROBAR SUCURSAL ACTIVA
         // ========================================
 
         public async Task<bool> SucursalDisponibleAsync(
@@ -102,7 +102,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // VERIFICAR LOTES RELACIONADOS
+        // 7. VERIFICAR LOTES RELACIONADOS
         // ========================================
 
         public async Task<bool> TieneLotesAsync(
@@ -114,26 +114,51 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // DATATABLES - PAGINACION SQL SERVER
+        // 8. NUEVO:
+        // VERIFICAR COMPRAS PENDIENTES
+        // ========================================
+
+        public async Task<bool> TieneComprasPendientesAsync(
+            int almacenId)
+        {
+            if (almacenId <= 0)
+            {
+                return false;
+            }
+
+            // Solo las compras en Borrador
+            // impiden desactivar o trasladar
+            // el almacen.
+            //
+            // Las compras Recibidas y Anuladas
+            // permanecen como historial.
+
+            return await _context.Compras
+                .AsNoTracking()
+                .AnyAsync(c =>
+                    c.AlmacenId == almacenId &&
+                    c.Estado == "Borrador");
+        }
+
+        // ========================================
+        // 9. DATATABLES - PAGINACION SQL
         // ========================================
 
         public async Task<DataTablesResponseDto<AlmacenDto>>
             ObtenerPaginadasAsync(
                 DataTablesRequestDto request)
         {
+            ArgumentNullException.ThrowIfNull(request);
+
             var query = _context.Almacenes
                 .AsNoTracking()
                 .AsQueryable();
 
-            // =====================================
             // TOTAL DE REGISTROS
-            // =====================================
 
             int recordsTotal = await query.CountAsync();
 
-            // =====================================
             // BUSQUEDA
-            // =====================================
 
             var search = request.Search?.Value?.Trim();
 
@@ -149,9 +174,7 @@ namespace Proyecto_FarmaControl.Repositorio
 
             int recordsFiltered = await query.CountAsync();
 
-            // =====================================
             // ORDENAMIENTO
-            // =====================================
 
             var orden = request.Order?.FirstOrDefault();
 
@@ -180,7 +203,8 @@ namespace Proyecto_FarmaControl.Repositorio
                 "sucursalnombre" => descendente
                     ? query.OrderByDescending(
                         a => a.Sucursal.Nombre)
-                    : query.OrderBy(a => a.Sucursal.Nombre),
+                    : query.OrderBy(
+                        a => a.Sucursal.Nombre),
 
                 "codigo" => descendente
                     ? query.OrderByDescending(a => a.Codigo)
@@ -199,9 +223,7 @@ namespace Proyecto_FarmaControl.Repositorio
                     : query.OrderBy(a => a.Nombre)
             };
 
-            // =====================================
             // PAGINACION
-            // =====================================
 
             int start = Math.Max(0, request.Start);
 
@@ -211,9 +233,7 @@ namespace Proyecto_FarmaControl.Repositorio
                     ? Math.Min(request.Length, 100)
                     : 10;
 
-            // =====================================
             // PROYECCION A DTO
-            // =====================================
 
             var data = await query
                 .Skip(start)
