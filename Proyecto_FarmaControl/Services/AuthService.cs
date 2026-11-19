@@ -7,8 +7,9 @@
     using Proyecto_FarmaControl.Interfaces;
     using Proyecto_FarmaControl.Models;
     using Proyecto_FarmaControl.Models.settings;
+using Proyecto_FarmaControl.Repositorio;
 
-    namespace Proyecto_FarmaControl.Services
+namespace Proyecto_FarmaControl.Services
     {
         public class AuthService : IAuthService
         {

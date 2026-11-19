@@ -47,6 +47,53 @@ namespace Proyecto_FarmaControl.Migrations
                     b.ToTable("Categorias");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Lote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Almacen")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("CantidadInicial")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("CostoUnitario")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Existencias")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaIngreso")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("FechaVencimiento")
+                        .HasColumnType("date");
+
+                    b.Property<int>("MedicamentoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NumeroLote")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicamentoId");
+
+                    b.ToTable("Lotes");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Medicamento", b =>
                 {
                     b.Property<int>("Id")
@@ -117,6 +164,146 @@ namespace Proyecto_FarmaControl.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Permissions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Description = "Consultar categorías",
+                            Name = "categoria.ver"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Registrar categorías",
+                            Name = "categoria.crear"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "Actualizar categorías",
+                            Name = "categoria.actualizar"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Desactivar categorías",
+                            Name = "categoria.borrar"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Description = "Consultar medicamentos",
+                            Name = "medicamento.ver"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Description = "Registrar medicamentos",
+                            Name = "medicamento.crear"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Description = "Actualizar medicamentos",
+                            Name = "medicamento.actualizar"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Description = "Desactivar medicamentos",
+                            Name = "medicamento.borrar"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Description = "Consultar lotes de medicamentos",
+                            Name = "lote.ver"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Description = "Registrar lotes de medicamentos",
+                            Name = "lote.crear"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Description = "Actualizar lotes de medicamentos",
+                            Name = "lote.actualizar"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Description = "Desactivar lotes de medicamentos",
+                            Name = "lote.borrar"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Description = "Consultar roles",
+                            Name = "rol.ver"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Description = "Crear roles",
+                            Name = "rol.crear"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Description = "Asignar permisos a roles",
+                            Name = "rol.asignar"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Description = "Consultar permisos",
+                            Name = "permiso.ver"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Description = "Crear permisos",
+                            Name = "permiso.crear"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Description = "Actualizar permisos",
+                            Name = "permiso.actualizar"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Description = "Eliminar permisos",
+                            Name = "permiso.borrar"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Description = "Consultar usuarios",
+                            Name = "usuario.ver"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Description = "Asignar permisos a usuarios",
+                            Name = "usuario.asignar"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Description = "Cambiar el rol de usuarios",
+                            Name = "usuario.cambiar.rol"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Description = "Acceder al panel administrativo",
+                            Name = "admin.panel"
+                        });
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Rol", b =>
@@ -141,6 +328,11 @@ namespace Proyecto_FarmaControl.Migrations
                         {
                             Id = 1,
                             Name = "Usuario"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Administrador"
                         });
                 });
 
@@ -157,6 +349,123 @@ namespace Proyecto_FarmaControl.Migrations
                     b.HasIndex("PermissionId");
 
                     b.ToTable("RolePermissions");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 1
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 2
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 3
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 4
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 5
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 6
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 7
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 8
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 9
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 10
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 11
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 12
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 13
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 14
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 15
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 16
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 17
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 18
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 19
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 20
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 21
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 22
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 23
+                        });
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Usuario", b =>
@@ -229,6 +538,17 @@ namespace Proyecto_FarmaControl.Migrations
                     b.HasIndex("PermissionId");
 
                     b.ToTable("UsuarioPermisos");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Lote", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Medicamento", "Medicamento")
+                        .WithMany()
+                        .HasForeignKey("MedicamentoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Medicamento");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Medicamento", b =>

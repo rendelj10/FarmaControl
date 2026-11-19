@@ -1,18 +1,26 @@
 
-using Proyecto_FarmaControl.Models;
+using Proyecto_FarmaControl.DTOs;
 
 namespace Proyecto_FarmaControl.Interfaces
 {
     public interface IMedicamentoService
     {
-        Task<List<Medicamento>> ObtenerTodasAsync();
+        Task<DataTablesResponseDto<MedicamentoDto>>
+            ObtenerPaginadosAsync(DataTablesRequestDto request);
 
-        Task<Medicamento?> ObtenerPorIdAsync(int id);
+        Task<IReadOnlyList<MedicamentoDto>>
+            ObtenerTodasAsync();
 
-        Task CrearAsync(Medicamento medicamento);
+        Task<MedicamentoGuardarDto?>
+            ObtenerPorIdAsync(int id);
 
-        Task ActualizarAsync(Medicamento medicamento);
+        Task<(bool Success, string? ErrorMessage)>
+            CrearAsync(MedicamentoGuardarDto dto);
 
-        Task DesactivarAsync(int id);
+        Task<(bool Success, string? ErrorMessage)>
+            ActualizarAsync(MedicamentoGuardarDto dto);
+
+        Task<(bool Success, string? ErrorMessage)>
+            DesactivarAsync(int id);
     }
 }

@@ -1,6 +1,9 @@
 ﻿
+using Proyecto_FarmaControl.DTOs;
 using Proyecto_FarmaControl.Interfaces;
 using Proyecto_FarmaControl.Models;
+using Proyecto_FarmaControl.Repositorio;
+
 
 namespace Proyecto_FarmaControl.Services
 {
@@ -13,75 +16,145 @@ namespace Proyecto_FarmaControl.Services
             _repository = repository;
         }
 
-        public async Task<List<Categoria>> ObtenerTodasAsync()
+        // =====================================
+        // OBTENER TODAS LAS CATEGORIAS
+        // =====================================
+
+        public async Task<IReadOnlyList<CategoriaTablaDto>>
+            ObtenerTodasAsync()
         {
-            return await _repository.ObtenerTodasAsync();
+            var categorias = await _repository.ObtenerTodasAsync();
+
+            return categorias.Select(c => new CategoriaTablaDto
+            {
+                Id = c.Id,
+                Nombre = c.Nombre,
+                Descripcion = c.Descripcion,
+                Activo = c.Activo
+            }).ToList();
         }
 
-        public async Task<Categoria?> ObtenerPorIdAsync(int id)
+        // =====================================
+        // OBTENER CATEGORIA POR ID
+        // =====================================
+
+        public async Task<CategoriaGuardarDto?>
+            ObtenerPorIdAsync(int id)
         {
-            return await _repository.ObtenerPorIdAsync(id);
-        }
-
-        public async Task CrearAsync(Categoria categoria)
-        {
-            var nombre = categoria.Nombre?.Trim();
-
-            if (string.IsNullOrWhiteSpace(nombre))
-                throw new ArgumentException(
-                    "El nombre de la categoría es obligatorio.");
-
-            categoria.Nombre = nombre;
-
-            if (await _repository.ExisteNombreAsync(categoria.Nombre))
-                throw new InvalidOperationException(
-                    "Ya existe una categoría con ese nombre.");
-
-            categoria.Activo = true;
-
-            await _repository.AgregarAsync(categoria);
-        }
-
-        public async Task ActualizarAsync(Categoria categoria)
-        {
-            var existente = await _repository
-                .ObtenerPorIdAsync(categoria.Id);
-
-            if (existente == null)
-                throw new KeyNotFoundException(
-                    "La categoría no existe.");
-
-            var nombre = categoria.Nombre?.Trim();
-
-            if (string.IsNullOrWhiteSpace(nombre))
-                throw new ArgumentException(
-                    "El nombre de la categoría es obligatorio.");
-
-            categoria.Nombre = nombre;
-
-            if (await _repository.ExisteNombreAsync(
-                categoria.Nombre, categoria.Id))
-                throw new InvalidOperationException(
-                    "Ya existe una categoría con ese nombre.");
-
-            existente.Nombre = categoria.Nombre;
-            existente.Descripcion = categoria.Descripcion;
-
-            await _repository.ActualizarAsync(existente);
-        }
-
-        public async Task DesactivarAsync(int id)
-        {
-            var categoria = await _repository
-                .ObtenerPorIdAsync(id);
+            var categoria = await _repository.ObtenerPorIdAsync(id);
 
             if (categoria == null)
-                throw new KeyNotFoundException(
-                    "La categoría no existe.");
+                return null;
+
+            return new CategoriaGuardarDto
+            {
+                Id = categoria.Id,
+                Nombre = categoria.Nombre,
+                Descripcion = categoria.Descripcion
+            };
+        }
+
+        // =====================================
+        // OBTENER CATEGORIAS PAGINADAS
+        // =====================================
+
+        public Task<DataTablesResponseDto<CategoriaTablaDto>>
+            ObtenerPaginadasAsync(DataTablesRequestDto request)
+        {
+            return _repository.ObtenerPaginadasAsync(request);
+        }
+
+        // =====================================
+        // CREAR CATEGORIA
+        // =====================================
+
+        public async Task<(bool Success, string? ErrorMessage)>
+            CrearAsync(CategoriaGuardarDto dto)
+        {
+            var nombre = dto.Nombre?.Trim();
+
+            if (string.IsNullOrWhiteSpace(nombre))
+                return (false, "El nombre de la categoría es obligatorio.");
+
+            if (await _repository.ExisteNombreAsync(nombre))
+                return (false, "Ya existe una categoría con ese nombre.");
+
+            var categoria = new Categoria
+            {
+                Nombre = nombre,
+                Descripcion = dto.Descripcion?.Trim(),
+                Activo = true
+            };
+
+            var categoriaCreada =
+                await _repository.AgregarAsync(categoria);
+
+            if (categoriaCreada.Id <= 0)
+                return (false, "No se pudo registrar la categoría.");
+
+            return (true, null);
+        }
+
+        // =====================================
+        // ACTUALIZAR CATEGORIA
+        // =====================================
+
+        public async Task<(bool Success, string? ErrorMessage)>
+            ActualizarAsync(CategoriaGuardarDto dto)
+        {
+            if (!dto.Id.HasValue || dto.Id.Value <= 0)
+                return (false, "El identificador de categoría no es válido.");
+
+            var categoria =
+                await _repository.ObtenerPorIdAsync(dto.Id.Value);
+
+            if (categoria == null)
+                return (false, "La categoría no existe.");
+
+            var nombre = dto.Nombre?.Trim();
+
+            if (string.IsNullOrWhiteSpace(nombre))
+                return (false, "El nombre de la categoría es obligatorio.");
+
+            if (await _repository.ExisteNombreAsync(nombre, dto.Id))
+                return (false, "Ya existe otra categoría con ese nombre.");
+
+            categoria.Nombre = nombre;
+            categoria.Descripcion = dto.Descripcion?.Trim();
+
+            var actualizado =
+                await _repository.ActualizarAsync(categoria);
+
+            if (!actualizado)
+                return (false, "No se pudo actualizar la categoría.");
+
+            return (true, null);
+        }
+
+        // =====================================
+        // DESACTIVAR CATEGORIA
+        // =====================================
+
+        public async Task<(bool Success, string? ErrorMessage)>
+            DesactivarAsync(int id)
+        {
+            var categoria = await _repository.ObtenerPorIdAsync(id);
+
+            if (categoria == null)
+                return (false, "La categoría no existe.");
+
+            if (!categoria.Activo)
+                return (false, "La categoría ya está desactivada.");
 
             categoria.Activo = false;
 
-            await _repository.ActualizarAsync(categoria);
+            var actualizado =
+                await _repository.ActualizarAsync(categoria);
+
+            if (!actualizado)
+                return (false, "No se pudo desactivar la categoría.");
+
+            return (true, null);
         }
     }
 }

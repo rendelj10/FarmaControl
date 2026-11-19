@@ -5,6 +5,8 @@ namespace Proyecto_FarmaControl.DTOs
 {
     public class MedicamentoGuardarDto
     {
+        public int? Id { get; set; }
+
         [Required(ErrorMessage = "El código es obligatorio.")]
         [StringLength(30, ErrorMessage = "Máximo 30 caracteres.")]
         public string Codigo { get; set; } = string.Empty;
