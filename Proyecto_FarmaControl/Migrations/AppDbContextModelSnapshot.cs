@@ -22,6 +22,42 @@ namespace Proyecto_FarmaControl.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Almacen", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SucursalId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Ubicacion")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SucursalId", "Codigo")
+                        .IsUnique();
+
+                    b.ToTable("Almacenes");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Categoria", b =>
                 {
                     b.Property<int>("Id")
@@ -47,6 +83,192 @@ namespace Proyecto_FarmaControl.Migrations
                     b.ToTable("Categorias");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Cliente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("DocumentoIdentidad")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.ToTable("Clientes");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Compra", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlmacenId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("FechaCompra")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("FechaRecepcion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Impuesto")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("NumeroDocumento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("ProveedorId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlmacenId");
+
+                    b.HasIndex("ProveedorId", "NumeroDocumento")
+                        .IsUnique();
+
+                    b.ToTable("Compras");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleCompra", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CompraId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("CostoUnitario")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("FechaVencimiento")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("LoteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MedicamentoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NumeroLote")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompraId");
+
+                    b.HasIndex("LoteId");
+
+                    b.HasIndex("MedicamentoId");
+
+                    b.ToTable("DetalleCompras");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleVenta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LoteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MedicamentoId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("VentaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoteId");
+
+                    b.HasIndex("MedicamentoId");
+
+                    b.HasIndex("VentaId");
+
+                    b.ToTable("DetalleVentas");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Lote", b =>
                 {
                     b.Property<int>("Id")
@@ -58,10 +280,8 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Almacen")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<int>("AlmacenId")
+                        .HasColumnType("int");
 
                     b.Property<int>("CantidadInicial")
                         .HasColumnType("int");
@@ -89,7 +309,10 @@ namespace Proyecto_FarmaControl.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MedicamentoId");
+                    b.HasIndex("AlmacenId");
+
+                    b.HasIndex("MedicamentoId", "AlmacenId", "NumeroLote")
+                        .IsUnique();
 
                     b.ToTable("Lotes");
                 });
@@ -303,7 +526,204 @@ namespace Proyecto_FarmaControl.Migrations
                             Id = 23,
                             Description = "Acceder al panel administrativo",
                             Name = "admin.panel"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Description = "Consultar sucursales",
+                            Name = "sucursal.ver"
+                        },
+                        new
+                        {
+                            Id = 25,
+                            Description = "Registrar sucursales",
+                            Name = "sucursal.crear"
+                        },
+                        new
+                        {
+                            Id = 26,
+                            Description = "Actualizar sucursales",
+                            Name = "sucursal.actualizar"
+                        },
+                        new
+                        {
+                            Id = 27,
+                            Description = "Desactivar sucursales",
+                            Name = "sucursal.borrar"
+                        },
+                        new
+                        {
+                            Id = 28,
+                            Description = "Consultar almacenes",
+                            Name = "almacen.ver"
+                        },
+                        new
+                        {
+                            Id = 29,
+                            Description = "Registrar almacenes",
+                            Name = "almacen.crear"
+                        },
+                        new
+                        {
+                            Id = 30,
+                            Description = "Actualizar almacenes",
+                            Name = "almacen.actualizar"
+                        },
+                        new
+                        {
+                            Id = 31,
+                            Description = "Desactivar almacenes",
+                            Name = "almacen.borrar"
+                        },
+                        new
+                        {
+                            Id = 32,
+                            Description = "Consultar proveedores",
+                            Name = "proveedor.ver"
+                        },
+                        new
+                        {
+                            Id = 33,
+                            Description = "Registrar proveedores",
+                            Name = "proveedor.crear"
+                        },
+                        new
+                        {
+                            Id = 34,
+                            Description = "Actualizar proveedores",
+                            Name = "proveedor.actualizar"
+                        },
+                        new
+                        {
+                            Id = 35,
+                            Description = "Desactivar proveedores",
+                            Name = "proveedor.borrar"
+                        },
+                        new
+                        {
+                            Id = 36,
+                            Description = "Consultar compras",
+                            Name = "compra.ver"
+                        },
+                        new
+                        {
+                            Id = 37,
+                            Description = "Registrar compras",
+                            Name = "compra.crear"
+                        },
+                        new
+                        {
+                            Id = 38,
+                            Description = "Confirmar recepción de compras",
+                            Name = "compra.recibir"
+                        },
+                        new
+                        {
+                            Id = 39,
+                            Description = "Anular compras en borrador",
+                            Name = "compra.anular"
+                        },
+                        new
+                        {
+                            Id = 40,
+                            Description = "Consultar clientes",
+                            Name = "cliente.ver"
+                        },
+                        new
+                        {
+                            Id = 41,
+                            Description = "Registrar clientes",
+                            Name = "cliente.crear"
+                        },
+                        new
+                        {
+                            Id = 42,
+                            Description = "Actualizar clientes",
+                            Name = "cliente.actualizar"
+                        },
+                        new
+                        {
+                            Id = 43,
+                            Description = "Desactivar clientes",
+                            Name = "cliente.borrar"
+                        },
+                        new
+                        {
+                            Id = 44,
+                            Description = "Consultar ventas",
+                            Name = "venta.ver"
+                        },
+                        new
+                        {
+                            Id = 45,
+                            Description = "Registrar ventas",
+                            Name = "venta.crear"
+                        },
+                        new
+                        {
+                            Id = 46,
+                            Description = "Confirmar ventas y descontar existencias",
+                            Name = "venta.confirmar"
+                        },
+                        new
+                        {
+                            Id = 47,
+                            Description = "Anular ventas en borrador",
+                            Name = "venta.anular"
                         });
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Proveedor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Contacto")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NombreComercial")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("RazonSocial")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Ruc")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.ToTable("Proveedores");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Rol", b =>
@@ -465,7 +885,168 @@ namespace Proyecto_FarmaControl.Migrations
                         {
                             RoleId = 2,
                             PermissionId = 23
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 24
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 25
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 26
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 27
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 28
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 29
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 30
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 31
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 32
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 33
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 34
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 35
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 36
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 37
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 38
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 39
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 40
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 41
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 42
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 43
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 44
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 45
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 46
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 47
                         });
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Sucursal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.ToTable("Sucursales");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Usuario", b =>
@@ -540,13 +1121,162 @@ namespace Proyecto_FarmaControl.Migrations
                     b.ToTable("UsuarioPermisos");
                 });
 
-            modelBuilder.Entity("Proyecto_FarmaControl.Models.Lote", b =>
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Venta", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlmacenId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("FechaConfirmacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaVenta")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Impuesto")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("NumeroDocumento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlmacenId");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("NumeroDocumento")
+                        .IsUnique();
+
+                    b.ToTable("Ventas");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Almacen", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Sucursal", "Sucursal")
+                        .WithMany("Almacenes")
+                        .HasForeignKey("SucursalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Sucursal");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Compra", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Almacen", "Almacen")
+                        .WithMany()
+                        .HasForeignKey("AlmacenId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Proveedor", "Proveedor")
+                        .WithMany()
+                        .HasForeignKey("ProveedorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Almacen");
+
+                    b.Navigation("Proveedor");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleCompra", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Compra", "Compra")
+                        .WithMany("Detalles")
+                        .HasForeignKey("CompraId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Lote", "Lote")
+                        .WithMany()
+                        .HasForeignKey("LoteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Proyecto_FarmaControl.Models.Medicamento", "Medicamento")
                         .WithMany()
                         .HasForeignKey("MedicamentoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Compra");
+
+                    b.Navigation("Lote");
+
+                    b.Navigation("Medicamento");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleVenta", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Lote", "Lote")
+                        .WithMany()
+                        .HasForeignKey("LoteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Medicamento", "Medicamento")
+                        .WithMany()
+                        .HasForeignKey("MedicamentoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Venta", "Venta")
+                        .WithMany("Detalles")
+                        .HasForeignKey("VentaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Lote");
+
+                    b.Navigation("Medicamento");
+
+                    b.Navigation("Venta");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Lote", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Almacen", "Almacen")
+                        .WithMany()
+                        .HasForeignKey("AlmacenId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Medicamento", "Medicamento")
+                        .WithMany()
+                        .HasForeignKey("MedicamentoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Almacen");
 
                     b.Navigation("Medicamento");
                 });
@@ -611,6 +1341,30 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Venta", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Almacen", "Almacen")
+                        .WithMany()
+                        .HasForeignKey("AlmacenId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Almacen");
+
+                    b.Navigation("Cliente");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Compra", b =>
+                {
+                    b.Navigation("Detalles");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Permiso", b =>
                 {
                     b.Navigation("RolePermissions");
@@ -625,9 +1379,19 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Navigation("Usuarios");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Sucursal", b =>
+                {
+                    b.Navigation("Almacenes");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Usuario", b =>
                 {
                     b.Navigation("UsuarioPermisos");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Venta", b =>
+                {
+                    b.Navigation("Detalles");
                 });
 #pragma warning restore 612, 618
         }

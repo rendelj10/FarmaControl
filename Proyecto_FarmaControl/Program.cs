@@ -1,6 +1,7 @@
 
 using System.Security.Claims;
 using System.Text;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -137,24 +138,18 @@ builder.Services
     });
 
 // ========================================
-// 4. CONFIGURACION AUTORIZACION
+// 4. CONFIGURACION DE AUTORIZACION
 // ========================================
 
 builder.Services.AddAuthorization(options =>
 {
-    // PANEL ADMINISTRATIVO
-
     options.AddPolicy("admin.panel", policy =>
         policy.RequireAssertion(context =>
             context.User.HasPermission("admin.panel")));
 
-    // ACTUALIZAR PERMISOS
-
     options.AddPolicy("permiso.actualizar", policy =>
         policy.RequireAssertion(context =>
             context.User.HasPermission("permiso.actualizar")));
-
-    // ELIMINAR PERMISOS
 
     options.AddPolicy("permiso.borrar", policy =>
         policy.RequireAssertion(context =>
@@ -189,26 +184,74 @@ builder.Services.AddAutoMapper(cfg =>
 // 7. REGISTRO DE REPOSITORIOS
 // ========================================
 
+// CATEGORIAS
 builder.Services.AddScoped<
     ICategoriaRepository,
     CategoriaRepository>();
 
+// MEDICAMENTOS
 builder.Services.AddScoped<
     IMedicamentoRepository,
     MedicamentoRepository>();
 
+// LOTES
 builder.Services.AddScoped<
     ILoteRepository,
     LoteRepository>();
 
+// SUCURSALES
+builder.Services.AddScoped<
+    ISucursalRepository,
+    SucursalRepository>();
+
+// ALMACENES
+builder.Services.AddScoped<
+    IAlmacenRepository,
+    AlmacenRepository>();
+
+// PROVEEDORES
+builder.Services.AddScoped<
+    IProveedorRepository,
+    ProveedorRepository>();
+
+// COMPRAS
+builder.Services.AddScoped<
+    ICompraRepository,
+    CompraRepository>();
+
+// VENTAS
+builder.Services.AddScoped<
+    IVentaService,
+    VentaService>();
+
+// VENTAS
+builder.Services.AddScoped<
+    IVentaRepository,
+    VentaRepository>();
+
+// ========================================
+// CLIENTES - NUEVO REGISTRO
+// ========================================
+
+builder.Services.AddScoped<
+    IClienteRepository,
+    ClienteRepository>();
+
+// ========================================
+// REPOSITORIOS DE SEGURIDAD
+// ========================================
+
+// USUARIOS
 builder.Services.AddScoped<
     IUsuarioRepository,
     UsuarioRepository>();
 
+// ROLES
 builder.Services.AddScoped<
     IRoleRepository,
     RolRepository>();
 
+// PERMISOS
 builder.Services.AddScoped<
     IPermissionRepository,
     PermissionRepository>();
@@ -217,30 +260,69 @@ builder.Services.AddScoped<
 // 8. REGISTRO DE SERVICIOS
 // ========================================
 
+// CATEGORIAS
 builder.Services.AddScoped<
     ICategoriaService,
     CategoriaService>();
 
+// MEDICAMENTOS
 builder.Services.AddScoped<
     IMedicamentoService,
     MedicamentoService>();
 
+// LOTES
 builder.Services.AddScoped<
     ILoteService,
     LoteService>();
 
+// SUCURSALES
+builder.Services.AddScoped<
+    ISucursalService,
+    SucursalService>();
+
+// ALMACENES
+builder.Services.AddScoped<
+    IAlmacenService,
+    AlmacenService>();
+
+// PROVEEDORES
+builder.Services.AddScoped<
+    IProveedorService,
+    ProveedorService>();
+
+// COMPRAS
+builder.Services.AddScoped<
+    ICompraService,
+    CompraService>();
+
+// ========================================
+// CLIENTES - NUEVO REGISTRO
+// ========================================
+
+builder.Services.AddScoped<
+    IClienteService,
+    ClienteService>();
+
+// ========================================
+// SERVICIOS DE SEGURIDAD Y SOPORTE
+// ========================================
+
+// TOKENS
 builder.Services.AddScoped<
     ITokenService,
     TokenService>();
 
+// CORREOS
 builder.Services.AddScoped<
     IEmailService,
     EmailService>();
 
+// AUTENTICACION
 builder.Services.AddScoped<
     IAuthService,
     AuthService>();
 
+// ROLES Y PERMISOS
 builder.Services.AddScoped<
     IRolePermissionService,
     RolePermissionService>();
@@ -258,6 +340,7 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+
     app.UseHsts();
 }
 

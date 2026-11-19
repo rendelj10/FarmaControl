@@ -13,7 +13,7 @@ namespace Proyecto_FarmaControl.Data
         }
 
         // ========================================
-        // MODULOS PRINCIPALES
+        // 1. TABLAS DE NEGOCIO
         // ========================================
 
         public DbSet<Categoria> Categorias { get; set; } = null!;
@@ -22,8 +22,35 @@ namespace Proyecto_FarmaControl.Data
 
         public DbSet<Lote> Lotes { get; set; } = null!;
 
+        public DbSet<Sucursal> Sucursales { get; set; } = null!;
+
+        public DbSet<Almacen> Almacenes { get; set; } = null!;
+
+        public DbSet<Proveedor> Proveedores { get; set; } = null!;
+
+        public DbSet<Compra> Compras { get; set; } = null!;
+
+        public DbSet<DetalleCompra> DetalleCompras { get; set; } = null!;
+
+        // NUEVO MODULO: CLIENTES
+
+        public DbSet<Cliente> Clientes { get; set; } = null!;
+
+
         // ========================================
-        // MODULO DE SEGURIDAD
+        // VENTAS Y DETALLEVENTAS
+        // ========================================
+
+        public DbSet<Venta> Ventas { get; set; } = null!;
+
+        public DbSet<DetalleVenta> DetalleVentas { get; set; } = null!;
+
+        // Ventas y DetalleVentas se incorporaran
+        // cuando completemos sus servicios
+        // y reglas de negocio.
+
+        // ========================================
+        // 2. TABLAS DE SEGURIDAD
         // ========================================
 
         public DbSet<Usuario> Usuarios { get; set; } = null!;
@@ -36,12 +63,13 @@ namespace Proyecto_FarmaControl.Data
 
         public DbSet<UsuarioPermiso> UsuarioPermisos { get; set; } = null!;
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(
+            ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // ========================================
-            // 1. ROLES DEL SISTEMA
+            // 3. ROLES
             // ========================================
 
             modelBuilder.Entity<Rol>().HasData(
@@ -58,12 +86,12 @@ namespace Proyecto_FarmaControl.Data
             );
 
             // ========================================
-            // 2. PERMISOS DEL SISTEMA
+            // 4. PERMISOS
             // ========================================
 
             modelBuilder.Entity<Permiso>().HasData(
 
-                // PERMISOS DE CATEGORIAS
+                // CATEGORIAS
 
                 new Permiso
                 {
@@ -90,7 +118,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Desactivar categorías"
                 },
 
-                // PERMISOS DE MEDICAMENTOS
+                // MEDICAMENTOS
 
                 new Permiso
                 {
@@ -117,7 +145,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Desactivar medicamentos"
                 },
 
-                // PERMISOS DE LOTES
+                // LOTES
 
                 new Permiso
                 {
@@ -144,7 +172,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Desactivar lotes de medicamentos"
                 },
 
-                // PERMISOS DE ROLES
+                // ROLES
 
                 new Permiso
                 {
@@ -165,7 +193,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Asignar permisos a roles"
                 },
 
-                // PERMISOS DE ADMINISTRACION DE PERMISOS
+                // PERMISOS
 
                 new Permiso
                 {
@@ -192,7 +220,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Eliminar permisos"
                 },
 
-                // PERMISOS DE USUARIOS
+                // USUARIOS
 
                 new Permiso
                 {
@@ -213,69 +241,269 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Cambiar el rol de usuarios"
                 },
 
-                // PERMISO DEL PANEL ADMINISTRATIVO
+                // PANEL ADMINISTRATIVO
 
                 new Permiso
                 {
                     Id = 23,
                     Name = "admin.panel",
                     Description = "Acceder al panel administrativo"
+                },
+
+                // SUCURSALES
+
+                new Permiso
+                {
+                    Id = 24,
+                    Name = "sucursal.ver",
+                    Description = "Consultar sucursales"
+                },
+                new Permiso
+                {
+                    Id = 25,
+                    Name = "sucursal.crear",
+                    Description = "Registrar sucursales"
+                },
+                new Permiso
+                {
+                    Id = 26,
+                    Name = "sucursal.actualizar",
+                    Description = "Actualizar sucursales"
+                },
+                new Permiso
+                {
+                    Id = 27,
+                    Name = "sucursal.borrar",
+                    Description = "Desactivar sucursales"
+                },
+
+                // ALMACENES
+
+                new Permiso
+                {
+                    Id = 28,
+                    Name = "almacen.ver",
+                    Description = "Consultar almacenes"
+                },
+                new Permiso
+                {
+                    Id = 29,
+                    Name = "almacen.crear",
+                    Description = "Registrar almacenes"
+                },
+                new Permiso
+                {
+                    Id = 30,
+                    Name = "almacen.actualizar",
+                    Description = "Actualizar almacenes"
+                },
+                new Permiso
+                {
+                    Id = 31,
+                    Name = "almacen.borrar",
+                    Description = "Desactivar almacenes"
+                },
+
+                // PROVEEDORES
+
+                new Permiso
+                {
+                    Id = 32,
+                    Name = "proveedor.ver",
+                    Description = "Consultar proveedores"
+                },
+                new Permiso
+                {
+                    Id = 33,
+                    Name = "proveedor.crear",
+                    Description = "Registrar proveedores"
+                },
+                new Permiso
+                {
+                    Id = 34,
+                    Name = "proveedor.actualizar",
+                    Description = "Actualizar proveedores"
+                },
+                new Permiso
+                {
+                    Id = 35,
+                    Name = "proveedor.borrar",
+                    Description = "Desactivar proveedores"
+                },
+
+                // COMPRAS
+
+                new Permiso
+                {
+                    Id = 36,
+                    Name = "compra.ver",
+                    Description = "Consultar compras"
+                },
+                new Permiso
+                {
+                    Id = 37,
+                    Name = "compra.crear",
+                    Description = "Registrar compras"
+                },
+                new Permiso
+                {
+                    Id = 38,
+                    Name = "compra.recibir",
+                    Description = "Confirmar recepción de compras"
+                },
+                new Permiso
+                {
+                    Id = 39,
+                    Name = "compra.anular",
+                    Description = "Anular compras en borrador"
+                },
+
+                // ====================================
+                // NUEVOS PERMISOS: CLIENTES
+                // ====================================
+
+                new Permiso
+                {
+                    Id = 40,
+                    Name = "cliente.ver",
+                    Description = "Consultar clientes"
+                },
+                new Permiso
+                {
+                    Id = 41,
+                    Name = "cliente.crear",
+                    Description = "Registrar clientes"
+                },
+                new Permiso
+                {
+                    Id = 42,
+                    Name = "cliente.actualizar",
+                    Description = "Actualizar clientes"
+                },
+                new Permiso
+                {
+                    Id = 43,
+                    Name = "cliente.borrar",
+                    Description = "Desactivar clientes"
+                },
+
+                // ====================================
+                // VENTAS - NUEVOS PERMISOS
+                // ====================================
+
+                new Permiso
+                {
+                    Id = 44,
+                    Name = "venta.ver",
+                    Description = "Consultar ventas"
+                },
+                new Permiso
+                {
+                    Id = 45,
+                    Name = "venta.crear",
+                    Description = "Registrar ventas"
+                },
+                new Permiso
+                {
+                    Id = 46,
+                    Name = "venta.confirmar",
+                    Description = "Confirmar ventas y descontar existencias"
+                },
+                new Permiso
+                {
+                    Id = 47,
+                    Name = "venta.anular",
+                    Description = "Anular ventas en borrador"
                 }
+
             );
 
             // ========================================
-            // 3. PERMISOS ASIGNADOS AL ADMINISTRADOR
+            // 5. PERMISOS DEL ADMINISTRADOR
             // ========================================
 
             modelBuilder.Entity<RolePermission>().HasData(
 
                 // CATEGORIAS
-
                 new { RoleId = 2, PermissionId = 1 },
                 new { RoleId = 2, PermissionId = 2 },
                 new { RoleId = 2, PermissionId = 3 },
                 new { RoleId = 2, PermissionId = 4 },
 
                 // MEDICAMENTOS
-
                 new { RoleId = 2, PermissionId = 5 },
                 new { RoleId = 2, PermissionId = 6 },
                 new { RoleId = 2, PermissionId = 7 },
                 new { RoleId = 2, PermissionId = 8 },
 
                 // LOTES
-
                 new { RoleId = 2, PermissionId = 9 },
                 new { RoleId = 2, PermissionId = 10 },
                 new { RoleId = 2, PermissionId = 11 },
                 new { RoleId = 2, PermissionId = 12 },
 
                 // ROLES
-
                 new { RoleId = 2, PermissionId = 13 },
                 new { RoleId = 2, PermissionId = 14 },
                 new { RoleId = 2, PermissionId = 15 },
 
                 // PERMISOS
-
                 new { RoleId = 2, PermissionId = 16 },
                 new { RoleId = 2, PermissionId = 17 },
                 new { RoleId = 2, PermissionId = 18 },
                 new { RoleId = 2, PermissionId = 19 },
 
                 // USUARIOS
-
                 new { RoleId = 2, PermissionId = 20 },
                 new { RoleId = 2, PermissionId = 21 },
                 new { RoleId = 2, PermissionId = 22 },
 
-                // PANEL ADMINISTRATIVO
+                // PANEL
+                new { RoleId = 2, PermissionId = 23 },
 
-                new { RoleId = 2, PermissionId = 23 }
+                // SUCURSALES
+                new { RoleId = 2, PermissionId = 24 },
+                new { RoleId = 2, PermissionId = 25 },
+                new { RoleId = 2, PermissionId = 26 },
+                new { RoleId = 2, PermissionId = 27 },
+
+                // ALMACENES
+                new { RoleId = 2, PermissionId = 28 },
+                new { RoleId = 2, PermissionId = 29 },
+                new { RoleId = 2, PermissionId = 30 },
+                new { RoleId = 2, PermissionId = 31 },
+
+                // PROVEEDORES
+                new { RoleId = 2, PermissionId = 32 },
+                new { RoleId = 2, PermissionId = 33 },
+                new { RoleId = 2, PermissionId = 34 },
+                new { RoleId = 2, PermissionId = 35 },
+
+                // COMPRAS
+                new { RoleId = 2, PermissionId = 36 },
+                new { RoleId = 2, PermissionId = 37 },
+                new { RoleId = 2, PermissionId = 38 },
+                new { RoleId = 2, PermissionId = 39 },
+
+                // CLIENTES - NUEVOS
+                new { RoleId = 2, PermissionId = 40 },
+                new { RoleId = 2, PermissionId = 41 },
+                new { RoleId = 2, PermissionId = 42 },
+                new { RoleId = 2, PermissionId = 43 },
+
+                // ====================================
+                // VENTAS - ADMINISTRADOR
+                // ====================================
+
+                new { RoleId = 2, PermissionId = 44 },
+                new { RoleId = 2, PermissionId = 45 },
+                new { RoleId = 2, PermissionId = 46 },
+                new { RoleId = 2, PermissionId = 47 }
+
             );
 
             // ========================================
-            // 4. RELACION MEDICAMENTOS - CATEGORIAS
+            // 6. MEDICAMENTOS
             // ========================================
 
             modelBuilder.Entity<Medicamento>(entity =>
@@ -290,7 +518,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 5. RELACION LOTES - MEDICAMENTOS
+            // 7. LOTES
             // ========================================
 
             modelBuilder.Entity<Lote>(entity =>
@@ -299,6 +527,19 @@ namespace Proyecto_FarmaControl.Data
                     .WithMany()
                     .HasForeignKey(l => l.MedicamentoId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(l => l.Almacen)
+                    .WithMany()
+                    .HasForeignKey(l => l.AlmacenId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(l => new
+                {
+                    l.MedicamentoId,
+                    l.AlmacenId,
+                    l.NumeroLote
+                })
+                .IsUnique();
 
                 entity.Property(l => l.CostoUnitario)
                     .HasPrecision(18, 2);
@@ -311,7 +552,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 6. CONFIGURACION DE USUARIOS
+            // 8. USUARIOS
             // ========================================
 
             modelBuilder.Entity<Usuario>(entity =>
@@ -321,7 +562,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 7. RELACION ROLES - PERMISOS
+            // 9. ROLES Y PERMISOS
             // ========================================
 
             modelBuilder.Entity<RolePermission>(entity =>
@@ -344,7 +585,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 8. RELACION USUARIOS - PERMISOS
+            // 10. USUARIOS Y PERMISOS
             // ========================================
 
             modelBuilder.Entity<UsuarioPermiso>(entity =>
@@ -365,6 +606,217 @@ namespace Proyecto_FarmaControl.Data
                     .HasForeignKey(up => up.PermissionId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // ========================================
+            // 11. SUCURSALES
+            // ========================================
+
+            modelBuilder.Entity<Sucursal>(entity =>
+            {
+                entity.HasIndex(s => s.Codigo)
+                    .IsUnique();
+            });
+
+            // ========================================
+            // 12. ALMACENES
+            // ========================================
+
+            modelBuilder.Entity<Almacen>(entity =>
+            {
+                entity.HasIndex(a => new
+                {
+                    a.SucursalId,
+                    a.Codigo
+                })
+                .IsUnique();
+
+                entity.HasOne(a => a.Sucursal)
+                    .WithMany(s => s.Almacenes)
+                    .HasForeignKey(a => a.SucursalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ========================================
+            // 13. PROVEEDORES
+            // ========================================
+
+            modelBuilder.Entity<Proveedor>(entity =>
+            {
+                entity.HasIndex(p => p.Codigo)
+                    .IsUnique();
+            });
+
+            // ========================================
+            // 14. COMPRAS
+            // ========================================
+
+            modelBuilder.Entity<Compra>(entity =>
+            {
+                entity.HasOne(c => c.Proveedor)
+                    .WithMany()
+                    .HasForeignKey(c => c.ProveedorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.Almacen)
+                    .WithMany()
+                    .HasForeignKey(c => c.AlmacenId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(c => new
+                {
+                    c.ProveedorId,
+                    c.NumeroDocumento
+                })
+                .IsUnique();
+
+                entity.Property(c => c.Subtotal)
+                    .HasPrecision(18, 2);
+
+                entity.Property(c => c.Impuesto)
+                    .HasPrecision(18, 2);
+
+                entity.Property(c => c.Total)
+                    .HasPrecision(18, 2);
+
+                entity.Property(c => c.FechaCompra)
+                    .HasColumnType("date");
+
+                entity.Property(c => c.FechaRecepcion)
+                    .HasColumnType("datetime2");
+            });
+
+            // ========================================
+            // 15. DETALLE DE COMPRAS
+            // ========================================
+
+            modelBuilder.Entity<DetalleCompra>(entity =>
+            {
+                entity.HasOne(d => d.Compra)
+                    .WithMany(c => c.Detalles)
+                    .HasForeignKey(d => d.CompraId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.Medicamento)
+                    .WithMany()
+                    .HasForeignKey(d => d.MedicamentoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.Lote)
+                    .WithMany()
+                    .HasForeignKey(d => d.LoteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(d => d.CostoUnitario)
+                    .HasPrecision(18, 2);
+
+                entity.Property(d => d.Subtotal)
+                    .HasPrecision(18, 2);
+
+                entity.Property(d => d.FechaVencimiento)
+                    .HasColumnType("date");
+            });
+
+            // ========================================
+            // 16. CLIENTES - NUEVA CONFIGURACION
+            // ========================================
+
+            modelBuilder.Entity<Cliente>(entity =>
+            {
+                // Ningun cliente puede compartir
+                // el mismo codigo con otro.
+
+                entity.HasIndex(c => c.Codigo)
+                    .IsUnique();
+            });
+
+
+            // ========================================
+            // 17. VENTAS
+            // ========================================
+
+            modelBuilder.Entity<Venta>(entity =>
+            {
+                // Documento unico de venta.
+
+                entity.HasIndex(v => v.NumeroDocumento)
+                    .IsUnique();
+
+                // Una venta pertenece a un cliente.
+
+                entity.HasOne(v => v.Cliente)
+                    .WithMany()
+                    .HasForeignKey(v => v.ClienteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Una venta sale de un almacen.
+
+                entity.HasOne(v => v.Almacen)
+                    .WithMany()
+                    .HasForeignKey(v => v.AlmacenId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Importes monetarios.
+
+                entity.Property(v => v.Subtotal)
+                    .HasPrecision(18, 2);
+
+                entity.Property(v => v.Impuesto)
+                    .HasPrecision(18, 2);
+
+                entity.Property(v => v.Total)
+                    .HasPrecision(18, 2);
+
+                // Fechas.
+
+                entity.Property(v => v.FechaVenta)
+                    .HasColumnType("date");
+
+                entity.Property(v => v.FechaConfirmacion)
+                    .HasColumnType("datetime2");
+            });
+
+
+            // ========================================
+            // 18. DETALLE DE VENTAS
+            // ========================================
+
+            modelBuilder.Entity<DetalleVenta>(entity =>
+            {
+                // Relacion con la venta.
+
+                entity.HasOne(d => d.Venta)
+                    .WithMany(v => v.Detalles)
+                    .HasForeignKey(d => d.VentaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relacion con el medicamento.
+
+                entity.HasOne(d => d.Medicamento)
+                    .WithMany()
+                    .HasForeignKey(d => d.MedicamentoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relacion con el lote utilizado.
+
+                entity.HasOne(d => d.Lote)
+                    .WithMany()
+                    .HasForeignKey(d => d.LoteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Importes monetarios.
+
+                entity.Property(d => d.PrecioUnitario)
+                    .HasPrecision(18, 2);
+
+                entity.Property(d => d.Subtotal)
+                    .HasPrecision(18, 2);
+
+                // Indice para consultas de lotes
+                // asociados a los detalles.
+
+                entity.HasIndex(d => d.LoteId);
+            });
+
         }
     }
 }
