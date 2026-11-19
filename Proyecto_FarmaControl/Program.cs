@@ -189,26 +189,42 @@ builder.Services.AddAutoMapper(cfg =>
 // 7. REGISTRO DE REPOSITORIOS
 // ========================================
 
+// CATEGORIAS
 builder.Services.AddScoped<
     ICategoriaRepository,
     CategoriaRepository>();
 
+// MEDICAMENTOS
 builder.Services.AddScoped<
     IMedicamentoRepository,
     MedicamentoRepository>();
 
+// LOTES
 builder.Services.AddScoped<
     ILoteRepository,
     LoteRepository>();
 
+// SUCURSALES
+builder.Services.AddScoped<
+    ISucursalRepository,
+    SucursalRepository>();
+
+// ALMACENES
+builder.Services.AddScoped<
+    IAlmacenRepository,
+    AlmacenRepository>();
+
+// USUARIOS
 builder.Services.AddScoped<
     IUsuarioRepository,
     UsuarioRepository>();
 
+// ROLES
 builder.Services.AddScoped<
     IRoleRepository,
     RolRepository>();
 
+// PERMISOS
 builder.Services.AddScoped<
     IPermissionRepository,
     PermissionRepository>();
@@ -217,30 +233,47 @@ builder.Services.AddScoped<
 // 8. REGISTRO DE SERVICIOS
 // ========================================
 
+// CATEGORIAS
 builder.Services.AddScoped<
     ICategoriaService,
     CategoriaService>();
 
+// MEDICAMENTOS
 builder.Services.AddScoped<
     IMedicamentoService,
     MedicamentoService>();
 
+// LOTES
 builder.Services.AddScoped<
     ILoteService,
     LoteService>();
 
+// SUCURSALES
+builder.Services.AddScoped<
+    ISucursalService,
+    SucursalService>();
+
+// ALMACENES
+builder.Services.AddScoped<
+    IAlmacenService,
+    AlmacenService>();
+
+// TOKENS
 builder.Services.AddScoped<
     ITokenService,
     TokenService>();
 
+// CORREOS
 builder.Services.AddScoped<
     IEmailService,
     EmailService>();
 
+// AUTENTICACION
 builder.Services.AddScoped<
     IAuthService,
     AuthService>();
 
+// ROLES Y PERMISOS
 builder.Services.AddScoped<
     IRolePermissionService,
     RolePermissionService>();

@@ -7,7 +7,8 @@ namespace Proyecto_FarmaControl.Models
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Debe seleccionar un medicamento.")]
+        [Range(1, int.MaxValue,
+            ErrorMessage = "Debe seleccionar un medicamento.")]
         public int MedicamentoId { get; set; }
 
         public Medicamento Medicamento { get; set; } = null!;
@@ -16,9 +17,12 @@ namespace Proyecto_FarmaControl.Models
         [StringLength(50, ErrorMessage = "Máximo 50 caracteres.")]
         public string NumeroLote { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El almacén es obligatorio.")]
-        [StringLength(100, ErrorMessage = "Máximo 100 caracteres.")]
-        public string Almacen { get; set; } = string.Empty;
+        // Relación con la tabla Almacenes
+        [Range(1, int.MaxValue,
+            ErrorMessage = "Debe seleccionar un almacén válido.")]
+        public int AlmacenId { get; set; }
+
+        public Almacen Almacen { get; set; } = null!;
 
         [Range(1, int.MaxValue,
             ErrorMessage = "La cantidad inicial debe ser mayor que cero.")]
