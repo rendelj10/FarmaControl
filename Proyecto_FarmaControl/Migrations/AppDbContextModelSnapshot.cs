@@ -22,6 +22,52 @@ namespace Proyecto_FarmaControl.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.AjusteInventario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlmacenId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("FechaAjuste")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("FechaAplicacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NumeroDocumento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NumeroDocumento")
+                        .IsUnique();
+
+                    b.HasIndex("AlmacenId", "Estado");
+
+                    b.ToTable("AjustesInventario", (string)null);
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Almacen", b =>
                 {
                     b.Property<int>("Id")
@@ -182,6 +228,53 @@ namespace Proyecto_FarmaControl.Migrations
                         .IsUnique();
 
                     b.ToTable("Compras");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleAjusteInventario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AjusteInventarioId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ExistenciasAntes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ExistenciasDespues")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LoteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MedicamentoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("TipoMovimiento")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoteId");
+
+                    b.HasIndex("MedicamentoId");
+
+                    b.HasIndex("AjusteInventarioId", "LoteId")
+                        .IsUnique();
+
+                    b.ToTable("DetalleAjustesInventario", (string)null);
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleCompra", b =>
@@ -670,6 +763,30 @@ namespace Proyecto_FarmaControl.Migrations
                             Id = 47,
                             Description = "Anular ventas en borrador",
                             Name = "venta.anular"
+                        },
+                        new
+                        {
+                            Id = 48,
+                            Description = "Consultar ajustes de inventario",
+                            Name = "ajuste.ver"
+                        },
+                        new
+                        {
+                            Id = 49,
+                            Description = "Registrar ajustes de inventario",
+                            Name = "ajuste.crear"
+                        },
+                        new
+                        {
+                            Id = 50,
+                            Description = "Aplicar ajustes y modificar existencias",
+                            Name = "ajuste.aplicar"
+                        },
+                        new
+                        {
+                            Id = 51,
+                            Description = "Anular ajustes en borrador",
+                            Name = "ajuste.anular"
                         });
                 });
 
@@ -1005,6 +1122,26 @@ namespace Proyecto_FarmaControl.Migrations
                         {
                             RoleId = 2,
                             PermissionId = 47
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 48
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 49
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 50
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 51
                         });
                 });
 
@@ -1179,6 +1316,17 @@ namespace Proyecto_FarmaControl.Migrations
                     b.ToTable("Ventas");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.AjusteInventario", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Almacen", "Almacen")
+                        .WithMany()
+                        .HasForeignKey("AlmacenId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Almacen");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Almacen", b =>
                 {
                     b.HasOne("Proyecto_FarmaControl.Models.Sucursal", "Sucursal")
@@ -1207,6 +1355,33 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Navigation("Almacen");
 
                     b.Navigation("Proveedor");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleAjusteInventario", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.AjusteInventario", "AjusteInventario")
+                        .WithMany("Detalles")
+                        .HasForeignKey("AjusteInventarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Lote", "Lote")
+                        .WithMany()
+                        .HasForeignKey("LoteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Medicamento", "Medicamento")
+                        .WithMany()
+                        .HasForeignKey("MedicamentoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AjusteInventario");
+
+                    b.Navigation("Lote");
+
+                    b.Navigation("Medicamento");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleCompra", b =>
@@ -1358,6 +1533,11 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Navigation("Almacen");
 
                     b.Navigation("Cliente");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.AjusteInventario", b =>
+                {
+                    b.Navigation("Detalles");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Compra", b =>

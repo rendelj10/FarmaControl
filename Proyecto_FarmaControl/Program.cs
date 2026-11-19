@@ -221,13 +221,13 @@ builder.Services.AddScoped<
 
 // VENTAS
 builder.Services.AddScoped<
-    IVentaService,
-    VentaService>();
-
-// VENTAS
-builder.Services.AddScoped<
     IVentaRepository,
     VentaRepository>();
+
+// AJUSTES DE INVENTARIO
+builder.Services.AddScoped<
+    IAjusteInventarioRepository,
+    AjusteInventarioRepository>();
 
 // ========================================
 // CLIENTES - NUEVO REGISTRO
@@ -294,6 +294,16 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ICompraService,
     CompraService>();
+
+// VENTAS
+builder.Services.AddScoped<
+    IVentaService,
+    VentaService>();
+
+// AJUSTES DE INVENTARIO
+builder.Services.AddScoped<
+    IAjusteInventarioService,
+    AjusteInventarioService>();
 
 // ========================================
 // CLIENTES - NUEVO REGISTRO

@@ -409,11 +409,41 @@ namespace Proyecto_FarmaControl.Data
                     Name = "venta.confirmar",
                     Description = "Confirmar ventas y descontar existencias"
                 },
+
                 new Permiso
                 {
                     Id = 47,
                     Name = "venta.anular",
                     Description = "Anular ventas en borrador"
+                },
+
+                // ====================================
+                // AJUSTES DE INVENTARIO - PERMISOS
+                // ====================================
+
+                new Permiso
+                {
+                    Id = 48,
+                    Name = "ajuste.ver",
+                    Description = "Consultar ajustes de inventario"
+                },
+                new Permiso
+                {
+                    Id = 49,
+                    Name = "ajuste.crear",
+                    Description = "Registrar ajustes de inventario"
+                },
+                new Permiso
+                {
+                    Id = 50,
+                    Name = "ajuste.aplicar",
+                    Description = "Aplicar ajustes y modificar existencias"
+                },
+                new Permiso
+                {
+                    Id = 51,
+                    Name = "ajuste.anular",
+                    Description = "Anular ajustes en borrador"
                 }
 
             );
@@ -494,13 +524,22 @@ namespace Proyecto_FarmaControl.Data
                 // ====================================
                 // VENTAS - ADMINISTRADOR
                 // ====================================
-
                 new { RoleId = 2, PermissionId = 44 },
                 new { RoleId = 2, PermissionId = 45 },
                 new { RoleId = 2, PermissionId = 46 },
-                new { RoleId = 2, PermissionId = 47 }
+                new { RoleId = 2, PermissionId = 47 },
+
+                // ====================================
+                // AJUSTES DE INVENTARIO - ADMINISTRADOR
+                // ====================================
+
+                new { RoleId = 2, PermissionId = 48 },
+                new { RoleId = 2, PermissionId = 49 },
+                new { RoleId = 2, PermissionId = 50 },
+                new { RoleId = 2, PermissionId = 51 }
 
             );
+
 
             // ========================================
             // 6. MEDICAMENTOS
@@ -813,6 +852,119 @@ namespace Proyecto_FarmaControl.Data
 
                 // Indice para consultas de lotes
                 // asociados a los detalles.
+
+                entity.HasIndex(d => d.LoteId);
+            });
+
+            // ========================================
+            // 19. AJUSTES DE INVENTARIO
+            // ========================================
+
+            modelBuilder.Entity<AjusteInventario>(entity =>
+            {
+                // Nombre exacto de la tabla SQL.
+                // Debe coincidir con el repositorio.
+
+                entity.ToTable("AjustesInventario");
+
+                // Documento unico por ajuste.
+
+                entity.HasIndex(a => a.NumeroDocumento)
+                    .IsUnique();
+
+                // Relacion con el almacen.
+
+                entity.HasOne(a => a.Almacen)
+                    .WithMany()
+                    .HasForeignKey(a => a.AlmacenId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Datos obligatorios.
+
+                entity.Property(a => a.NumeroDocumento)
+                    .HasMaxLength(50)
+                    .IsRequired();
+
+                entity.Property(a => a.Estado)
+                    .HasMaxLength(20)
+                    .IsRequired();
+
+                entity.Property(a => a.Motivo)
+                    .HasMaxLength(200)
+                    .IsRequired();
+
+                entity.Property(a => a.Observaciones)
+                    .HasMaxLength(500);
+
+                // Fechas.
+
+                entity.Property(a => a.FechaAjuste)
+                    .HasColumnType("date");
+
+                entity.Property(a => a.FechaAplicacion)
+                    .HasColumnType("datetime2");
+
+                // Consultas por almacen y estado.
+
+                entity.HasIndex(a => new
+                {
+                    a.AlmacenId,
+                    a.Estado
+                });
+            });
+
+            // ========================================
+            // 20. DETALLE DE AJUSTES DE INVENTARIO
+            // ========================================
+
+            modelBuilder.Entity<DetalleAjusteInventario>(entity =>
+            {
+                // Nombre exacto de la tabla SQL.
+
+                entity.ToTable("DetalleAjustesInventario");
+
+                // Relacion con el ajuste principal.
+
+                entity.HasOne(d => d.AjusteInventario)
+                    .WithMany(a => a.Detalles)
+                    .HasForeignKey(d => d.AjusteInventarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relacion con el medicamento.
+
+                entity.HasOne(d => d.Medicamento)
+                    .WithMany()
+                    .HasForeignKey(d => d.MedicamentoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relacion con el lote.
+
+                entity.HasOne(d => d.Lote)
+                    .WithMany()
+                    .HasForeignKey(d => d.LoteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Tipo de movimiento:
+                // Entrada o Salida.
+
+                entity.Property(d => d.TipoMovimiento)
+                    .HasMaxLength(10)
+                    .IsRequired();
+
+                entity.Property(d => d.Observaciones)
+                    .HasMaxLength(300);
+
+                // No permitir el mismo lote dos veces
+                // en un mismo ajuste.
+
+                entity.HasIndex(d => new
+                {
+                    d.AjusteInventarioId,
+                    d.LoteId
+                })
+                .IsUnique();
+
+                // Facilitar consultas por lote.
 
                 entity.HasIndex(d => d.LoteId);
             });
