@@ -13,7 +13,7 @@ namespace Proyecto_FarmaControl.Data
         }
 
         // ========================================
-        // 1. MODULOS DE NEGOCIO
+        // 1. TABLAS DE NEGOCIO
         // ========================================
 
         public DbSet<Categoria> Categorias { get; set; } = null!;
@@ -28,14 +28,29 @@ namespace Proyecto_FarmaControl.Data
 
         public DbSet<Proveedor> Proveedores { get; set; } = null!;
 
-        // COMPRAS Y DETALLES
-
         public DbSet<Compra> Compras { get; set; } = null!;
 
         public DbSet<DetalleCompra> DetalleCompras { get; set; } = null!;
 
+        // NUEVO MODULO: CLIENTES
+
+        public DbSet<Cliente> Clientes { get; set; } = null!;
+
+
         // ========================================
-        // 2. MODULO DE SEGURIDAD
+        // VENTAS Y DETALLEVENTAS
+        // ========================================
+
+        public DbSet<Venta> Ventas { get; set; } = null!;
+
+        public DbSet<DetalleVenta> DetalleVentas { get; set; } = null!;
+
+        // Ventas y DetalleVentas se incorporaran
+        // cuando completemos sus servicios
+        // y reglas de negocio.
+
+        // ========================================
+        // 2. TABLAS DE SEGURIDAD
         // ========================================
 
         public DbSet<Usuario> Usuarios { get; set; } = null!;
@@ -54,7 +69,7 @@ namespace Proyecto_FarmaControl.Data
             base.OnModelCreating(modelBuilder);
 
             // ========================================
-            // 3. ROLES DEL SISTEMA
+            // 3. ROLES
             // ========================================
 
             modelBuilder.Entity<Rol>().HasData(
@@ -71,7 +86,7 @@ namespace Proyecto_FarmaControl.Data
             );
 
             // ========================================
-            // 4. PERMISOS DEL SISTEMA
+            // 4. PERMISOS
             // ========================================
 
             modelBuilder.Entity<Permiso>().HasData(
@@ -316,9 +331,7 @@ namespace Proyecto_FarmaControl.Data
                     Description = "Desactivar proveedores"
                 },
 
-                // ========================================
-                // 5. NUEVOS PERMISOS DE COMPRAS
-                // ========================================
+                // COMPRAS
 
                 new Permiso
                 {
@@ -343,11 +356,70 @@ namespace Proyecto_FarmaControl.Data
                     Id = 39,
                     Name = "compra.anular",
                     Description = "Anular compras en borrador"
+                },
+
+                // ====================================
+                // NUEVOS PERMISOS: CLIENTES
+                // ====================================
+
+                new Permiso
+                {
+                    Id = 40,
+                    Name = "cliente.ver",
+                    Description = "Consultar clientes"
+                },
+                new Permiso
+                {
+                    Id = 41,
+                    Name = "cliente.crear",
+                    Description = "Registrar clientes"
+                },
+                new Permiso
+                {
+                    Id = 42,
+                    Name = "cliente.actualizar",
+                    Description = "Actualizar clientes"
+                },
+                new Permiso
+                {
+                    Id = 43,
+                    Name = "cliente.borrar",
+                    Description = "Desactivar clientes"
+                },
+
+                // ====================================
+                // VENTAS - NUEVOS PERMISOS
+                // ====================================
+
+                new Permiso
+                {
+                    Id = 44,
+                    Name = "venta.ver",
+                    Description = "Consultar ventas"
+                },
+                new Permiso
+                {
+                    Id = 45,
+                    Name = "venta.crear",
+                    Description = "Registrar ventas"
+                },
+                new Permiso
+                {
+                    Id = 46,
+                    Name = "venta.confirmar",
+                    Description = "Confirmar ventas y descontar existencias"
+                },
+                new Permiso
+                {
+                    Id = 47,
+                    Name = "venta.anular",
+                    Description = "Anular ventas en borrador"
                 }
+
             );
 
             // ========================================
-            // 6. PERMISOS DEL ADMINISTRADOR
+            // 5. PERMISOS DEL ADMINISTRADOR
             // ========================================
 
             modelBuilder.Entity<RolePermission>().HasData(
@@ -386,7 +458,7 @@ namespace Proyecto_FarmaControl.Data
                 new { RoleId = 2, PermissionId = 21 },
                 new { RoleId = 2, PermissionId = 22 },
 
-                // ADMINISTRACION
+                // PANEL
                 new { RoleId = 2, PermissionId = 23 },
 
                 // SUCURSALES
@@ -411,11 +483,27 @@ namespace Proyecto_FarmaControl.Data
                 new { RoleId = 2, PermissionId = 36 },
                 new { RoleId = 2, PermissionId = 37 },
                 new { RoleId = 2, PermissionId = 38 },
-                new { RoleId = 2, PermissionId = 39 }
+                new { RoleId = 2, PermissionId = 39 },
+
+                // CLIENTES - NUEVOS
+                new { RoleId = 2, PermissionId = 40 },
+                new { RoleId = 2, PermissionId = 41 },
+                new { RoleId = 2, PermissionId = 42 },
+                new { RoleId = 2, PermissionId = 43 },
+
+                // ====================================
+                // VENTAS - ADMINISTRADOR
+                // ====================================
+
+                new { RoleId = 2, PermissionId = 44 },
+                new { RoleId = 2, PermissionId = 45 },
+                new { RoleId = 2, PermissionId = 46 },
+                new { RoleId = 2, PermissionId = 47 }
+
             );
 
             // ========================================
-            // 7. MEDICAMENTOS - CATEGORIAS
+            // 6. MEDICAMENTOS
             // ========================================
 
             modelBuilder.Entity<Medicamento>(entity =>
@@ -430,7 +518,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 8. LOTES - MEDICAMENTOS Y ALMACENES
+            // 7. LOTES
             // ========================================
 
             modelBuilder.Entity<Lote>(entity =>
@@ -464,7 +552,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 9. USUARIOS
+            // 8. USUARIOS
             // ========================================
 
             modelBuilder.Entity<Usuario>(entity =>
@@ -474,7 +562,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 10. ROLES - PERMISOS
+            // 9. ROLES Y PERMISOS
             // ========================================
 
             modelBuilder.Entity<RolePermission>(entity =>
@@ -497,7 +585,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 11. USUARIOS - PERMISOS
+            // 10. USUARIOS Y PERMISOS
             // ========================================
 
             modelBuilder.Entity<UsuarioPermiso>(entity =>
@@ -520,7 +608,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 12. SUCURSALES
+            // 11. SUCURSALES
             // ========================================
 
             modelBuilder.Entity<Sucursal>(entity =>
@@ -530,7 +618,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 13. ALMACENES - SUCURSALES
+            // 12. ALMACENES
             // ========================================
 
             modelBuilder.Entity<Almacen>(entity =>
@@ -549,7 +637,7 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 14. PROVEEDORES
+            // 13. PROVEEDORES
             // ========================================
 
             modelBuilder.Entity<Proveedor>(entity =>
@@ -559,27 +647,20 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 15. COMPRAS - NUEVA TABLA
+            // 14. COMPRAS
             // ========================================
 
             modelBuilder.Entity<Compra>(entity =>
             {
-                // Una compra pertenece a un proveedor.
-
                 entity.HasOne(c => c.Proveedor)
                     .WithMany()
                     .HasForeignKey(c => c.ProveedorId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Una compra tiene un almacen destino.
-
                 entity.HasOne(c => c.Almacen)
                     .WithMany()
                     .HasForeignKey(c => c.AlmacenId)
                     .OnDelete(DeleteBehavior.Restrict);
-
-                // Un numero de documento no puede
-                // repetirse para el mismo proveedor.
 
                 entity.HasIndex(c => new
                 {
@@ -587,8 +668,6 @@ namespace Proyecto_FarmaControl.Data
                     c.NumeroDocumento
                 })
                 .IsUnique();
-
-                // Importes monetarios.
 
                 entity.Property(c => c.Subtotal)
                     .HasPrecision(18, 2);
@@ -599,8 +678,6 @@ namespace Proyecto_FarmaControl.Data
                 entity.Property(c => c.Total)
                     .HasPrecision(18, 2);
 
-                // Fechas.
-
                 entity.Property(c => c.FechaCompra)
                     .HasColumnType("date");
 
@@ -609,31 +686,117 @@ namespace Proyecto_FarmaControl.Data
             });
 
             // ========================================
-            // 16. DETALLES DE COMPRAS - NUEVA TABLA
+            // 15. DETALLE DE COMPRAS
             // ========================================
 
             modelBuilder.Entity<DetalleCompra>(entity =>
             {
-                // Una compra puede contener
-                // varios detalles.
-
                 entity.HasOne(d => d.Compra)
                     .WithMany(c => c.Detalles)
                     .HasForeignKey(d => d.CompraId)
                     .OnDelete(DeleteBehavior.Restrict);
-
-                // Cada detalle corresponde
-                // a un medicamento.
 
                 entity.HasOne(d => d.Medicamento)
                     .WithMany()
                     .HasForeignKey(d => d.MedicamentoId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // El lote puede ser nulo mientras
-                // la compra esta en borrador.
-                //
-                // Se asignara durante la recepcion.
+                entity.HasOne(d => d.Lote)
+                    .WithMany()
+                    .HasForeignKey(d => d.LoteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(d => d.CostoUnitario)
+                    .HasPrecision(18, 2);
+
+                entity.Property(d => d.Subtotal)
+                    .HasPrecision(18, 2);
+
+                entity.Property(d => d.FechaVencimiento)
+                    .HasColumnType("date");
+            });
+
+            // ========================================
+            // 16. CLIENTES - NUEVA CONFIGURACION
+            // ========================================
+
+            modelBuilder.Entity<Cliente>(entity =>
+            {
+                // Ningun cliente puede compartir
+                // el mismo codigo con otro.
+
+                entity.HasIndex(c => c.Codigo)
+                    .IsUnique();
+            });
+
+
+            // ========================================
+            // 17. VENTAS
+            // ========================================
+
+            modelBuilder.Entity<Venta>(entity =>
+            {
+                // Documento unico de venta.
+
+                entity.HasIndex(v => v.NumeroDocumento)
+                    .IsUnique();
+
+                // Una venta pertenece a un cliente.
+
+                entity.HasOne(v => v.Cliente)
+                    .WithMany()
+                    .HasForeignKey(v => v.ClienteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Una venta sale de un almacen.
+
+                entity.HasOne(v => v.Almacen)
+                    .WithMany()
+                    .HasForeignKey(v => v.AlmacenId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Importes monetarios.
+
+                entity.Property(v => v.Subtotal)
+                    .HasPrecision(18, 2);
+
+                entity.Property(v => v.Impuesto)
+                    .HasPrecision(18, 2);
+
+                entity.Property(v => v.Total)
+                    .HasPrecision(18, 2);
+
+                // Fechas.
+
+                entity.Property(v => v.FechaVenta)
+                    .HasColumnType("date");
+
+                entity.Property(v => v.FechaConfirmacion)
+                    .HasColumnType("datetime2");
+            });
+
+
+            // ========================================
+            // 18. DETALLE DE VENTAS
+            // ========================================
+
+            modelBuilder.Entity<DetalleVenta>(entity =>
+            {
+                // Relacion con la venta.
+
+                entity.HasOne(d => d.Venta)
+                    .WithMany(v => v.Detalles)
+                    .HasForeignKey(d => d.VentaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relacion con el medicamento.
+
+                entity.HasOne(d => d.Medicamento)
+                    .WithMany()
+                    .HasForeignKey(d => d.MedicamentoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relacion con el lote utilizado.
 
                 entity.HasOne(d => d.Lote)
                     .WithMany()
@@ -642,17 +805,18 @@ namespace Proyecto_FarmaControl.Data
 
                 // Importes monetarios.
 
-                entity.Property(d => d.CostoUnitario)
+                entity.Property(d => d.PrecioUnitario)
                     .HasPrecision(18, 2);
 
                 entity.Property(d => d.Subtotal)
                     .HasPrecision(18, 2);
 
-                // Fecha de vencimiento del lote.
+                // Indice para consultas de lotes
+                // asociados a los detalles.
 
-                entity.Property(d => d.FechaVencimiento)
-                    .HasColumnType("date");
+                entity.HasIndex(d => d.LoteId);
             });
+
         }
     }
 }

@@ -1,6 +1,7 @@
 
 using System.Security.Claims;
 using System.Text;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -137,24 +138,18 @@ builder.Services
     });
 
 // ========================================
-// 4. CONFIGURACION AUTORIZACION
+// 4. CONFIGURACION DE AUTORIZACION
 // ========================================
 
 builder.Services.AddAuthorization(options =>
 {
-    // PANEL ADMINISTRATIVO
-
     options.AddPolicy("admin.panel", policy =>
         policy.RequireAssertion(context =>
             context.User.HasPermission("admin.panel")));
 
-    // ACTUALIZAR PERMISOS
-
     options.AddPolicy("permiso.actualizar", policy =>
         policy.RequireAssertion(context =>
             context.User.HasPermission("permiso.actualizar")));
-
-    // ELIMINAR PERMISOS
 
     options.AddPolicy("permiso.borrar", policy =>
         policy.RequireAssertion(context =>
@@ -219,10 +214,32 @@ builder.Services.AddScoped<
     IProveedorRepository,
     ProveedorRepository>();
 
-// COMPRAS - NUEVO
+// COMPRAS
 builder.Services.AddScoped<
     ICompraRepository,
     CompraRepository>();
+
+// VENTAS
+builder.Services.AddScoped<
+    IVentaService,
+    VentaService>();
+
+// VENTAS
+builder.Services.AddScoped<
+    IVentaRepository,
+    VentaRepository>();
+
+// ========================================
+// CLIENTES - NUEVO REGISTRO
+// ========================================
+
+builder.Services.AddScoped<
+    IClienteRepository,
+    ClienteRepository>();
+
+// ========================================
+// REPOSITORIOS DE SEGURIDAD
+// ========================================
 
 // USUARIOS
 builder.Services.AddScoped<
@@ -273,10 +290,22 @@ builder.Services.AddScoped<
     IProveedorService,
     ProveedorService>();
 
-// COMPRAS - NUEVO
+// COMPRAS
 builder.Services.AddScoped<
     ICompraService,
     CompraService>();
+
+// ========================================
+// CLIENTES - NUEVO REGISTRO
+// ========================================
+
+builder.Services.AddScoped<
+    IClienteService,
+    ClienteService>();
+
+// ========================================
+// SERVICIOS DE SEGURIDAD Y SOPORTE
+// ========================================
 
 // TOKENS
 builder.Services.AddScoped<
@@ -311,6 +340,7 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+
     app.UseHsts();
 }
 

@@ -83,6 +83,51 @@ namespace Proyecto_FarmaControl.Migrations
                     b.ToTable("Categorias");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Cliente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("DocumentoIdentidad")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.ToTable("Clientes");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Compra", b =>
                 {
                     b.Property<int>("Id")
@@ -183,6 +228,45 @@ namespace Proyecto_FarmaControl.Migrations
                     b.HasIndex("MedicamentoId");
 
                     b.ToTable("DetalleCompras");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleVenta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LoteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MedicamentoId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("VentaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoteId");
+
+                    b.HasIndex("MedicamentoId");
+
+                    b.HasIndex("VentaId");
+
+                    b.ToTable("DetalleVentas");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Lote", b =>
@@ -538,6 +622,54 @@ namespace Proyecto_FarmaControl.Migrations
                             Id = 39,
                             Description = "Anular compras en borrador",
                             Name = "compra.anular"
+                        },
+                        new
+                        {
+                            Id = 40,
+                            Description = "Consultar clientes",
+                            Name = "cliente.ver"
+                        },
+                        new
+                        {
+                            Id = 41,
+                            Description = "Registrar clientes",
+                            Name = "cliente.crear"
+                        },
+                        new
+                        {
+                            Id = 42,
+                            Description = "Actualizar clientes",
+                            Name = "cliente.actualizar"
+                        },
+                        new
+                        {
+                            Id = 43,
+                            Description = "Desactivar clientes",
+                            Name = "cliente.borrar"
+                        },
+                        new
+                        {
+                            Id = 44,
+                            Description = "Consultar ventas",
+                            Name = "venta.ver"
+                        },
+                        new
+                        {
+                            Id = 45,
+                            Description = "Registrar ventas",
+                            Name = "venta.crear"
+                        },
+                        new
+                        {
+                            Id = 46,
+                            Description = "Confirmar ventas y descontar existencias",
+                            Name = "venta.confirmar"
+                        },
+                        new
+                        {
+                            Id = 47,
+                            Description = "Anular ventas en borrador",
+                            Name = "venta.anular"
                         });
                 });
 
@@ -833,6 +965,46 @@ namespace Proyecto_FarmaControl.Migrations
                         {
                             RoleId = 2,
                             PermissionId = 39
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 40
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 41
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 42
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 43
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 44
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 45
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 46
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 47
                         });
                 });
 
@@ -949,6 +1121,64 @@ namespace Proyecto_FarmaControl.Migrations
                     b.ToTable("UsuarioPermisos");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Venta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlmacenId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("FechaConfirmacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaVenta")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Impuesto")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("NumeroDocumento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlmacenId");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("NumeroDocumento")
+                        .IsUnique();
+
+                    b.ToTable("Ventas");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Almacen", b =>
                 {
                     b.HasOne("Proyecto_FarmaControl.Models.Sucursal", "Sucursal")
@@ -1003,6 +1233,33 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Navigation("Lote");
 
                     b.Navigation("Medicamento");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleVenta", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Lote", "Lote")
+                        .WithMany()
+                        .HasForeignKey("LoteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Medicamento", "Medicamento")
+                        .WithMany()
+                        .HasForeignKey("MedicamentoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Venta", "Venta")
+                        .WithMany("Detalles")
+                        .HasForeignKey("VentaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Lote");
+
+                    b.Navigation("Medicamento");
+
+                    b.Navigation("Venta");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Lote", b =>
@@ -1084,6 +1341,25 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Venta", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Almacen", "Almacen")
+                        .WithMany()
+                        .HasForeignKey("AlmacenId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Almacen");
+
+                    b.Navigation("Cliente");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Compra", b =>
                 {
                     b.Navigation("Detalles");
@@ -1111,6 +1387,11 @@ namespace Proyecto_FarmaControl.Migrations
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Usuario", b =>
                 {
                     b.Navigation("UsuarioPermisos");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Venta", b =>
+                {
+                    b.Navigation("Detalles");
                 });
 #pragma warning restore 612, 618
         }
