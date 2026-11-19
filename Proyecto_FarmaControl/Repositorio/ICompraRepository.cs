@@ -19,7 +19,14 @@ namespace Proyecto_FarmaControl.Repositorio
                 DataTablesRequestDto request);
 
         // ========================================
-        // OPERACIONES DE COMPRAS
+        // CONSULTA CON BLOQUEO PARA OPERACIONES
+        // DE RECEPCION Y ANULACION
+        // ========================================
+
+        Task<Compra?> ObtenerParaProcesarAsync(int id);
+
+        // ========================================
+        // OPERACIONES
         // ========================================
 
         Task AgregarAsync(Compra compra);
@@ -47,7 +54,7 @@ namespace Proyecto_FarmaControl.Repositorio
             IEnumerable<int> medicamentosIds);
 
         // ========================================
-        // LOTES PARA RECEPCION DE COMPRAS
+        // LOTES
         // ========================================
 
         Task<Lote?> ObtenerLoteAsync(
@@ -58,7 +65,7 @@ namespace Proyecto_FarmaControl.Repositorio
         Task AgregarLoteAsync(Lote lote);
 
         // ========================================
-        // TRANSACCIONES SQL SERVER
+        // TRANSACCIONES
         // ========================================
 
         Task EjecutarEnTransaccionAsync(

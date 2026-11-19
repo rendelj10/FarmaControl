@@ -33,7 +33,7 @@ namespace Proyecto_FarmaControl.Repositorio
 
         // ========================================
         // 2. CONSULTAR COMPRA POR ID
-        // CON TODOS SUS DETALLES
+        // SIN BLOQUEO EXCLUSIVO DE PROCESAMIENTO
         // ========================================
 
         public async Task<Compra?> ObtenerPorIdAsync(int id)
@@ -55,16 +55,61 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // 3. AGREGAR COMPRA Y SUS DETALLES
+        // 3. NUEVO:
+        // OBTENER COMPRA CON BLOQUEO
+        // ========================================
+
+        public async Task<Compra?> ObtenerParaProcesarAsync(
+            int id)
+        {
+            if (id <= 0)
+            {
+                return null;
+            }
+
+            // Este metodo debe ejecutarse dentro
+            // de EjecutarEnTransaccionAsync.
+            //
+            // UPDLOCK:
+            // solicita bloqueo de actualizacion.
+            //
+            // HOLDLOCK:
+            // conserva la proteccion hasta finalizar
+            // la transaccion.
+            //
+            // Una segunda recepcion de esta misma
+            // compra tendra que esperar y despues
+            // comprobar nuevamente su estado.
+
+            if (_context.Database.CurrentTransaction == null)
+            {
+                throw new InvalidOperationException(
+                    "La consulta de procesamiento requiere " +
+                    "una transacción activa.");
+            }
+
+            return await _context.Set<Compra>()
+                .FromSqlInterpolated(
+                    $@"SELECT *
+                       FROM [Compras] WITH (UPDLOCK, HOLDLOCK)
+                       WHERE [Id] = {id}")
+                .Include(c => c.Proveedor)
+                .Include(c => c.Almacen)
+                .Include(c => c.Detalles)
+                    .ThenInclude(d => d.Medicamento)
+                .Include(c => c.Detalles)
+                    .ThenInclude(d => d.Lote)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync();
+        }
+
+        // ========================================
+        // 4. AGREGAR COMPRA Y DETALLES
         // ========================================
 
         public async Task AgregarAsync(Compra compra)
         {
             ArgumentNullException.ThrowIfNull(compra);
-
-            // Si los detalles están agregados
-            // a compra.Detalles, EF Core los
-            // insertará junto con la compra.
 
             await _context.Set<Compra>()
                 .AddAsync(compra);
@@ -73,22 +118,21 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // 4. ACTUALIZAR COMPRA
+        // 5. ACTUALIZAR COMPRA
         // ========================================
 
         public async Task ActualizarAsync(Compra compra)
         {
             ArgumentNullException.ThrowIfNull(compra);
 
-            // Se espera una entidad obtenida
-            // previamente mediante ObtenerPorIdAsync.
-            // EF Core mantiene el seguimiento.
+            // Se espera una entidad rastreada
+            // por el contexto actual.
 
             await _context.SaveChangesAsync();
         }
 
         // ========================================
-        // 5. GUARDAR CAMBIOS PENDIENTES
+        // 6. GUARDAR CAMBIOS
         // ========================================
 
         public async Task GuardarCambiosAsync()
@@ -97,8 +141,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // 6. VERIFICAR DOCUMENTO DUPLICADO
-        // POR PROVEEDOR
+        // 7. VALIDAR DOCUMENTO DUPLICADO
         // ========================================
 
         public async Task<bool> ExisteDocumentoAsync(
@@ -126,7 +169,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // 7. VALIDAR PROVEEDOR ACTIVO
+        // 8. VALIDAR PROVEEDOR ACTIVO
         // ========================================
 
         public async Task<bool> ProveedorDisponibleAsync(
@@ -145,7 +188,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // 8. VALIDAR ALMACEN Y SUCURSAL
+        // 9. VALIDAR ALMACEN Y SUCURSAL
         // ========================================
 
         public async Task<bool> AlmacenDisponibleAsync(
@@ -165,7 +208,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // 9. OBTENER MEDICAMENTOS ACTIVOS
+        // 10. MEDICAMENTOS ACTIVOS
         // ========================================
 
         public async Task<List<int>>
@@ -195,7 +238,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // 10. CONSULTAR LOTE PARA RECEPCION
+        // 11. BUSCAR LOTE CON BLOQUEO
         // ========================================
 
         public async Task<Lote?> ObtenerLoteAsync(
@@ -210,51 +253,63 @@ namespace Proyecto_FarmaControl.Repositorio
                 return null;
             }
 
+            if (_context.Database.CurrentTransaction == null)
+            {
+                throw new InvalidOperationException(
+                    "La consulta del lote para recepción " +
+                    "requiere una transacción activa.");
+            }
+
             string numeroNormalizado =
                 numeroLote.Trim().ToUpperInvariant();
 
+            // El indice unico existente:
+            //
+            // MedicamentoId, AlmacenId, NumeroLote
+            //
+            // ayuda a localizar el lote exacto.
+            //
+            // La combinacion de bloqueos protege
+            // la lectura y la posible insercion
+            // durante la transaccion.
+            //
+            // Los numeros de lote se almacenan
+            // normalizados en mayusculas.
+
             return await _context.Set<Lote>()
-                .FirstOrDefaultAsync(l =>
-                    l.MedicamentoId == medicamentoId &&
-                    l.AlmacenId == almacenId &&
-                    l.NumeroLote.Trim().ToUpper()
-                        == numeroNormalizado);
+                .FromSqlInterpolated(
+                    $@"SELECT *
+                       FROM [Lotes] WITH (UPDLOCK, HOLDLOCK)
+                       WHERE [MedicamentoId] = {medicamentoId}
+                         AND [AlmacenId] = {almacenId}
+                         AND [NumeroLote] = {numeroNormalizado}")
+                .FirstOrDefaultAsync();
         }
 
         // ========================================
-        // 11. PREPARAR NUEVO LOTE
+        // 12. PREPARAR NUEVO LOTE
         // ========================================
 
         public async Task AgregarLoteAsync(Lote lote)
         {
             ArgumentNullException.ThrowIfNull(lote);
 
-            // Agrega el lote al contexto.
-            //
-            // No ejecuta SaveChangesAsync aquí.
-            // La recepción guardará todos
-            // los cambios dentro de la
-            // misma transacción.
+            // No guardar aqui.
+            // La transaccion confirma conjuntamente
+            // compra, detalles y existencias.
 
-            await _context.Set<Lote>().AddAsync(lote);
+            await _context.Set<Lote>()
+                .AddAsync(lote);
         }
 
         // ========================================
-        // 12. TRANSACCION PARA RECEPCION
+        // 13. EJECUTAR TRANSACCION
         // ========================================
 
         public async Task EjecutarEnTransaccionAsync(
             Func<Task> operacion)
         {
             ArgumentNullException.ThrowIfNull(operacion);
-
-            // Serializable ayuda a proteger las
-            // comprobaciones de estado y stock
-            // frente a operaciones concurrentes.
-            //
-            // La lógica de recepción también
-            // debe verificar que la compra
-            // continúe en estado Borrador.
 
             await using var transaccion =
                 await _context.Database
@@ -278,7 +333,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // 13. DATATABLES - PAGINACION SQL
+        // 14. DATATABLES - PAGINACION SQL SERVER
         // ========================================
 
         public async Task<DataTablesResponseDto<CompraDto>>
@@ -291,16 +346,12 @@ namespace Proyecto_FarmaControl.Repositorio
                 .AsNoTracking()
                 .AsQueryable();
 
-            // =====================================
             // TOTAL DE REGISTROS
-            // =====================================
 
             int recordsTotal =
                 await query.CountAsync();
 
-            // =====================================
             // FILTRO DE BUSQUEDA
-            // =====================================
 
             string? search =
                 request.Search?.Value?.Trim();
@@ -319,9 +370,7 @@ namespace Proyecto_FarmaControl.Repositorio
             int recordsFiltered =
                 await query.CountAsync();
 
-            // =====================================
             // ORDENAMIENTO
-            // =====================================
 
             var orden =
                 request.Order?.FirstOrDefault();
@@ -370,6 +419,12 @@ namespace Proyecto_FarmaControl.Repositorio
                         : query.OrderBy(
                             c => c.FechaCompra),
 
+                    "fecharecepcion" => descendente
+                        ? query.OrderByDescending(
+                            c => c.FechaRecepcion)
+                        : query.OrderBy(
+                            c => c.FechaRecepcion),
+
                     "estado" => descendente
                         ? query.OrderByDescending(c => c.Estado)
                         : query.OrderBy(c => c.Estado),
@@ -390,15 +445,11 @@ namespace Proyecto_FarmaControl.Repositorio
                         c => c.FechaCompra)
                 };
 
-            // Evitar ordenamientos inestables
-            // cuando dos compras tienen los
-            // mismos valores.
+            // Orden secundario estable.
 
             ordenada = ordenada.ThenBy(c => c.Id);
 
-            // =====================================
             // PAGINACION
-            // =====================================
 
             int start = Math.Max(0, request.Start);
 
@@ -408,9 +459,7 @@ namespace Proyecto_FarmaControl.Repositorio
                     ? Math.Min(request.Length, 100)
                     : 10;
 
-            // =====================================
-            // PROYECCION A DTO
-            // =====================================
+            // PROYECCION DTO
 
             var data = await ordenada
                 .Skip(start)
@@ -431,6 +480,8 @@ namespace Proyecto_FarmaControl.Repositorio
                         c.NumeroDocumento,
 
                     FechaCompra = c.FechaCompra,
+
+                    FechaRecepcion = c.FechaRecepcion,
 
                     Estado = c.Estado,
 
