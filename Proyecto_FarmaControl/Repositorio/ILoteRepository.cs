@@ -1,7 +1,6 @@
-
 using Proyecto_FarmaControl.Models;
 
-namespace Proyecto_FarmaControl.Interfaces
+namespace Proyecto_FarmaControl.Repositorio
 {
     public interface ILoteRepository
     {

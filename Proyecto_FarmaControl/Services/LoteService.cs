@@ -1,6 +1,7 @@
 
 using Proyecto_FarmaControl.Interfaces;
 using Proyecto_FarmaControl.Models;
+using Proyecto_FarmaControl.Repositorio;
 
 namespace Proyecto_FarmaControl.Services
 {

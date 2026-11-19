@@ -1,10 +1,9 @@
 
 using Microsoft.EntityFrameworkCore;
 using Proyecto_FarmaControl.Data;
-using Proyecto_FarmaControl.Interfaces;
 using Proyecto_FarmaControl.Models;
 
-namespace Proyecto_FarmaControl.Repositories
+namespace Proyecto_FarmaControl.Repositorio
 {
     public class RolRepository : IRoleRepository
     {

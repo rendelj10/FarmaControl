@@ -237,6 +237,72 @@ namespace Proyecto_FarmaControl.Migrations
                             Id = 12,
                             Description = "Desactivar lotes de medicamentos",
                             Name = "lote.borrar"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Description = "Consultar roles",
+                            Name = "rol.ver"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Description = "Crear roles",
+                            Name = "rol.crear"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Description = "Asignar permisos a roles",
+                            Name = "rol.asignar"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Description = "Consultar permisos",
+                            Name = "permiso.ver"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Description = "Crear permisos",
+                            Name = "permiso.crear"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Description = "Actualizar permisos",
+                            Name = "permiso.actualizar"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Description = "Eliminar permisos",
+                            Name = "permiso.borrar"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Description = "Consultar usuarios",
+                            Name = "usuario.ver"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Description = "Asignar permisos a usuarios",
+                            Name = "usuario.asignar"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Description = "Cambiar el rol de usuarios",
+                            Name = "usuario.cambiar.rol"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Description = "Acceder al panel administrativo",
+                            Name = "admin.panel"
                         });
                 });
 
@@ -344,6 +410,61 @@ namespace Proyecto_FarmaControl.Migrations
                         {
                             RoleId = 2,
                             PermissionId = 12
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 13
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 14
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 15
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 16
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 17
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 18
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 19
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 20
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 21
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 22
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 23
                         });
                 });
 

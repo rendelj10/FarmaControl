@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 
 using Proyecto_FarmaControl.Data;
 using Proyecto_FarmaControl.Interfaces;
-using Proyecto_FarmaControl.Repositories;
+using Proyecto_FarmaControl.Repositorio;
 using Proyecto_FarmaControl.Services;
 using Proyecto_FarmaControl.Models.settings;
 using Proyecto_FarmaControl.Middlewares;
@@ -100,7 +100,10 @@ builder.Services
                 NameClaimType = ClaimTypes.Name
             };
 
-        // Leer JWT desde cookies seguras
+        // ========================================
+        // LECTURA DEL JWT DESDE COOKIES
+        // ========================================
+
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
@@ -137,7 +140,26 @@ builder.Services
 // 4. CONFIGURACION AUTORIZACION
 // ========================================
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // PANEL ADMINISTRATIVO
+
+    options.AddPolicy("admin.panel", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasPermission("admin.panel")));
+
+    // ACTUALIZAR PERMISOS
+
+    options.AddPolicy("permiso.actualizar", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasPermission("permiso.actualizar")));
+
+    // ELIMINAR PERMISOS
+
+    options.AddPolicy("permiso.borrar", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasPermission("permiso.borrar")));
+});
 
 builder.Services.AddSingleton<
     IAuthorizationPolicyProvider,
@@ -187,6 +209,10 @@ builder.Services.AddScoped<
     IRoleRepository,
     RolRepository>();
 
+builder.Services.AddScoped<
+    IPermissionRepository,
+    PermissionRepository>();
+
 // ========================================
 // 8. REGISTRO DE SERVICIOS
 // ========================================
@@ -214,6 +240,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IAuthService,
     AuthService>();
+
+builder.Services.AddScoped<
+    IRolePermissionService,
+    RolePermissionService>();
 
 // ========================================
 // 9. CONSTRUIR APLICACION

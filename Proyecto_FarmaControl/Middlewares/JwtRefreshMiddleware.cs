@@ -1,8 +1,9 @@
 
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
 using Proyecto_FarmaControl.Interfaces;
 using Proyecto_FarmaControl.Models.settings;
 
@@ -28,12 +29,19 @@ namespace Proyecto_FarmaControl.Middlewares
             HttpContext context,
             IAuthService authService)
         {
-            // Omitir las rutas de autenticación
+            // =====================================
+            // 1. OMITIR RUTAS DE AUTENTICACION
+            // =====================================
+
             if (context.Request.Path.StartsWithSegments("/Auth"))
             {
                 await _next(context);
                 return;
             }
+
+            // =====================================
+            // 2. LEER COOKIES
+            // =====================================
 
             var accessToken =
                 context.Request.Cookies["access_token"];
@@ -48,6 +56,10 @@ namespace Proyecto_FarmaControl.Middlewares
                 return;
             }
 
+            // =====================================
+            // 3. CONFIGURAR VALIDACION JWT
+            // =====================================
+
             var handler = new JwtSecurityTokenHandler();
 
             var validationParameters =
@@ -57,7 +69,8 @@ namespace Proyecto_FarmaControl.Middlewares
 
                     IssuerSigningKey =
                         new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(_jwtSettings.Key)),
+                            Encoding.UTF8.GetBytes(
+                                _jwtSettings.Key)),
 
                     ValidateIssuer = true,
                     ValidIssuer = _jwtSettings.Issuer,
@@ -66,46 +79,73 @@ namespace Proyecto_FarmaControl.Middlewares
                     ValidAudience = _jwtSettings.Audience,
 
                     ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
+                    ClockSkew = TimeSpan.Zero,
+
+                    RoleClaimType = ClaimTypes.Role,
+                    NameClaimType = ClaimTypes.Name
                 };
 
-            // Validar el Access Token
+            // =====================================
+            // 4. VALIDAR ACCESS TOKEN
+            // =====================================
+
             if (!string.IsNullOrWhiteSpace(accessToken))
             {
+                ClaimsPrincipal? principal = null;
+
                 try
                 {
-                    var principal = handler.ValidateToken(
+                    principal = handler.ValidateToken(
                         accessToken,
                         validationParameters,
                         out SecurityToken validatedToken);
 
                     ValidarAlgoritmo(validatedToken);
-
-                    context.User = principal;
-
-                    await _next(context);
-                    return;
                 }
                 catch (SecurityTokenExpiredException)
                 {
-                    // Continuar con la renovación
+                    // El token expiró.
+                    // Continuar con la renovación.
+                }
+                catch (SecurityTokenException)
+                {
+                    await HandleInvalidToken(context);
+                    return;
                 }
                 catch
                 {
                     await HandleInvalidToken(context);
                     return;
                 }
+
+                if (principal != null)
+                {
+                    context.User = principal;
+
+                    // Ejecutar la aplicación fuera
+                    // del bloque de validación.
+                    await _next(context);
+                    return;
+                }
             }
 
-            // Comprobar Refresh Token
+            // =====================================
+            // 5. COMPROBAR REFRESH TOKEN
+            // =====================================
+
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
                 await HandleInvalidToken(context);
                 return;
             }
 
+            // =====================================
+            // 6. RENOVAR TOKENS
+            // =====================================
+
             var newTokens =
-                await authService.RefreshAccessTokenAsync(refreshToken);
+                await authService.RefreshAccessTokenAsync(
+                    refreshToken);
 
             if (newTokens == null)
             {
@@ -113,24 +153,50 @@ namespace Proyecto_FarmaControl.Middlewares
                 return;
             }
 
-            // Guardar las nuevas cookies
+            // =====================================
+            // 7. VALIDAR NUEVO ACCESS TOKEN
+            // =====================================
+
+            ClaimsPrincipal newPrincipal;
+
+            try
+            {
+                newPrincipal = handler.ValidateToken(
+                    newTokens.AccessToken,
+                    validationParameters,
+                    out SecurityToken validatedToken);
+
+                ValidarAlgoritmo(validatedToken);
+            }
+            catch
+            {
+                await HandleInvalidToken(context);
+                return;
+            }
+
+            // =====================================
+            // 8. GUARDAR NUEVAS COOKIES
+            // =====================================
+
             var accessOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                Secure = context.Request.IsHttps,
                 SameSite = SameSiteMode.Strict,
                 Path = "/",
-                Expires = newTokens.ExpiresAt
+                Expires = newTokens.ExpiresAt,
+                IsEssential = true
             };
 
             var refreshOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                Secure = context.Request.IsHttps,
                 SameSite = SameSiteMode.Strict,
                 Path = "/",
                 Expires = newTokens.RefreshTokenExpiresAt
-                    ?? DateTime.UtcNow.AddDays(7)
+                    ?? DateTime.UtcNow.AddDays(7),
+                IsEssential = true
             };
 
             context.Response.Cookies.Append(
@@ -143,31 +209,26 @@ namespace Proyecto_FarmaControl.Middlewares
                 newTokens.RefreshToken,
                 refreshOptions);
 
-            try
-            {
-                // Validar el nuevo Access Token
-                var principal = handler.ValidateToken(
-                    newTokens.AccessToken,
-                    validationParameters,
-                    out SecurityToken validatedToken);
+            // =====================================
+            // 9. ACTUALIZAR USUARIO AUTENTICADO
+            // =====================================
 
-                ValidarAlgoritmo(validatedToken);
+            context.User = newPrincipal;
 
-                // Asignar usuario a la petición actual
-                context.User = principal;
+            // Compartir el token con JwtBearer.
+            context.Items[RefreshedTokenKey] =
+                newTokens.AccessToken;
 
-                // Compartir el token renovado con JwtBearer
-                context.Items[RefreshedTokenKey] =
-                    newTokens.AccessToken;
-            }
-            catch
-            {
-                await HandleInvalidToken(context);
-                return;
-            }
+            // =====================================
+            // 10. CONTINUAR PETICION
+            // =====================================
 
             await _next(context);
         }
+
+        // =====================================
+        // VALIDAR ALGORITMO DE SEGURIDAD
+        // =====================================
 
         private static void ValidarAlgoritmo(
             SecurityToken validatedToken)
@@ -182,13 +243,17 @@ namespace Proyecto_FarmaControl.Middlewares
             }
         }
 
+        // =====================================
+        // CERRAR SESION SI EL TOKEN ES INVALIDO
+        // =====================================
+
         private static Task HandleInvalidToken(
             HttpContext context)
         {
             var options = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                Secure = context.Request.IsHttps,
                 SameSite = SameSiteMode.Strict,
                 Path = "/"
             };

@@ -142,6 +142,84 @@ namespace Proyecto_FarmaControl.Data
                     Id = 12,
                     Name = "lote.borrar",
                     Description = "Desactivar lotes de medicamentos"
+                },
+
+                // PERMISOS DE ROLES
+
+                new Permiso
+                {
+                    Id = 13,
+                    Name = "rol.ver",
+                    Description = "Consultar roles"
+                },
+                new Permiso
+                {
+                    Id = 14,
+                    Name = "rol.crear",
+                    Description = "Crear roles"
+                },
+                new Permiso
+                {
+                    Id = 15,
+                    Name = "rol.asignar",
+                    Description = "Asignar permisos a roles"
+                },
+
+                // PERMISOS DE ADMINISTRACION DE PERMISOS
+
+                new Permiso
+                {
+                    Id = 16,
+                    Name = "permiso.ver",
+                    Description = "Consultar permisos"
+                },
+                new Permiso
+                {
+                    Id = 17,
+                    Name = "permiso.crear",
+                    Description = "Crear permisos"
+                },
+                new Permiso
+                {
+                    Id = 18,
+                    Name = "permiso.actualizar",
+                    Description = "Actualizar permisos"
+                },
+                new Permiso
+                {
+                    Id = 19,
+                    Name = "permiso.borrar",
+                    Description = "Eliminar permisos"
+                },
+
+                // PERMISOS DE USUARIOS
+
+                new Permiso
+                {
+                    Id = 20,
+                    Name = "usuario.ver",
+                    Description = "Consultar usuarios"
+                },
+                new Permiso
+                {
+                    Id = 21,
+                    Name = "usuario.asignar",
+                    Description = "Asignar permisos a usuarios"
+                },
+                new Permiso
+                {
+                    Id = 22,
+                    Name = "usuario.cambiar.rol",
+                    Description = "Cambiar el rol de usuarios"
+                },
+
+                // PERMISO DEL PANEL ADMINISTRATIVO
+
+                new Permiso
+                {
+                    Id = 23,
+                    Name = "admin.panel",
+                    Description = "Acceder al panel administrativo"
                 }
             );
 
@@ -170,7 +248,30 @@ namespace Proyecto_FarmaControl.Data
                 new { RoleId = 2, PermissionId = 9 },
                 new { RoleId = 2, PermissionId = 10 },
                 new { RoleId = 2, PermissionId = 11 },
-                new { RoleId = 2, PermissionId = 12 }
+                new { RoleId = 2, PermissionId = 12 },
+
+                // ROLES
+
+                new { RoleId = 2, PermissionId = 13 },
+                new { RoleId = 2, PermissionId = 14 },
+                new { RoleId = 2, PermissionId = 15 },
+
+                // PERMISOS
+
+                new { RoleId = 2, PermissionId = 16 },
+                new { RoleId = 2, PermissionId = 17 },
+                new { RoleId = 2, PermissionId = 18 },
+                new { RoleId = 2, PermissionId = 19 },
+
+                // USUARIOS
+
+                new { RoleId = 2, PermissionId = 20 },
+                new { RoleId = 2, PermissionId = 21 },
+                new { RoleId = 2, PermissionId = 22 },
+
+                // PANEL ADMINISTRATIVO
+
+                new { RoleId = 2, PermissionId = 23 }
             );
 
             // ========================================

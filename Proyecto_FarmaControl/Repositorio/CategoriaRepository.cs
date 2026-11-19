@@ -1,11 +1,10 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using Proyecto_FarmaControl.Data;
-using Proyecto_FarmaControl.Interfaces;
 using Proyecto_FarmaControl.Models;
 using Proyecto_FarmaControl.DTOs;
 
-namespace Proyecto_FarmaControl.Repositories
+namespace Proyecto_FarmaControl.Repositorio
 {
     public class CategoriaRepository : ICategoriaRepository
     {
@@ -16,7 +15,11 @@ namespace Proyecto_FarmaControl.Repositories
             _context = context;
         }
 
-        public async Task<List<Categoria>> ObtenerTodasAsync()
+        // =====================================
+        // OBTENER TODAS LAS CATEGORIAS
+        // =====================================
+
+        public async Task<IReadOnlyList<Categoria>> ObtenerTodasAsync()
         {
             return await _context.Categorias
                 .AsNoTracking()
@@ -24,26 +27,49 @@ namespace Proyecto_FarmaControl.Repositories
                 .ToListAsync();
         }
 
+        // =====================================
+        // OBTENER CATEGORIA POR ID
+        // =====================================
+
         public async Task<Categoria?> ObtenerPorIdAsync(int id)
         {
             return await _context.Categorias
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
-        public async Task AgregarAsync(Categoria categoria)
+        // =====================================
+        // AGREGAR CATEGORIA
+        // =====================================
+
+        public async Task<Categoria> AgregarAsync(Categoria categoria)
         {
             await _context.Categorias.AddAsync(categoria);
+
             await _context.SaveChangesAsync();
+
+            return categoria;
         }
 
-        public async Task ActualizarAsync(Categoria categoria)
+        // =====================================
+        // ACTUALIZAR CATEGORIA
+        // =====================================
+
+        public async Task<bool> ActualizarAsync(Categoria categoria)
         {
             _context.Categorias.Update(categoria);
-            await _context.SaveChangesAsync();
+
+            var filasAfectadas = await _context.SaveChangesAsync();
+
+            return filasAfectadas > 0;
         }
 
+        // =====================================
+        // VERIFICAR NOMBRE DUPLICADO
+        // =====================================
+
         public async Task<bool> ExisteNombreAsync(
-            string nombre, int? excluirId = null)
+            string nombre,
+            int? excluirId = null)
         {
             return await _context.Categorias.AnyAsync(c =>
                 c.Nombre == nombre &&
@@ -61,9 +87,13 @@ namespace Proyecto_FarmaControl.Repositories
                 .AsNoTracking()
                 .AsQueryable();
 
+            // TOTAL DE REGISTROS
             var recordsTotal = await query.CountAsync();
 
+            // =====================================
             // BUSQUEDA
+            // =====================================
+
             var search = request.Search?.Value?.Trim();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -76,37 +106,56 @@ namespace Proyecto_FarmaControl.Repositories
 
             var recordsFiltered = await query.CountAsync();
 
+            // =====================================
             // ORDENAMIENTO
-            var orderColumn = request.Order.FirstOrDefault()?.Column ?? 0;
-            var orderDir = request.Order.FirstOrDefault()?.Dir ?? "asc";
+            // =====================================
 
-            var columnName = request.Columns
+            var order = request.Order?.FirstOrDefault();
+
+            var orderColumn = order?.Column ?? 0;
+
+            var orderDir = order?.Dir ?? "asc";
+
+            var descending = string.Equals(
+                orderDir,
+                "desc",
+                StringComparison.OrdinalIgnoreCase);
+
+            var columnName = request.Columns?
                 .ElementAtOrDefault(orderColumn)?.Data ?? "nombre";
 
             query = columnName.ToLowerInvariant() switch
             {
-                "id" => orderDir == "desc"
+                "id" => descending
                     ? query.OrderByDescending(c => c.Id)
                     : query.OrderBy(c => c.Id),
 
-                "descripcion" => orderDir == "desc"
+                "descripcion" => descending
                     ? query.OrderByDescending(c => c.Descripcion)
                     : query.OrderBy(c => c.Descripcion),
 
-                "activo" => orderDir == "desc"
+                "activo" => descending
                     ? query.OrderByDescending(c => c.Activo)
                     : query.OrderBy(c => c.Activo),
 
-                _ => orderDir == "desc"
+                _ => descending
                     ? query.OrderByDescending(c => c.Nombre)
                     : query.OrderBy(c => c.Nombre)
             };
 
+            // =====================================
             // PAGINACION
+            // =====================================
+
             var start = Math.Max(0, request.Start);
+
             var length = request.Length > 0
                 ? Math.Min(request.Length, 100)
                 : 10;
+
+            // =====================================
+            // PROYECCION A DTO
+            // =====================================
 
             var data = await query
                 .Skip(start)
@@ -119,6 +168,10 @@ namespace Proyecto_FarmaControl.Repositories
                     Activo = c.Activo
                 })
                 .ToListAsync();
+
+            // =====================================
+            // RESPUESTA DATATABLES
+            // =====================================
 
             return new DataTablesResponseDto<CategoriaTablaDto>
             {

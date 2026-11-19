@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Proyecto_FarmaControl.DTOs;
 using Proyecto_FarmaControl.Interfaces;
-using Proyecto_FarmaControl.Models;
+using Proyecto_FarmaControl.Services;
 
 namespace Proyecto_FarmaControl.Controllers
 {
@@ -21,31 +21,168 @@ namespace Proyecto_FarmaControl.Controllers
             _categoriaService = categoriaService;
         }
 
-        // GET: Medicamento/Index
+        // =====================================
+        // INDEX
+        // =====================================
+
         [Authorize(Policy = "medicamento.ver")]
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             var medicamentos = await _service.ObtenerTodasAsync();
 
-            var resultado = medicamentos.Select(m => new MedicamentoDto
-            {
-                Id = m.Id,
-                Codigo = m.Codigo,
-                Nombre = m.Nombre,
-                PrincipioActivo = m.PrincipioActivo,
-                Concentracion = m.Concentracion,
-                FormaFarmaceutica = m.FormaFarmaceutica,
-                Presentacion = m.Presentacion,
-                CategoriaId = m.CategoriaId,
-                CategoriaNombre = m.Categoria?.Nombre ?? string.Empty,
-                Activo = m.Activo
-            }).ToList();
-
-            return View(resultado);
+            return View(medicamentos);
         }
 
-        // GET: Medicamento/Crear
+        // =====================================
+        // DATATABLES
+        // =====================================
+
+        [Authorize(Policy = "medicamento.ver")]
+        [HttpPost]
+        public async Task<IActionResult> GetData(
+            [FromForm] DataTablesRequestDto request)
+        {
+            var result =
+                await _service.ObtenerPaginadosAsync(request);
+
+            return Ok(result);
+        }
+
+        // =====================================
+        // OBTENER POR ID
+        // =====================================
+
+        [Authorize(Policy = "medicamento.ver")]
+        [HttpGet]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _service.ObtenerPorIdAsync(id);
+
+            if (result == null)
+                return NotFound(new
+                {
+                    message = "Medicamento no encontrado."
+                });
+
+            return Ok(result);
+        }
+
+        // =====================================
+        // OBTENER CATEGORÍAS ACTIVAS
+        // =====================================
+
+        [Authorize(Policy = "medicamento.ver")]
+        [HttpGet]
+        public async Task<IActionResult> GetCategorias()
+        {
+            var categorias =
+                await _categoriaService.ObtenerTodasAsync();
+
+            var resultado = categorias
+                .Where(c => c.Activo)
+                .Select(c => new
+                {
+                    id = c.Id,
+                    nombre = c.Nombre
+                })
+                .ToList();
+
+            return Ok(resultado);
+        }
+
+        // =====================================
+        // CREAR - AJAX
+        // =====================================
+
+        [Authorize(Policy = "medicamento.crear")]
+        [HttpPost]
+        public async Task<IActionResult> Create(
+            [FromBody] MedicamentoGuardarDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Error en los datos enviados."
+                });
+
+            var (success, errorMessage) =
+                await _service.CrearAsync(dto);
+
+            return success
+                ? Ok(new
+                {
+                    success = true,
+                    message = "Medicamento creado correctamente."
+                })
+                : BadRequest(new
+                {
+                    success = false,
+                    errorMessage
+                });
+        }
+
+        // =====================================
+        // ACTUALIZAR - AJAX
+        // =====================================
+
+        [Authorize(Policy = "medicamento.actualizar")]
+        [HttpPost]
+        public async Task<IActionResult> Update(
+            [FromBody] MedicamentoGuardarDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Error en los datos enviados."
+                });
+
+            var (success, errorMessage) =
+                await _service.ActualizarAsync(dto);
+
+            return success
+                ? Ok(new
+                {
+                    success = true,
+                    message = "Medicamento actualizado correctamente."
+                })
+                : BadRequest(new
+                {
+                    success = false,
+                    errorMessage
+                });
+        }
+
+        // =====================================
+        // DESACTIVAR - AJAX
+        // =====================================
+
+        [Authorize(Policy = "medicamento.borrar")]
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var (success, errorMessage) =
+                await _service.DesactivarAsync(id);
+
+            return success
+                ? Ok(new
+                {
+                    success = true,
+                    message = "Medicamento desactivado correctamente."
+                })
+                : BadRequest(new
+                {
+                    success = false,
+                    errorMessage
+                });
+        }
+
+        // =====================================
+        // FORMULARIOS RAZOR TEMPORALES
+        // =====================================
+
         [Authorize(Policy = "medicamento.crear")]
         [HttpGet]
         public async Task<IActionResult> Crear()
@@ -55,7 +192,6 @@ namespace Proyecto_FarmaControl.Controllers
             return View(new MedicamentoGuardarDto());
         }
 
-        // POST: Medicamento/Crear
         [Authorize(Policy = "medicamento.crear")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -68,69 +204,42 @@ namespace Proyecto_FarmaControl.Controllers
                 return View(dto);
             }
 
-            try
-            {
-                var medicamento = new Medicamento
-                {
-                    Codigo = dto.Codigo,
-                    Nombre = dto.Nombre,
-                    PrincipioActivo = dto.PrincipioActivo,
-                    Concentracion = dto.Concentracion,
-                    FormaFarmaceutica = dto.FormaFarmaceutica,
-                    Presentacion = dto.Presentacion,
-                    CategoriaId = dto.CategoriaId
-                };
+            var (success, errorMessage) =
+                await _service.CrearAsync(dto);
 
-                await _service.CrearAsync(medicamento);
-
-                TempData["Mensaje"] =
-                    "Medicamento registrado correctamente.";
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (ArgumentException ex)
+            if (!success)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                ModelState.AddModelError(
+                    string.Empty,
+                    errorMessage ?? "No se pudo registrar el medicamento.");
+
+                await CargarCategoriasAsync(dto.CategoriaId);
+
+                return View(dto);
             }
 
-            await CargarCategoriasAsync(dto.CategoriaId);
+            TempData["Mensaje"] =
+                "Medicamento registrado correctamente.";
 
-            return View(dto);
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Medicamento/Editar/1
         [Authorize(Policy = "medicamento.actualizar")]
         [HttpGet]
         public async Task<IActionResult> Editar(int id)
         {
-            var medicamento = await _service.ObtenerPorIdAsync(id);
+            var dto = await _service.ObtenerPorIdAsync(id);
 
-            if (medicamento == null)
+            if (dto == null)
                 return NotFound();
 
             ViewData["Id"] = id;
-
-            var dto = new MedicamentoGuardarDto
-            {
-                Codigo = medicamento.Codigo,
-                Nombre = medicamento.Nombre,
-                PrincipioActivo = medicamento.PrincipioActivo,
-                Concentracion = medicamento.Concentracion,
-                FormaFarmaceutica = medicamento.FormaFarmaceutica,
-                Presentacion = medicamento.Presentacion,
-                CategoriaId = medicamento.CategoriaId
-            };
 
             await CargarCategoriasAsync(dto.CategoriaId);
 
             return View(dto);
         }
 
-        // POST: Medicamento/Editar/1
         [Authorize(Policy = "medicamento.actualizar")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -138,6 +247,7 @@ namespace Proyecto_FarmaControl.Controllers
             int id,
             MedicamentoGuardarDto dto)
         {
+            dto.Id = id;
             ViewData["Id"] = id;
 
             if (!ModelState.IsValid)
@@ -146,71 +256,54 @@ namespace Proyecto_FarmaControl.Controllers
                 return View(dto);
             }
 
-            try
-            {
-                var medicamento = new Medicamento
-                {
-                    Id = id,
-                    Codigo = dto.Codigo,
-                    Nombre = dto.Nombre,
-                    PrincipioActivo = dto.PrincipioActivo,
-                    Concentracion = dto.Concentracion,
-                    FormaFarmaceutica = dto.FormaFarmaceutica,
-                    Presentacion = dto.Presentacion,
-                    CategoriaId = dto.CategoriaId
-                };
+            var (success, errorMessage) =
+                await _service.ActualizarAsync(dto);
 
-                await _service.ActualizarAsync(medicamento);
+            if (!success)
+            {
+                if (errorMessage == "El medicamento no existe.")
+                    return NotFound();
 
-                TempData["Mensaje"] =
-                    "Medicamento actualizado correctamente.";
+                ModelState.AddModelError(
+                    string.Empty,
+                    errorMessage ?? "No se pudo actualizar el medicamento.");
 
-                return RedirectToAction(nameof(Index));
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                await CargarCategoriasAsync(dto.CategoriaId);
+
+                return View(dto);
             }
 
-            await CargarCategoriasAsync(dto.CategoriaId);
+            TempData["Mensaje"] =
+                "Medicamento actualizado correctamente.";
 
-            return View(dto);
+            return RedirectToAction(nameof(Index));
         }
 
-        // POST: Medicamento/Desactivar/1
         [Authorize(Policy = "medicamento.borrar")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Desactivar(int id)
         {
-            try
-            {
+            var (success, errorMessage) =
                 await _service.DesactivarAsync(id);
 
-                TempData["Mensaje"] =
-                    "Medicamento desactivado correctamente.";
-            }
-            catch (KeyNotFoundException ex)
-            {
-                TempData["Error"] = ex.Message;
-            }
+            TempData[success ? "Mensaje" : "Error"] =
+                success
+                    ? "Medicamento desactivado correctamente."
+                    : errorMessage;
 
             return RedirectToAction(nameof(Index));
         }
 
-        // Cargar categorías activas para los formularios
+        // =====================================
+        // CARGAR CATEGORÍAS PARA FORMULARIOS
+        // =====================================
+
         private async Task CargarCategoriasAsync(
             int? categoriaSeleccionada = null)
         {
-            var categorias = await _categoriaService.ObtenerTodasAsync();
+            var categorias =
+                await _categoriaService.ObtenerTodasAsync();
 
             ViewBag.Categorias = new SelectList(
                 categorias.Where(c => c.Activo),

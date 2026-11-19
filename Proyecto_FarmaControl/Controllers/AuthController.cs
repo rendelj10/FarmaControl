@@ -261,6 +261,19 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // =====================================
+        // ACCESO DENEGADO
+        // =====================================
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult AccessDenied()
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                "Acceso denegado.");
+        }
+
+        // =====================================
         // CERRAR SESION
         // =====================================
 
@@ -276,8 +289,13 @@ namespace Proyecto_FarmaControl.Controllers
                 Path = "/"
             };
 
-            Response.Cookies.Delete("access_token", options);
-            Response.Cookies.Delete("refresh_token", options);
+            Response.Cookies.Delete(
+                "access_token",
+                options);
+
+            Response.Cookies.Delete(
+                "refresh_token",
+                options);
 
             return RedirectToAction(nameof(Login));
         }
