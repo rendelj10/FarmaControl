@@ -1,4 +1,5 @@
 ﻿
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_FarmaControl.DTOs;
@@ -167,10 +168,21 @@ namespace Proyecto_FarmaControl.Controllers
                 });
             }
 
+            if (!int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                out int usuarioId) || usuarioId <= 0)
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "No se pudo identificar al usuario autenticado."
+                });
+            }
+
             try
             {
                 var compra = await _service
-                    .RecibirAsync(id);
+                    .RecibirAsync(id, usuarioId);
 
                 return Ok(new
                 {

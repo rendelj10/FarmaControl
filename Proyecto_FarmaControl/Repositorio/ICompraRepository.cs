@@ -64,6 +64,9 @@ namespace Proyecto_FarmaControl.Repositorio
 
         Task AgregarLoteAsync(Lote lote);
 
+        Task AgregarMovimientoAsync(
+            MovimientoInventario movimiento);
+
         // ========================================
         // TRANSACCIONES
         // ========================================

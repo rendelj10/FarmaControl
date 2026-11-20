@@ -45,6 +45,16 @@ namespace Proyecto_FarmaControl.Data
 
         public DbSet<DetalleVenta> DetalleVentas { get; set; } = null!;
 
+        // AJUSTES DE INVENTARIO Y MOVIMIENTOS
+
+        public DbSet<AjusteInventario> AjustesInventario { get; set; } = null!;
+
+        public DbSet<DetalleAjusteInventario> DetalleAjustes { get; set; } = null!;
+
+        public DbSet<MovimientoInventario> MovimientosInventario { get; set; } = null!;
+
+        public DbSet<DetalleMovimiento> DetalleMovimientos { get; set; } = null!;
+
         // Ventas y DetalleVentas se incorporaran
         // cuando completemos sus servicios
         // y reglas de negocio.
@@ -862,27 +872,25 @@ namespace Proyecto_FarmaControl.Data
 
             modelBuilder.Entity<AjusteInventario>(entity =>
             {
-                // Nombre exacto de la tabla SQL.
-                // Debe coincidir con el repositorio.
-
                 entity.ToTable("AjustesInventario");
-
-                // Documento unico por ajuste.
-
-                entity.HasIndex(a => a.NumeroDocumento)
-                    .IsUnique();
-
-                // Relacion con el almacen.
 
                 entity.HasOne(a => a.Almacen)
                     .WithMany()
                     .HasForeignKey(a => a.AlmacenId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Datos obligatorios.
+                entity.HasOne(a => a.Usuario)
+                    .WithMany()
+                    .HasForeignKey(a => a.UsuarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                entity.Property(a => a.NumeroDocumento)
-                    .HasMaxLength(50)
+                entity.HasOne(a => a.ConfirmadoPorUsuario)
+                    .WithMany()
+                    .HasForeignKey(a => a.ConfirmadoPorUsuarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(a => a.TipoAjuste)
+                    .HasMaxLength(30)
                     .IsRequired();
 
                 entity.Property(a => a.Estado)
@@ -890,27 +898,27 @@ namespace Proyecto_FarmaControl.Data
                     .IsRequired();
 
                 entity.Property(a => a.Motivo)
-                    .HasMaxLength(200)
+                    .HasMaxLength(150)
                     .IsRequired();
 
                 entity.Property(a => a.Observaciones)
-                    .HasMaxLength(500);
-
-                // Fechas.
+                    .HasMaxLength(250);
 
                 entity.Property(a => a.FechaAjuste)
-                    .HasColumnType("date");
-
-                entity.Property(a => a.FechaAplicacion)
                     .HasColumnType("datetime2");
 
-                // Consultas por almacen y estado.
+                entity.Property(a => a.FechaConfirmacion)
+                    .HasColumnType("datetime2");
 
                 entity.HasIndex(a => new
                 {
                     a.AlmacenId,
                     a.Estado
                 });
+
+                entity.HasIndex(a => a.UsuarioId);
+
+                entity.HasIndex(a => a.ConfirmadoPorUsuarioId);
             });
 
             // ========================================
@@ -919,54 +927,150 @@ namespace Proyecto_FarmaControl.Data
 
             modelBuilder.Entity<DetalleAjusteInventario>(entity =>
             {
-                // Nombre exacto de la tabla SQL.
+                entity.ToTable("DetalleAjustes", table =>
+                {
+                    table.HasCheckConstraint(
+                        "CK_DetalleAjustes_ExistenciaSistema",
+                        "[ExistenciaSistema] >= 0");
 
-                entity.ToTable("DetalleAjustesInventario");
+                    table.HasCheckConstraint(
+                        "CK_DetalleAjustes_CantidadFisica",
+                        "[CantidadFisica] >= 0");
 
-                // Relacion con el ajuste principal.
+                    table.HasCheckConstraint(
+                        "CK_DetalleAjustes_Diferencia",
+                        "[Diferencia] = [CantidadFisica] - [ExistenciaSistema]");
+                });
 
                 entity.HasOne(d => d.AjusteInventario)
                     .WithMany(a => a.Detalles)
                     .HasForeignKey(d => d.AjusteInventarioId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Relacion con el medicamento.
-
-                entity.HasOne(d => d.Medicamento)
-                    .WithMany()
-                    .HasForeignKey(d => d.MedicamentoId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                // Relacion con el lote.
-
                 entity.HasOne(d => d.Lote)
                     .WithMany()
                     .HasForeignKey(d => d.LoteId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Tipo de movimiento:
-                // Entrada o Salida.
-
-                entity.Property(d => d.TipoMovimiento)
-                    .HasMaxLength(10)
-                    .IsRequired();
-
-                entity.Property(d => d.Observaciones)
-                    .HasMaxLength(300);
-
-                // No permitir el mismo lote dos veces
-                // en un mismo ajuste.
+                entity.Property(d => d.Observacion)
+                    .HasMaxLength(250);
 
                 entity.HasIndex(d => new
                 {
                     d.AjusteInventarioId,
                     d.LoteId
-                })
-                .IsUnique();
-
-                // Facilitar consultas por lote.
+                }).IsUnique();
 
                 entity.HasIndex(d => d.LoteId);
+            });
+
+            // ========================================
+            // 21. MOVIMIENTOS DE INVENTARIO
+            // ========================================
+
+            modelBuilder.Entity<MovimientoInventario>(entity =>
+            {
+                entity.ToTable("MovimientosInventario");
+
+                entity.Property(m => m.TipoMovimiento)
+                    .HasMaxLength(30)
+                    .IsRequired();
+
+                entity.Property(m => m.Estado)
+                    .HasMaxLength(20)
+                    .IsRequired();
+
+                entity.Property(m => m.Motivo)
+                    .HasMaxLength(150);
+
+                entity.Property(m => m.Referencia)
+                    .HasMaxLength(100);
+
+                entity.Property(m => m.Observaciones)
+                    .HasMaxLength(250);
+
+                entity.Property(m => m.FechaMovimiento)
+                    .HasColumnType("datetime2");
+
+                entity.HasOne(m => m.AlmacenOrigen)
+                    .WithMany()
+                    .HasForeignKey(m => m.AlmacenOrigenId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.AlmacenDestino)
+                    .WithMany()
+                    .HasForeignKey(m => m.AlmacenDestinoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.Usuario)
+                    .WithMany()
+                    .HasForeignKey(m => m.UsuarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.Compra)
+                    .WithOne()
+                    .HasForeignKey<MovimientoInventario>(m => m.CompraId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.Venta)
+                    .WithOne()
+                    .HasForeignKey<MovimientoInventario>(m => m.VentaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(m => m.AjusteInventario)
+                    .WithOne(a => a.MovimientoInventario)
+                    .HasForeignKey<MovimientoInventario>(m => m.AjusteInventarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(m => m.AlmacenOrigenId);
+
+                entity.HasIndex(m => m.AlmacenDestinoId);
+
+                entity.HasIndex(m => m.UsuarioId);
+
+                entity.HasIndex(m => m.FechaMovimiento);
+            });
+
+            // ========================================
+            // 22. DETALLE DE MOVIMIENTOS
+            // ========================================
+
+            modelBuilder.Entity<DetalleMovimiento>(entity =>
+            {
+                entity.ToTable("DetalleMovimientos", table =>
+                {
+                    table.HasCheckConstraint(
+                        "CK_DetalleMovimientos_AlMenosUnLote",
+                        "[LoteOrigenId] IS NOT NULL OR [LoteDestinoId] IS NOT NULL");
+
+                    table.HasCheckConstraint(
+                        "CK_DetalleMovimientos_Cantidad",
+                        "[Cantidad] > 0");
+                });
+
+                entity.HasOne(d => d.MovimientoInventario)
+                    .WithMany(m => m.Detalles)
+                    .HasForeignKey(d => d.MovimientoInventarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.LoteOrigen)
+                    .WithMany()
+                    .HasForeignKey(d => d.LoteOrigenId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.LoteDestino)
+                    .WithMany()
+                    .HasForeignKey(d => d.LoteDestinoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(d => d.Observacion)
+                    .HasMaxLength(250);
+
+                entity.HasIndex(d => d.MovimientoInventarioId);
+
+                entity.HasIndex(d => d.LoteOrigenId);
+
+                entity.HasIndex(d => d.LoteDestinoId);
             });
 
         }

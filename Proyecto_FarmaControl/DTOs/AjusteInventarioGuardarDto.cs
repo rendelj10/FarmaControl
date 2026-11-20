@@ -1,63 +1,53 @@
 ﻿
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Proyecto_FarmaControl.DTOs
 {
     public class AjusteInventarioGuardarDto
     {
-        // ========================================
-        // ALMACEN
-        // ========================================
+        // ALMACÉN DONDE SE REALIZA EL CONTEO
 
         [Range(1, int.MaxValue,
             ErrorMessage = "Seleccione un almacén válido.")]
         public int AlmacenId { get; set; }
 
-        // ========================================
-        // DOCUMENTO
-        // ========================================
+        // TIPO DE AJUSTE: Conteo o Correccion
 
         [Required(ErrorMessage =
-            "El número de documento es obligatorio.")]
-        [StringLength(50)]
-        public string NumeroDocumento { get; set; }
-            = string.Empty;
+            "El tipo de ajuste es obligatorio.")]
+        [StringLength(30)]
+        [RegularExpression("^(Conteo|Correccion)$",
+            ErrorMessage = "El tipo de ajuste no es válido.")]
+        public string TipoAjuste { get; set; } = "Conteo";
 
-        // ========================================
-        // FECHA
-        // ========================================
+        // FECHA DEL AJUSTE
 
-        [Required]
-        [DataType(DataType.Date)]
         public DateTime FechaAjuste { get; set; }
-            = DateTime.Today;
+            = DateTime.UtcNow;
 
-        // ========================================
-        // MOTIVO
-        // ========================================
+        // MOTIVO DEL AJUSTE
 
         [Required(ErrorMessage =
             "El motivo del ajuste es obligatorio.")]
-        [StringLength(200)]
-        public string Motivo { get; set; }
-            = string.Empty;
+        [StringLength(150,
+            ErrorMessage = "El motivo no puede superar 150 caracteres.")]
+        public string Motivo { get; set; } = string.Empty;
 
-        // ========================================
-        // OBSERVACIONES
-        // ========================================
+        // OBSERVACIONES GENERALES
 
-        [StringLength(500)]
+        [StringLength(250,
+            ErrorMessage = "Las observaciones no pueden superar 250 caracteres.")]
         public string? Observaciones { get; set; }
 
-        // ========================================
-        // DETALLES
-        // ========================================
+        // DETALLES DEL CONTEO FÍSICO
 
-        [Required]
-        [MinLength(1, ErrorMessage =
-            "Debe registrar al menos un detalle.")]
-        public List<DetalleAjusteInventarioGuardarDto>
-            Detalles
+        [Required(ErrorMessage =
+            "Debe registrar los detalles del ajuste.")]
+        [MinLength(1,
+            ErrorMessage = "Debe registrar al menos un lote.")]
+        public List<DetalleAjusteInventarioGuardarDto> Detalles
         { get; set; } = new();
     }
 }

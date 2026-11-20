@@ -31,6 +31,9 @@ namespace Proyecto_FarmaControl.Repositorio
 
         Task<Lote?> ObtenerLoteParaDescontarAsync(int loteId);
 
+        Task AgregarMovimientoAsync(
+            MovimientoInventario movimiento);
+
         Task EjecutarEnTransaccionAsync(
             Func<Task> operacion);
     }

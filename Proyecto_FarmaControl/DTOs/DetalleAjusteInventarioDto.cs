@@ -3,56 +3,43 @@ namespace Proyecto_FarmaControl.DTOs
 {
     public class DetalleAjusteInventarioDto
     {
+        // IDENTIFICADOR DEL DETALLE
+
         public int Id { get; set; }
 
-        // ========================================
-        // AJUSTE PRINCIPAL
-        // ========================================
+        // AJUSTE AL QUE PERTENECE
 
         public int AjusteInventarioId { get; set; }
 
-        // ========================================
-        // MEDICAMENTO
-        // ========================================
-
-        public int MedicamentoId { get; set; }
-
-        public string MedicamentoNombre { get; set; }
-            = string.Empty;
-
-        // ========================================
-        // LOTE
-        // ========================================
+        // INFORMACIÓN DEL LOTE
 
         public int LoteId { get; set; }
 
         public string NumeroLote { get; set; }
             = string.Empty;
 
-        // ========================================
-        // MOVIMIENTO
-        // ========================================
+        // INFORMACIÓN DEL MEDICAMENTO
 
-        public string TipoMovimiento { get; set; }
+        public int MedicamentoId { get; set; }
+
+        public string MedicamentoNombre { get; set; }
             = string.Empty;
 
-        public int Cantidad { get; set; }
+        // EXISTENCIAS AL REGISTRAR EL CONTEO
 
-        // ========================================
-        // HISTORIAL DE EXISTENCIAS
-        // ========================================
+        public int ExistenciaSistema { get; set; }
 
-        // Serán null mientras el ajuste
-        // permanezca en Borrador.
+        // CANTIDAD CONTADA FÍSICAMENTE
 
-        public int? ExistenciasAntes { get; set; }
+        public int CantidadFisica { get; set; }
 
-        public int? ExistenciasDespues { get; set; }
+        // DIFERENCIA CALCULADA
+        // CantidadFisica - ExistenciaSistema
 
-        // ========================================
-        // OBSERVACIONES
-        // ========================================
+        public int Diferencia { get; set; }
 
-        public string? Observaciones { get; set; }
+        // OBSERVACIÓN DEL DETALLE
+
+        public string? Observacion { get; set; }
     }
 }

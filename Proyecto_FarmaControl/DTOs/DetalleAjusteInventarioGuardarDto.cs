@@ -5,52 +5,22 @@ namespace Proyecto_FarmaControl.DTOs
 {
     public class DetalleAjusteInventarioGuardarDto
     {
-        // ========================================
-        // MEDICAMENTO
-        // ========================================
-
-        [Range(1, int.MaxValue,
-            ErrorMessage = "Seleccione un medicamento válido.")]
-        public int MedicamentoId { get; set; }
-
-        // ========================================
-        // LOTE
-        // ========================================
+        // LOTE QUE SE VA A CONTAR
 
         [Range(1, int.MaxValue,
             ErrorMessage = "Seleccione un lote válido.")]
         public int LoteId { get; set; }
 
-        // ========================================
-        // TIPO DE MOVIMIENTO
-        // ========================================
+        // CANTIDAD CONTADA FÍSICAMENTE
 
-        // Valores permitidos:
-        // Entrada o Salida.
-        //
-        // El servicio validará que el valor
-        // corresponda exactamente a uno
-        // de estos movimientos.
+        [Range(0, int.MaxValue,
+            ErrorMessage = "La cantidad física no puede ser negativa.")]
+        public int CantidadFisica { get; set; }
 
-        [Required(ErrorMessage =
-            "El tipo de movimiento es obligatorio.")]
-        [StringLength(10)]
-        public string TipoMovimiento { get; set; }
-            = string.Empty;
+        // OBSERVACIÓN DEL CONTEO
 
-        // ========================================
-        // CANTIDAD
-        // ========================================
-
-        [Range(1, int.MaxValue,
-            ErrorMessage = "La cantidad debe ser mayor que cero.")]
-        public int Cantidad { get; set; }
-
-        // ========================================
-        // OBSERVACIONES
-        // ========================================
-
-        [StringLength(300)]
-        public string? Observaciones { get; set; }
+        [StringLength(250,
+            ErrorMessage = "La observación no puede superar 250 caracteres.")]
+        public string? Observacion { get; set; }
     }
 }

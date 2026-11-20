@@ -6,25 +6,46 @@ namespace Proyecto_FarmaControl.Interfaces
     public interface IAjusteInventarioService
     {
         // ========================================
-        // CONSULTAS
+        // 1. CONSULTAR TODOS LOS AJUSTES
         // ========================================
 
-        Task<List<AjusteInventarioDto>> ObtenerTodosAsync();
+        Task<List<AjusteInventarioDto>>
+            ObtenerTodosAsync();
 
-        Task<AjusteInventarioDto?> ObtenerPorIdAsync(int id);
+        // ========================================
+        // 2. CONSULTAR AJUSTE POR ID
+        // ========================================
+
+        Task<AjusteInventarioDto?>
+            ObtenerPorIdAsync(int id);
+
+        // ========================================
+        // 3. CONSULTAR AJUSTES PAGINADOS
+        // ========================================
 
         Task<DataTablesResponseDto<AjusteInventarioDto>>
             ObtenerPaginadasAsync(
                 DataTablesRequestDto request);
 
         // ========================================
-        // OPERACIONES
+        // 4. CREAR AJUSTE EN BORRADOR
         // ========================================
 
         Task<AjusteInventarioDto> CrearBorradorAsync(
-            AjusteInventarioGuardarDto dto);
+            AjusteInventarioGuardarDto dto,
+            int usuarioId);
 
-        Task<AjusteInventarioDto> AplicarAsync(int id);
+        // ========================================
+        // 5. CONFIRMAR AJUSTE DE INVENTARIO
+        // ========================================
+
+        Task<AjusteInventarioDto> ConfirmarAsync(
+            int id,
+            int usuarioId);
+
+        // ========================================
+        // 6. ANULAR AJUSTE EN BORRADOR
+        // ========================================
 
         Task<AjusteInventarioDto> AnularAsync(int id);
     }

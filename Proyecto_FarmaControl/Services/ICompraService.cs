@@ -24,7 +24,7 @@ namespace Proyecto_FarmaControl.Interfaces
         Task<CompraDto> CrearBorradorAsync(
             CompraGuardarDto dto);
 
-        Task<CompraDto> RecibirAsync(int id);
+        Task<CompraDto> RecibirAsync(int id, int usuarioId);
 
         Task<CompraDto> AnularAsync(int id);
     }

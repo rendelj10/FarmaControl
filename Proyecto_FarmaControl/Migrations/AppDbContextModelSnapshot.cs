@@ -33,35 +33,42 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Property<int>("AlmacenId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ConfirmadoPorUsuarioId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Estado")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("FechaAjuste")
-                        .HasColumnType("date");
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("FechaAplicacion")
+                    b.Property<DateTime?>("FechaConfirmacion")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Motivo")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("NumeroDocumento")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("Observaciones")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("TipoAjuste")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NumeroDocumento")
-                        .IsUnique();
+                    b.HasIndex("ConfirmadoPorUsuarioId");
+
+                    b.HasIndex("UsuarioId");
 
                     b.HasIndex("AlmacenId", "Estado");
 
@@ -241,40 +248,37 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Property<int>("AjusteInventarioId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Cantidad")
+                    b.Property<int>("CantidadFisica")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ExistenciasAntes")
+                    b.Property<int>("Diferencia")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ExistenciasDespues")
+                    b.Property<int>("ExistenciaSistema")
                         .HasColumnType("int");
 
                     b.Property<int>("LoteId")
                         .HasColumnType("int");
 
-                    b.Property<int>("MedicamentoId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Observaciones")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<string>("TipoMovimiento")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                    b.Property<string>("Observacion")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("LoteId");
 
-                    b.HasIndex("MedicamentoId");
-
                     b.HasIndex("AjusteInventarioId", "LoteId")
                         .IsUnique();
 
-                    b.ToTable("DetalleAjustesInventario", (string)null);
+                    b.ToTable("DetalleAjustes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DetalleAjustes_CantidadFisica", "[CantidadFisica] >= 0");
+
+                            t.HasCheckConstraint("CK_DetalleAjustes_Diferencia", "[Diferencia] = [CantidadFisica] - [ExistenciaSistema]");
+
+                            t.HasCheckConstraint("CK_DetalleAjustes_ExistenciaSistema", "[ExistenciaSistema] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleCompra", b =>
@@ -321,6 +325,46 @@ namespace Proyecto_FarmaControl.Migrations
                     b.HasIndex("MedicamentoId");
 
                     b.ToTable("DetalleCompras");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleMovimiento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LoteDestinoId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("LoteOrigenId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MovimientoInventarioId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observacion")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoteDestinoId");
+
+                    b.HasIndex("LoteOrigenId");
+
+                    b.HasIndex("MovimientoInventarioId");
+
+                    b.ToTable("DetalleMovimientos", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DetalleMovimientos_AlMenosUnLote", "[LoteOrigenId] IS NOT NULL OR [LoteDestinoId] IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_DetalleMovimientos_Cantidad", "[Cantidad] > 0");
+                        });
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleVenta", b =>
@@ -458,6 +502,82 @@ namespace Proyecto_FarmaControl.Migrations
                         .IsUnique();
 
                     b.ToTable("Medicamentos");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.MovimientoInventario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AjusteInventarioId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AlmacenDestinoId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("AlmacenOrigenId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CompraId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("FechaMovimiento")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Referencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TipoMovimiento")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VentaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AjusteInventarioId")
+                        .IsUnique()
+                        .HasFilter("[AjusteInventarioId] IS NOT NULL");
+
+                    b.HasIndex("AlmacenDestinoId");
+
+                    b.HasIndex("AlmacenOrigenId");
+
+                    b.HasIndex("CompraId")
+                        .IsUnique()
+                        .HasFilter("[CompraId] IS NOT NULL");
+
+                    b.HasIndex("FechaMovimiento");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("VentaId")
+                        .IsUnique()
+                        .HasFilter("[VentaId] IS NOT NULL");
+
+                    b.ToTable("MovimientosInventario", (string)null);
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Permiso", b =>
@@ -1324,7 +1444,22 @@ namespace Proyecto_FarmaControl.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Proyecto_FarmaControl.Models.Usuario", "ConfirmadoPorUsuario")
+                        .WithMany()
+                        .HasForeignKey("ConfirmadoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Almacen");
+
+                    b.Navigation("ConfirmadoPorUsuario");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Almacen", b =>
@@ -1371,17 +1506,9 @@ namespace Proyecto_FarmaControl.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Proyecto_FarmaControl.Models.Medicamento", "Medicamento")
-                        .WithMany()
-                        .HasForeignKey("MedicamentoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("AjusteInventario");
 
                     b.Navigation("Lote");
-
-                    b.Navigation("Medicamento");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleCompra", b =>
@@ -1408,6 +1535,31 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Navigation("Lote");
 
                     b.Navigation("Medicamento");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleMovimiento", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Lote", "LoteDestino")
+                        .WithMany()
+                        .HasForeignKey("LoteDestinoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Lote", "LoteOrigen")
+                        .WithMany()
+                        .HasForeignKey("LoteOrigenId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.MovimientoInventario", "MovimientoInventario")
+                        .WithMany("Detalles")
+                        .HasForeignKey("MovimientoInventarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LoteDestino");
+
+                    b.Navigation("LoteOrigen");
+
+                    b.Navigation("MovimientoInventario");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.DetalleVenta", b =>
@@ -1465,6 +1617,52 @@ namespace Proyecto_FarmaControl.Migrations
                         .IsRequired();
 
                     b.Navigation("Categoria");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.MovimientoInventario", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.AjusteInventario", "AjusteInventario")
+                        .WithOne("MovimientoInventario")
+                        .HasForeignKey("Proyecto_FarmaControl.Models.MovimientoInventario", "AjusteInventarioId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Almacen", "AlmacenDestino")
+                        .WithMany()
+                        .HasForeignKey("AlmacenDestinoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Almacen", "AlmacenOrigen")
+                        .WithMany()
+                        .HasForeignKey("AlmacenOrigenId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Compra", "Compra")
+                        .WithOne()
+                        .HasForeignKey("Proyecto_FarmaControl.Models.MovimientoInventario", "CompraId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Venta", "Venta")
+                        .WithOne()
+                        .HasForeignKey("Proyecto_FarmaControl.Models.MovimientoInventario", "VentaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AjusteInventario");
+
+                    b.Navigation("AlmacenDestino");
+
+                    b.Navigation("AlmacenOrigen");
+
+                    b.Navigation("Compra");
+
+                    b.Navigation("Usuario");
+
+                    b.Navigation("Venta");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.RolePermission", b =>
@@ -1538,9 +1736,16 @@ namespace Proyecto_FarmaControl.Migrations
             modelBuilder.Entity("Proyecto_FarmaControl.Models.AjusteInventario", b =>
                 {
                     b.Navigation("Detalles");
+
+                    b.Navigation("MovimientoInventario");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Compra", b =>
+                {
+                    b.Navigation("Detalles");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.MovimientoInventario", b =>
                 {
                     b.Navigation("Detalles");
                 });

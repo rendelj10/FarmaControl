@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Proyecto_FarmaControl.DTOs;
 using Proyecto_FarmaControl.Interfaces;
-using Proyecto_FarmaControl.Services;
 
 namespace Proyecto_FarmaControl.Controllers
 {

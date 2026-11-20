@@ -1,5 +1,9 @@
 ﻿
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Proyecto_FarmaControl.DTOs;
@@ -21,7 +25,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // 1. CONSULTAR TODOS
+        // 1. CONSULTAR TODOS LOS AJUSTES
         // ========================================
 
         public async Task<List<AjusteInventarioDto>>
@@ -35,7 +39,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // 2. CONSULTAR POR ID
+        // 2. CONSULTAR AJUSTE POR ID
         // ========================================
 
         public async Task<AjusteInventarioDto?>
@@ -46,7 +50,8 @@ namespace Proyecto_FarmaControl.Services
                 return null;
             }
 
-            var ajuste = await _repository.ObtenerPorIdAsync(id);
+            var ajuste = await _repository
+                .ObtenerPorIdAsync(id);
 
             return ajuste == null
                 ? null
@@ -54,11 +59,12 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // 3. DATATABLES
+        // 3. CONSULTAR AJUSTES PAGINADOS
         // ========================================
 
         public Task<DataTablesResponseDto<AjusteInventarioDto>>
-            ObtenerPaginadasAsync(DataTablesRequestDto request)
+            ObtenerPaginadasAsync(
+                DataTablesRequestDto request)
         {
             ArgumentNullException.ThrowIfNull(request);
 
@@ -70,17 +76,13 @@ namespace Proyecto_FarmaControl.Services
         // ========================================
 
         public async Task<AjusteInventarioDto>
-            CrearBorradorAsync(AjusteInventarioGuardarDto dto)
+            CrearBorradorAsync(
+                AjusteInventarioGuardarDto dto,
+                int usuarioId)
         {
             ArgumentNullException.ThrowIfNull(dto);
 
-            ValidarAjuste(dto);
-
-            string documento = dto.NumeroDocumento
-                .Trim()
-                .ToUpperInvariant();
-
-            string motivo = dto.Motivo.Trim();
+            ValidarAjuste(dto, usuarioId);
 
             // VALIDAR ALMACEN
 
@@ -91,118 +93,120 @@ namespace Proyecto_FarmaControl.Services
                     "El almacén no existe o está inactivo.");
             }
 
-            // VALIDAR DOCUMENTO UNICO
+            string tipoAjuste =
+                NormalizarTipoAjuste(dto.TipoAjuste);
 
-            if (await _repository.ExisteDocumentoAsync(documento))
-            {
-                throw new InvalidOperationException(
-                    "Ya existe un ajuste con ese documento.");
-            }
-
-            // VALIDAR MEDICAMENTOS
-
-            await ValidarMedicamentosAsync(
-                dto.Detalles.Select(d => d.MedicamentoId));
-
-            // NO REPETIR LOTES EN UN MISMO AJUSTE
+            string motivo = dto.Motivo.Trim();
 
             var lotesProcesados = new HashSet<int>();
 
-            var detalles = new List<DetalleAjusteInventario>();
+            var detalles =
+                new List<DetalleAjusteInventario>();
 
-            foreach (var detalle in dto.Detalles)
+            // UN AJUSTE SOLO PUEDE GENERAR ENTRADAS O SALIDAS,
+            // NUNCA AMBOS TIPOS DE MOVIMIENTO.
+            // 1 = ENTRADA; -1 = SALIDA.
+            int? sentidoAjuste = null;
+
+            // VALIDAR CADA LOTE Y SU CONTEO
+
+            foreach (var detalleDto in dto.Detalles)
             {
-                if (!lotesProcesados.Add(detalle.LoteId))
+                if (!lotesProcesados.Add(detalleDto.LoteId))
                 {
                     throw new ArgumentException(
                         "Un lote no puede repetirse " +
                         "dentro del mismo ajuste.");
                 }
 
-                string tipo = NormalizarTipoMovimiento(
-                    detalle.TipoMovimiento);
-
-                // CONSULTAR LOTE
-
                 var lote = await _repository
-                    .ObtenerLoteParaConsultaAsync(detalle.LoteId);
+                    .ObtenerLoteParaConsultaAsync(
+                        detalleDto.LoteId);
 
                 if (lote == null ||
                     !lote.Activo ||
                     lote.AlmacenId != dto.AlmacenId ||
-                    lote.MedicamentoId != detalle.MedicamentoId)
+                    lote.Medicamento == null ||
+                    !lote.Medicamento.Activo)
                 {
                     throw new ArgumentException(
                         "El lote no existe, está inactivo " +
-                        "o no corresponde al medicamento " +
-                        "y almacén seleccionados.");
+                        "o no pertenece a un medicamento " +
+                        "activo del almacén seleccionado.");
                 }
 
-                // No incrementar unidades de un
-                // lote vencido.
-                //
-                // Se permite una Salida por pérdidas
-                // o daños de un lote vencido.
-
-                if (tipo == "Entrada" &&
-                    lote.FechaVencimiento.Date <= DateTime.Today)
+                if (lote.Existencias < 0)
                 {
                     throw new InvalidOperationException(
-                        "No se pueden ingresar existencias " +
-                        "a un lote vencido.");
+                        "El lote tiene existencias inválidas.");
                 }
 
-                // Comprobacion preliminar.
-                // El borrador NO reserva existencias.
-                // Se revisara nuevamente al aplicar.
+                // EL SERVICIO CALCULA LA DIFERENCIA
 
-                if (tipo == "Salida" &&
-                    lote.Existencias < detalle.Cantidad)
-                {
-                    throw new InvalidOperationException(
-                        $"Existencias insuficientes " +
-                        $"en el lote {lote.NumeroLote}.");
-                }
+                int diferencia =
+                    detalleDto.CantidadFisica -
+                    lote.Existencias;
 
-                if (tipo == "Entrada" &&
-                    lote.Existencias >
-                    int.MaxValue - detalle.Cantidad)
+                if (diferencia != 0)
                 {
-                    throw new InvalidOperationException(
-                        "La entrada supera el límite " +
-                        "permitido de existencias.");
+                    int sentidoActual = Math.Sign(diferencia);
+
+                    if (sentidoAjuste.HasValue &&
+                        sentidoAjuste.Value != sentidoActual)
+                    {
+                        throw new ArgumentException(
+                            "Un ajuste no puede combinar " +
+                            "entradas y salidas. Registre " +
+                            "un ajuste de entrada y otro " +
+                            "de salida por separado.");
+                    }
+
+                    sentidoAjuste = sentidoActual;
                 }
 
                 detalles.Add(new DetalleAjusteInventario
                 {
-                    MedicamentoId = detalle.MedicamentoId,
+                    LoteId = lote.Id,
 
-                    LoteId = detalle.LoteId,
+                    ExistenciaSistema =
+                        lote.Existencias,
 
-                    TipoMovimiento = tipo,
+                    CantidadFisica =
+                        detalleDto.CantidadFisica,
 
-                    Cantidad = detalle.Cantidad,
+                    Diferencia = diferencia,
 
-                    ExistenciasAntes = null,
-
-                    ExistenciasDespues = null,
-
-                    Observaciones = NormalizarOpcional(
-                        detalle.Observaciones)
+                    Observacion = NormalizarOpcional(
+                        detalleDto.Observacion)
                 });
             }
 
-            // CREAR ENCABEZADO
+            // NO SE REGISTRAN AJUSTES SIN DIFERENCIAS,
+            // PORQUE NO GENERARÍAN UN MOVIMIENTO REAL.
+
+            if (!sentidoAjuste.HasValue)
+            {
+                throw new ArgumentException(
+                    "No existen diferencias entre las " +
+                    "existencias del sistema y el conteo físico. " +
+                    "No es necesario registrar un ajuste.");
+            }
+
+            // CREAR CABECERA DEL AJUSTE
 
             var ajuste = new AjusteInventario
             {
                 AlmacenId = dto.AlmacenId,
 
-                NumeroDocumento = documento,
+                UsuarioId = usuarioId,
 
-                FechaAjuste = dto.FechaAjuste.Date,
+                FechaAjuste = dto.FechaAjuste,
 
-                FechaAplicacion = null,
+                FechaConfirmacion = null,
+
+                ConfirmadoPorUsuarioId = null,
+
+                TipoAjuste = tipoAjuste,
 
                 Estado = "Borrador",
 
@@ -214,7 +218,7 @@ namespace Proyecto_FarmaControl.Services
                 Detalles = detalles
             };
 
-            // GUARDAR SIN AFECTAR INVENTARIO
+            // GUARDAR SIN MODIFICAR EXISTENCIAS
 
             try
             {
@@ -225,8 +229,7 @@ namespace Proyecto_FarmaControl.Services
             {
                 throw new InvalidOperationException(
                     "No se pudo registrar el ajuste " +
-                    "porque existe un conflicto " +
-                    "con otro registro.",
+                    "por un conflicto en la base de datos.",
                     ex);
             }
 
@@ -236,10 +239,11 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // 5. APLICAR AJUSTE AL INVENTARIO
+        // 5. CONFIRMAR AJUSTE
         // ========================================
 
-        public async Task<AjusteInventarioDto> AplicarAsync(int id)
+        public async Task<AjusteInventarioDto>
+            ConfirmarAsync(int id, int usuarioId)
         {
             if (id <= 0)
             {
@@ -247,9 +251,16 @@ namespace Proyecto_FarmaControl.Services
                     "El identificador del ajuste no es válido.");
             }
 
+            if (usuarioId <= 0)
+            {
+                throw new ArgumentException(
+                    "No se pudo identificar al usuario " +
+                    "que confirma el ajuste.");
+            }
+
             await EjecutarSeguroAsync(async () =>
             {
-                // OBTENER AJUSTE CON BLOQUEO
+                // OBTENER AJUSTE CON BLOQUEO SQL
 
                 var ajuste = await _repository
                     .ObtenerParaProcesarAsync(id);
@@ -260,12 +271,12 @@ namespace Proyecto_FarmaControl.Services
                         "El ajuste no existe.");
                 }
 
-                // COMPROBAR ESTADO
+                // SOLO CONFIRMAR BORRADORES
 
                 if (ajuste.Estado != "Borrador")
                 {
                     throw new InvalidOperationException(
-                        "Solamente se pueden aplicar " +
+                        "Solamente se pueden confirmar " +
                         "ajustes en estado Borrador.");
                 }
 
@@ -284,28 +295,27 @@ namespace Proyecto_FarmaControl.Services
                         "El almacén está inactivo.");
                 }
 
-                // VALIDAR MEDICAMENTOS
-
-                await ValidarMedicamentosAsync(
-                    ajuste.Detalles.Select(d => d.MedicamentoId));
-
-                // ORDEN CONSISTENTE DE LOTES
-                // PARA REDUCIR BLOQUEOS CRUZADOS
+                // PROCESAR LOTES EN ORDEN Y VALIDAR QUE TODOS
+                // TENGAN EL MISMO SENTIDO DE AJUSTE.
 
                 var detallesOrdenados = ajuste.Detalles
                     .OrderBy(d => d.LoteId)
                     .ThenBy(d => d.Id)
                     .ToList();
 
-                var lotesProcesados = new HashSet<int>();
+                var lotesProcesados =
+                    new HashSet<int>();
+
+                var cambiosLote =
+                    new List<(DetalleAjusteInventario Detalle,
+                              Lote Lote,
+                              int Diferencia)>();
+
+                int? sentidoAjuste = null;
 
                 foreach (var detalle in detallesOrdenados)
                 {
-                    if (detalle.Cantidad <= 0)
-                    {
-                        throw new InvalidOperationException(
-                            "El ajuste contiene una cantidad inválida.");
-                    }
+                    // EVITAR LOTES REPETIDOS
 
                     if (!lotesProcesados.Add(detalle.LoteId))
                     {
@@ -313,110 +323,193 @@ namespace Proyecto_FarmaControl.Services
                             "El ajuste contiene un lote repetido.");
                     }
 
-                    string tipo = NormalizarTipoMovimiento(
-                        detalle.TipoMovimiento);
+                    if (detalle.CantidadFisica < 0 ||
+                        detalle.ExistenciaSistema < 0)
+                    {
+                        throw new InvalidOperationException(
+                            "El ajuste contiene cantidades inválidas.");
+                    }
 
-                    // BLOQUEAR LOTE ANTES DE LEER STOCK
+                    // OBTENER LOTE CON BLOQUEO
 
                     var lote = await _repository
                         .ObtenerLoteParaAjustarAsync(
                             detalle.LoteId);
 
-                    if (lote == null)
+                    if (lote == null || !lote.Activo)
                     {
                         throw new InvalidOperationException(
-                            "Uno de los lotes ya no existe.");
-                    }
-
-                    if (!lote.Activo)
-                    {
-                        throw new InvalidOperationException(
-                            "Uno de los lotes está inactivo.");
+                            "Uno de los lotes no existe " +
+                            "o está inactivo.");
                     }
 
                     if (lote.AlmacenId != ajuste.AlmacenId ||
-                        lote.MedicamentoId != detalle.MedicamentoId)
+                        lote.Medicamento == null ||
+                        !lote.Medicamento.Activo)
                     {
                         throw new InvalidOperationException(
-                            "El lote no corresponde " +
-                            "al medicamento o al almacén.");
+                            "El lote no pertenece a un " +
+                            "medicamento activo del almacén.");
                     }
 
-                    int antes = lote.Existencias;
+                    // VALIDAR QUE EL INVENTARIO NO CAMBIÓ
+                    // DESPUÉS DE REGISTRAR EL CONTEO.
 
-                    int despues;
-
-                    // ====================================
-                    // ENTRADA DE INVENTARIO
-                    // ====================================
-
-                    if (tipo == "Entrada")
+                    if (lote.Existencias !=
+                        detalle.ExistenciaSistema)
                     {
-                        if (lote.FechaVencimiento.Date
-                            <= DateTime.Today)
-                        {
-                            throw new InvalidOperationException(
-                                "No se pueden incrementar " +
-                                "las existencias de un lote vencido.");
-                        }
-
-                        if (antes > int.MaxValue - detalle.Cantidad)
-                        {
-                            throw new InvalidOperationException(
-                                "La entrada supera el límite " +
-                                "permitido de existencias.");
-                        }
-
-                        despues = antes + detalle.Cantidad;
+                        throw new InvalidOperationException(
+                            $"Las existencias del lote " +
+                            $"{lote.NumeroLote} cambiaron " +
+                            "después del conteo. " +
+                            "Es necesario registrar un " +
+                            "conteo actualizado.");
                     }
-                    // ====================================
-                    // SALIDA DE INVENTARIO
-                    // ====================================
-                    else
+
+                    // RECALCULAR LA DIFERENCIA ANTES DE CONFIRMAR.
+
+                    int diferencia =
+                        detalle.CantidadFisica -
+                        lote.Existencias;
+
+                    if (diferencia != 0)
                     {
-                        if (antes < detalle.Cantidad)
+                        int sentidoActual = Math.Sign(diferencia);
+
+                        if (sentidoAjuste.HasValue &&
+                            sentidoAjuste.Value != sentidoActual)
                         {
                             throw new InvalidOperationException(
-                                $"Existencias insuficientes " +
-                                $"en el lote {lote.NumeroLote}. " +
-                                $"Disponible: {antes}. " +
-                                $"Solicitado: {detalle.Cantidad}.");
+                                "El ajuste contiene entradas y salidas. " +
+                                "Divida el conteo en dos ajustes " +
+                                "independientes: uno de entrada y otro " +
+                                "de salida.");
                         }
 
-                        despues = antes - detalle.Cantidad;
+                        sentidoAjuste = sentidoActual;
                     }
 
-                    // ====================================
-                    // GUARDAR HISTORIAL Y EXISTENCIAS
-                    // ====================================
+                    detalle.ExistenciaSistema = lote.Existencias;
+                    detalle.Diferencia = diferencia;
 
-                    detalle.TipoMovimiento = tipo;
-
-                    detalle.ExistenciasAntes = antes;
-
-                    detalle.ExistenciasDespues = despues;
-
-                    lote.Existencias = despues;
+                    cambiosLote.Add((
+                        detalle,
+                        lote,
+                        diferencia));
                 }
 
-                // EL ESTADO SE GUARDA EN LA MISMA
-                // TRANSACCION QUE LAS EXISTENCIAS
+                // UN AJUSTE SIN DIFERENCIAS NO GENERA MOVIMIENTO.
 
-                ajuste.Estado = "Aplicado";
+                if (!sentidoAjuste.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "No existen diferencias entre las " +
+                        "existencias del sistema y el conteo físico. " +
+                        "No se puede confirmar un ajuste sin cambios.");
+                }
 
-                ajuste.FechaAplicacion = DateTime.UtcNow;
+                // ACTUALIZAR LOTES Y CONSTRUIR LOS DETALLES
+                // DEL MOVIMIENTO DESPUÉS DE VALIDAR TODO EL AJUSTE.
+
+                var detallesMovimiento =
+                    new List<DetalleMovimiento>();
+
+                foreach (var cambio in cambiosLote)
+                {
+                    var detalle = cambio.Detalle;
+                    var lote = cambio.Lote;
+                    int diferencia = cambio.Diferencia;
+
+                    lote.Existencias = detalle.CantidadFisica;
+
+                    if (diferencia > 0)
+                    {
+                        detallesMovimiento.Add(
+                            new DetalleMovimiento
+                            {
+                                LoteDestinoId = lote.Id,
+                                Cantidad = diferencia,
+                                Observacion = detalle.Observacion
+                            });
+                    }
+                    else if (diferencia < 0)
+                    {
+                        detallesMovimiento.Add(
+                            new DetalleMovimiento
+                            {
+                                LoteOrigenId = lote.Id,
+                                Cantidad = Math.Abs(diferencia),
+                                Observacion = detalle.Observacion
+                            });
+                    }
+                }
+
+                DateTime fechaConfirmacion =
+                    DateTime.UtcNow;
+
+                // CREAR MOVIMIENTO DE INVENTARIO CON EL TIPO
+                // Y EL ALMACÉN CORRESPONDIENTES AL SENTIDO.
+
+                var movimiento =
+                    new MovimientoInventario
+                    {
+                        TipoMovimiento = sentidoAjuste.Value > 0
+                            ? "AjusteEntrada"
+                            : "AjusteSalida",
+
+                        AlmacenOrigenId = sentidoAjuste.Value < 0
+                            ? ajuste.AlmacenId
+                            : null,
+
+                        AlmacenDestinoId = sentidoAjuste.Value > 0
+                            ? ajuste.AlmacenId
+                            : null,
+
+                        UsuarioId = usuarioId,
+
+                        AjusteInventarioId = ajuste.Id,
+
+                        FechaMovimiento =
+                        fechaConfirmacion,
+
+                        Motivo = ajuste.Motivo,
+
+                        Estado = "Confirmado",
+
+                        Observaciones =
+                        ajuste.Observaciones,
+
+                        Detalles = detallesMovimiento
+                    };
+
+                await _repository
+                    .AgregarMovimientoAsync(movimiento);
+
+                // CONFIRMAR AJUSTE
+
+                ajuste.Estado = "Confirmado";
+
+                ajuste.ConfirmadoPorUsuarioId =
+                    usuarioId;
+
+                ajuste.FechaConfirmacion =
+                    fechaConfirmacion;
+
+                // EL REPOSITORIO GUARDA TODO
+                // DENTRO DE LA MISMA TRANSACCION
             });
 
             return await ObtenerPorIdAsync(id)
                 ?? throw new InvalidOperationException(
-                    "No se pudo consultar el ajuste aplicado.");
+                    "No se pudo consultar el ajuste confirmado.");
         }
 
         // ========================================
         // 6. ANULAR AJUSTE EN BORRADOR
         // ========================================
 
-        public async Task<AjusteInventarioDto> AnularAsync(int id)
+        public async Task<AjusteInventarioDto>
+            AnularAsync(int id)
         {
             if (id <= 0)
             {
@@ -442,9 +535,6 @@ namespace Proyecto_FarmaControl.Services
                         "ajustes en estado Borrador.");
                 }
 
-                // Un borrador no modifico existencias.
-                // No es necesario revertir inventario.
-
                 ajuste.Estado = "Anulado";
             });
 
@@ -454,12 +544,19 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // 7. VALIDAR DTO Y DETALLES
+        // 7. VALIDAR DATOS DE ENTRADA
         // ========================================
 
         private static void ValidarAjuste(
-            AjusteInventarioGuardarDto dto)
+            AjusteInventarioGuardarDto dto,
+            int usuarioId)
         {
+            if (usuarioId <= 0)
+            {
+                throw new ArgumentException(
+                    "No se pudo identificar al usuario.");
+            }
+
             var errores = new List<ValidationResult>();
 
             bool valido = Validator.TryValidateObject(
@@ -475,11 +572,13 @@ namespace Proyecto_FarmaControl.Services
                     ?? "Los datos del ajuste no son válidos.");
             }
 
-            if (string.IsNullOrWhiteSpace(dto.NumeroDocumento))
+            if (dto.FechaAjuste == default)
             {
                 throw new ArgumentException(
-                    "El documento del ajuste es obligatorio.");
+                    "La fecha del ajuste no es válida.");
             }
+
+            NormalizarTipoAjuste(dto.TipoAjuste);
 
             if (string.IsNullOrWhiteSpace(dto.Motivo))
             {
@@ -487,23 +586,18 @@ namespace Proyecto_FarmaControl.Services
                     "El motivo del ajuste es obligatorio.");
             }
 
-            if (dto.FechaAjuste == default)
-            {
-                throw new ArgumentException(
-                    "La fecha del ajuste no es válida.");
-            }
-
             if (dto.Detalles == null ||
                 dto.Detalles.Count == 0)
             {
                 throw new ArgumentException(
-                    "Debe registrar al menos un detalle.");
+                    "Debe registrar al menos un lote.");
             }
 
             if (dto.Detalles.Count > 200)
             {
                 throw new ArgumentException(
-                    "Un ajuste no puede superar 200 detalles.");
+                    "Un ajuste no puede tener " +
+                    "más de 200 detalles.");
             }
 
             foreach (var detalle in dto.Detalles)
@@ -528,80 +622,52 @@ namespace Proyecto_FarmaControl.Services
                         errores.FirstOrDefault()?.ErrorMessage
                         ?? "Hay un detalle inválido.");
                 }
-
-                NormalizarTipoMovimiento(
-                    detalle.TipoMovimiento);
             }
         }
 
         // ========================================
-        // 8. VALIDAR MEDICAMENTOS ACTIVOS
+        // 8. NORMALIZAR TIPO DE AJUSTE
         // ========================================
 
-        private async Task ValidarMedicamentosAsync(
-            IEnumerable<int> ids)
+        private static string NormalizarTipoAjuste(
+            string? tipoAjuste)
         {
-            var requeridos = ids.Distinct().ToArray();
-
-            if (requeridos.Length == 0 ||
-                requeridos.Any(id => id <= 0))
-            {
-                throw new ArgumentException(
-                    "Debe seleccionar medicamentos válidos.");
-            }
-
-            var activos = await _repository
-                .ObtenerMedicamentosActivosAsync(requeridos);
-
-            if (activos.Distinct().Count() != requeridos.Length)
-            {
-                throw new ArgumentException(
-                    "Uno o más medicamentos no existen " +
-                    "o se encuentran inactivos.");
-            }
-        }
-
-        // ========================================
-        // 9. NORMALIZAR MOVIMIENTO
-        // ========================================
-
-        private static string NormalizarTipoMovimiento(
-            string? tipo)
-        {
-            string valor = (tipo ?? string.Empty).Trim();
+            string valor =
+                (tipoAjuste ?? string.Empty).Trim();
 
             if (valor.Equals(
-                "Entrada",
+                "Conteo",
                 StringComparison.OrdinalIgnoreCase))
             {
-                return "Entrada";
+                return "Conteo";
             }
 
             if (valor.Equals(
-                "Salida",
-                StringComparison.OrdinalIgnoreCase))
+                "Correccion",
+                StringComparison.OrdinalIgnoreCase) ||
+                valor.Equals(
+                    "Corrección",
+                    StringComparison.OrdinalIgnoreCase))
             {
-                return "Salida";
+                return "Correccion";
             }
 
             throw new ArgumentException(
-                "El tipo de movimiento debe ser " +
-                "Entrada o Salida.");
+                "El tipo de ajuste debe ser " +
+                "Conteo o Correccion.");
         }
 
         // ========================================
-        // 10. CONTROL DE CONCURRENCIA SQL SERVER
+        // 9. EJECUTAR OPERACION SEGURA
         // ========================================
 
         private async Task EjecutarSeguroAsync(
             Func<Task> operacion)
         {
-            ArgumentNullException.ThrowIfNull(operacion);
-
             try
             {
-                await _repository.EjecutarEnTransaccionAsync(
-                    operacion);
+                await _repository
+                    .EjecutarEnTransaccionAsync(operacion);
             }
             catch (DbUpdateConcurrencyException ex)
             {
@@ -614,38 +680,37 @@ namespace Proyecto_FarmaControl.Services
                 when (EsConflictoSql(ex))
             {
                 throw new InvalidOperationException(
-                    "Se produjo un conflicto al guardar " +
-                    "el ajuste o las existencias.",
+                    "Se produjo un conflicto al " +
+                    "guardar el ajuste o las existencias.",
                     ex);
             }
             catch (SqlException ex)
                 when (EsConflictoSql(ex))
             {
                 throw new InvalidOperationException(
-                    "SQL Server detectó operaciones " +
-                    "simultáneas en conflicto. " +
+                    "SQL Server detectó un conflicto " +
+                    "entre operaciones simultáneas. " +
                     "Consultá el estado del ajuste " +
                     "antes de reintentar.",
                     ex);
             }
         }
 
-        private static bool EsConflictoSql(Exception error)
+        // ========================================
+        // 10. DETECTAR CONFLICTOS SQL
+        // ========================================
+
+        private static bool EsConflictoSql(
+            Exception error)
         {
-            for (
-                Exception? actual = error;
-                actual != null;
-                actual = actual.InnerException)
+            for (Exception? actual = error;
+                 actual != null;
+                 actual = actual.InnerException)
             {
                 if (actual is SqlException sql)
                 {
                     foreach (SqlError detalle in sql.Errors)
                     {
-                        // 1205: Interbloqueo
-                        // 1222: Tiempo de bloqueo agotado
-                        // 2601: Indice unico duplicado
-                        // 2627: Restriccion unica duplicada
-
                         if (detalle.Number == 1205 ||
                             detalle.Number == 1222 ||
                             detalle.Number == 2601 ||
@@ -661,7 +726,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // 11. NORMALIZAR TEXTOS OPCIONALES
+        // 11. NORMALIZAR TEXTO OPCIONAL
         // ========================================
 
         private static string? NormalizarOpcional(
@@ -673,7 +738,7 @@ namespace Proyecto_FarmaControl.Services
         }
 
         // ========================================
-        // 12. MAPEAR MODELO A DTO
+        // 12. CONVERTIR MODELO A DTO
         // ========================================
 
         private static AjusteInventarioDto MapearDto(
@@ -686,13 +751,27 @@ namespace Proyecto_FarmaControl.Services
                 AlmacenId = ajuste.AlmacenId,
 
                 AlmacenNombre =
-                    ajuste.Almacen?.Nombre ?? string.Empty,
+                    ajuste.Almacen?.Nombre
+                    ?? string.Empty,
 
-                NumeroDocumento = ajuste.NumeroDocumento,
+                UsuarioId = ajuste.UsuarioId,
+
+                UsuarioNombre =
+                    ajuste.Usuario?.UserName
+                    ?? string.Empty,
+
+                ConfirmadoPorUsuarioId =
+                    ajuste.ConfirmadoPorUsuarioId,
+
+                ConfirmadoPorUsuarioNombre =
+                    ajuste.ConfirmadoPorUsuario?.UserName,
 
                 FechaAjuste = ajuste.FechaAjuste,
 
-                FechaAplicacion = ajuste.FechaAplicacion,
+                FechaConfirmacion =
+                    ajuste.FechaConfirmacion,
+
+                TipoAjuste = ajuste.TipoAjuste,
 
                 Estado = ajuste.Estado,
 
@@ -700,39 +779,45 @@ namespace Proyecto_FarmaControl.Services
 
                 Observaciones = ajuste.Observaciones,
 
+                MovimientoInventarioId =
+                    ajuste.MovimientoInventario?.Id,
+
                 Detalles = ajuste.Detalles
                     .OrderBy(d => d.Id)
-                    .Select(d => new DetalleAjusteInventarioDto
-                    {
-                        Id = d.Id,
+                    .Select(d =>
+                        new DetalleAjusteInventarioDto
+                        {
+                            Id = d.Id,
 
-                        AjusteInventarioId =
-                            d.AjusteInventarioId,
+                            AjusteInventarioId =
+                                d.AjusteInventarioId,
 
-                        MedicamentoId = d.MedicamentoId,
+                            LoteId = d.LoteId,
 
-                        MedicamentoNombre =
-                            d.Medicamento?.Nombre
-                            ?? string.Empty,
+                            NumeroLote =
+                                d.Lote?.NumeroLote
+                                ?? string.Empty,
 
-                        LoteId = d.LoteId,
+                            MedicamentoId =
+                                d.Lote?.MedicamentoId
+                                ?? 0,
 
-                        NumeroLote =
-                            d.Lote?.NumeroLote
-                            ?? string.Empty,
+                            MedicamentoNombre =
+                                d.Lote?.Medicamento?.Nombre
+                                ?? string.Empty,
 
-                        TipoMovimiento = d.TipoMovimiento,
+                            ExistenciaSistema =
+                                d.ExistenciaSistema,
 
-                        Cantidad = d.Cantidad,
+                            CantidadFisica =
+                                d.CantidadFisica,
 
-                        ExistenciasAntes =
-                            d.ExistenciasAntes,
+                            Diferencia =
+                                d.Diferencia,
 
-                        ExistenciasDespues =
-                            d.ExistenciasDespues,
-
-                        Observaciones = d.Observaciones
-                    })
+                            Observacion =
+                                d.Observacion
+                        })
                     .ToList()
             };
         }

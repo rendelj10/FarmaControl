@@ -1,4 +1,9 @@
 ﻿
+using System;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_FarmaControl.DTOs;
@@ -9,11 +14,14 @@ namespace Proyecto_FarmaControl.Controllers
     public class AjusteInventarioController : Controller
     {
         private readonly IAjusteInventarioService _service;
+        private readonly IAntiforgery _antiforgery;
 
         public AjusteInventarioController(
-            IAjusteInventarioService service)
+            IAjusteInventarioService service,
+            IAntiforgery antiforgery)
         {
             _service = service;
+            _antiforgery = antiforgery;
         }
 
         // ========================================
@@ -29,7 +37,29 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // ========================================
-        // 2. DATATABLES - PAGINACION SQL
+        // 2. OBTENER TOKEN ANTIFALSIFICACION
+        // GET: /AjusteInventario/ObtenerToken
+        // ========================================
+
+        [Authorize]
+        [HttpGet]
+        [ResponseCache(
+            NoStore = true,
+            Location = ResponseCacheLocation.None)]
+        public IActionResult ObtenerToken()
+        {
+            var tokens =
+                _antiforgery.GetAndStoreTokens(HttpContext);
+
+            return Ok(new
+            {
+                success = true,
+                requestToken = tokens.RequestToken
+            });
+        }
+
+        // ========================================
+        // 3. DATATABLES
         // POST: /AjusteInventario/GetData
         // ========================================
 
@@ -54,7 +84,7 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // ========================================
-        // 3. CONSULTAR TODOS LOS AJUSTES
+        // 4. CONSULTAR TODOS LOS AJUSTES
         // GET: /AjusteInventario/GetAll
         // ========================================
 
@@ -69,7 +99,7 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // ========================================
-        // 4. CONSULTAR AJUSTE POR ID
+        // 5. CONSULTAR AJUSTE POR ID
         // GET: /AjusteInventario/GetById?id=1
         // ========================================
 
@@ -102,7 +132,7 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // ========================================
-        // 5. CREAR AJUSTE EN BORRADOR
+        // 6. REGISTRAR AJUSTE EN BORRADOR
         // POST: /AjusteInventario/Create
         // ========================================
 
@@ -117,33 +147,37 @@ namespace Proyecto_FarmaControl.Controllers
                 return BadRequest(new
                 {
                     success = false,
-                    message =
-                        "Los datos del ajuste no son válidos."
+                    message = "Los datos del ajuste no son válidos."
+                });
+            }
+
+            if (!ObtenerUsuarioId(out int usuarioId))
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "No se pudo identificar al usuario."
                 });
             }
 
             try
             {
                 var ajuste = await _service
-                    .CrearBorradorAsync(dto);
+                    .CrearBorradorAsync(dto, usuarioId);
 
                 return Ok(new
                 {
                     success = true,
-
                     id = ajuste.Id,
-
-                    numeroDocumento =
-                        ajuste.NumeroDocumento,
-
+                    almacenId = ajuste.AlmacenId,
+                    tipoAjuste = ajuste.TipoAjuste,
                     estado = ajuste.Estado,
-
                     motivo = ajuste.Motivo,
-
+                    fechaAjuste = ajuste.FechaAjuste,
+                    detalles = ajuste.Detalles,
                     message =
-                        "Ajuste registrado en borrador " +
-                        "correctamente. No se modificaron " +
-                        "las existencias."
+                        "Ajuste registrado en borrador. " +
+                        "Las existencias no fueron modificadas."
                 });
             }
             catch (ArgumentException ex)
@@ -165,14 +199,40 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // ========================================
-        // 6. APLICAR AJUSTE AL INVENTARIO
+        // 7. CONFIRMAR AJUSTE DE INVENTARIO
+        // POST: /AjusteInventario/Confirmar?id=1
+        // ========================================
+
+        [Authorize(Policy = "ajuste.aplicar")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Confirmar(int id)
+        {
+            return ConfirmarAjusteInterno(id);
+        }
+
+        // ========================================
+        // 8. COMPATIBILIDAD CON ACCION ANTERIOR
         // POST: /AjusteInventario/Aplicar?id=1
         // ========================================
 
         [Authorize(Policy = "ajuste.aplicar")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Aplicar(int id)
+        public Task<IActionResult> Aplicar(int id)
+        {
+            return ConfirmarAjusteInterno(id);
+        }
+
+        // ========================================
+        // 9. ANULAR AJUSTE EN BORRADOR
+        // POST: /AjusteInventario/Anular?id=1
+        // ========================================
+
+        [Authorize(Policy = "ajuste.anular")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Anular(int id)
         {
             if (id <= 0)
             {
@@ -185,40 +245,91 @@ namespace Proyecto_FarmaControl.Controllers
 
             try
             {
-                // El servicio verifica:
-                //
-                // - Estado Borrador.
-                // - Almacen activo.
-                // - Medicamentos activos.
-                // - Lotes validos.
-                // - Cantidades disponibles.
-                // - Entradas y salidas.
-                //
-                // La modificacion del inventario
-                // ocurre dentro de una transaccion
-                // SQL Server.
-
                 var ajuste = await _service
-                    .AplicarAsync(id);
+                    .AnularAsync(id);
 
                 return Ok(new
                 {
                     success = true,
-
                     id = ajuste.Id,
-
-                    numeroDocumento =
-                        ajuste.NumeroDocumento,
-
                     estado = ajuste.Estado,
-
-                    fechaAplicacion =
-                        ajuste.FechaAplicacion,
-
-                    detalles = ajuste.Detalles,
-
                     message =
-                        "Ajuste aplicado correctamente. " +
+                        "Ajuste anulado correctamente. " +
+                        "Las existencias no fueron modificadas."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        // ========================================
+        // 10. LOGICA INTERNA DE CONFIRMACION
+        // ========================================
+
+        [NonAction]
+        private async Task<IActionResult>
+            ConfirmarAjusteInterno(int id)
+        {
+            if (id <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "El identificador no es válido."
+                });
+            }
+
+            if (!ObtenerUsuarioId(out int usuarioId))
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "No se pudo identificar al usuario."
+                });
+            }
+
+            try
+            {
+                var ajuste = await _service
+                    .ConfirmarAsync(id, usuarioId);
+
+                return Ok(new
+                {
+                    success = true,
+                    id = ajuste.Id,
+                    estado = ajuste.Estado,
+                    tipoAjuste = ajuste.TipoAjuste,
+                    fechaConfirmacion =
+                        ajuste.FechaConfirmacion,
+                    confirmadoPorUsuarioId =
+                        ajuste.ConfirmadoPorUsuarioId,
+                    movimientoInventarioId =
+                        ajuste.MovimientoInventarioId,
+                    detalles = ajuste.Detalles,
+                    message =
+                        "Ajuste confirmado correctamente. " +
                         "Las existencias fueron actualizadas."
                 });
             }
@@ -249,76 +360,18 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // ========================================
-        // 7. ANULAR AJUSTE EN BORRADOR
-        // POST: /AjusteInventario/Anular?id=1
+        // 11. IDENTIFICAR USUARIO AUTENTICADO
         // ========================================
 
-        [Authorize(Policy = "ajuste.anular")]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Anular(int id)
+        [NonAction]
+        private bool ObtenerUsuarioId(out int usuarioId)
         {
-            if (id <= 0)
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "El identificador no es válido."
-                });
-            }
+            string? identificador = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
 
-            try
-            {
-                // Solo pueden anularse ajustes
-                // que permanezcan en Borrador.
-                //
-                // Un ajuste en Borrador no ha
-                // modificado el inventario.
-
-                var ajuste = await _service
-                    .AnularAsync(id);
-
-                return Ok(new
-                {
-                    success = true,
-
-                    id = ajuste.Id,
-
-                    numeroDocumento =
-                        ajuste.NumeroDocumento,
-
-                    estado = ajuste.Estado,
-
-                    message =
-                        "Ajuste en borrador anulado " +
-                        "correctamente. No se modificaron " +
-                        "las existencias."
-                });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
-            }
+            return int.TryParse(
+                identificador,
+                out usuarioId) && usuarioId > 0;
         }
     }
 }

@@ -213,12 +213,20 @@ namespace Proyecto_FarmaControl.Services
         // 5. CONFIRMAR VENTA
         // ========================================
 
-        public async Task<VentaDto> ConfirmarAsync(int id)
+        public async Task<VentaDto> ConfirmarAsync(
+            int id,
+            int usuarioId)
         {
             if (id <= 0)
             {
                 throw new ArgumentException(
                     "El identificador de la venta no es válido.");
+            }
+
+            if (usuarioId <= 0)
+            {
+                throw new ArgumentException(
+                    "No se pudo identificar al usuario que confirma la venta.");
             }
 
             await EjecutarSeguroAsync(async () =>
@@ -278,6 +286,9 @@ namespace Proyecto_FarmaControl.Services
                     .ToList();
 
                 var lotesProcesados = new HashSet<int>();
+
+                var detallesMovimiento =
+                    new List<DetalleMovimiento>();
 
                 foreach (var detalle in detallesOrdenados)
                 {
@@ -343,14 +354,42 @@ namespace Proyecto_FarmaControl.Services
                     // Descontar una sola vez.
 
                     lote.Existencias -= detalle.Cantidad;
+
+                    // Registrar la salida del lote dentro
+                    // del mismo movimiento de la venta.
+
+                    detallesMovimiento.Add(
+                        new DetalleMovimiento
+                        {
+                            LoteOrigen = lote,
+                            Cantidad = detalle.Cantidad
+                        });
                 }
 
-                // El estado se guarda en la misma
-                // transaccion que los descuentos.
+                DateTime fechaConfirmacion = DateTime.UtcNow;
+
+                // El movimiento se guarda en la misma transacción
+                // que los descuentos y el cambio de estado.
+
+                var movimiento = new MovimientoInventario
+                {
+                    TipoMovimiento = "SalidaVenta",
+                    AlmacenOrigenId = venta.AlmacenId,
+                    UsuarioId = usuarioId,
+                    VentaId = venta.Id,
+                    FechaMovimiento = fechaConfirmacion,
+                    Motivo = "Venta confirmada",
+                    Referencia = venta.NumeroDocumento,
+                    Estado = "Confirmado",
+                    Detalles = detallesMovimiento
+                };
+
+                await _repository.AgregarMovimientoAsync(
+                    movimiento);
 
                 venta.Estado = "Confirmada";
 
-                venta.FechaConfirmacion = DateTime.UtcNow;
+                venta.FechaConfirmacion = fechaConfirmacion;
             });
 
             return await ObtenerPorIdAsync(id)

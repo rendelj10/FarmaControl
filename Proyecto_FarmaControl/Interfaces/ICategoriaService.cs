@@ -1,4 +1,4 @@
-﻿using Proyecto_FarmaControl.DTOs;
+using Proyecto_FarmaControl.DTOs;
 
 namespace Proyecto_FarmaControl.Interfaces
 {
@@ -9,7 +9,6 @@ namespace Proyecto_FarmaControl.Interfaces
 
         Task<IReadOnlyList<CategoriaTablaDto>>
             ObtenerTodasAsync();
-
         Task<CategoriaGuardarDto?> ObtenerPorIdAsync(int id);
 
         Task<(bool Success, string? ErrorMessage)>

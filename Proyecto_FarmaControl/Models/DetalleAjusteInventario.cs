@@ -7,9 +7,7 @@ namespace Proyecto_FarmaControl.Models
     {
         public int Id { get; set; }
 
-        // ========================================
-        // AJUSTE PRINCIPAL
-        // ========================================
+        // AJUSTE AL QUE PERTENECE EL DETALLE
 
         [Range(1, int.MaxValue)]
         public int AjusteInventarioId { get; set; }
@@ -17,20 +15,7 @@ namespace Proyecto_FarmaControl.Models
         public AjusteInventario AjusteInventario
         { get; set; } = null!;
 
-        // ========================================
-        // MEDICAMENTO
-        // ========================================
-
-        [Range(1, int.MaxValue,
-            ErrorMessage = "Seleccione un medicamento.")]
-        public int MedicamentoId { get; set; }
-
-        public Medicamento Medicamento
-        { get; set; } = null!;
-
-        // ========================================
-        // LOTE
-        // ========================================
+        // LOTE QUE SE ESTÁ CONTANDO
 
         [Range(1, int.MaxValue,
             ErrorMessage = "Seleccione un lote válido.")]
@@ -38,41 +23,26 @@ namespace Proyecto_FarmaControl.Models
 
         public Lote Lote { get; set; } = null!;
 
-        // ========================================
-        // TIPO DE MOVIMIENTO
-        // Entrada o Salida
-        // ========================================
+        // EXISTENCIA REGISTRADA EN EL SISTEMA
 
-        [Required(ErrorMessage =
-            "El tipo de movimiento es obligatorio.")]
-        [StringLength(10)]
-        public string TipoMovimiento { get; set; }
-            = string.Empty;
+        [Range(0, int.MaxValue,
+            ErrorMessage = "La existencia no puede ser negativa.")]
+        public int ExistenciaSistema { get; set; }
 
-        // ========================================
-        // CANTIDAD A AJUSTAR
-        // ========================================
+        // CANTIDAD CONTADA FÍSICAMENTE
 
-        [Range(1, int.MaxValue,
-            ErrorMessage = "La cantidad debe ser mayor que cero.")]
-        public int Cantidad { get; set; }
+        [Range(0, int.MaxValue,
+            ErrorMessage = "La cantidad física no puede ser negativa.")]
+        public int CantidadFisica { get; set; }
 
-        // ========================================
-        // HISTORIAL DE EXISTENCIAS
-        // ========================================
+        // DIFERENCIA CALCULADA POR EL SERVICIO
+        // CantidadFisica - ExistenciaSistema
 
-        // Estos valores se registran al aplicar
-        // el ajuste, nunca desde el navegador.
+        public int Diferencia { get; set; }
 
-        public int? ExistenciasAntes { get; set; }
+        // OBSERVACIÓN DEL CONTEO
 
-        public int? ExistenciasDespues { get; set; }
-
-        // ========================================
-        // OBSERVACIONES DEL DETALLE
-        // ========================================
-
-        [StringLength(300)]
-        public string? Observaciones { get; set; }
+        [StringLength(250)]
+        public string? Observacion { get; set; }
     }
 }

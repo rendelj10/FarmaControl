@@ -7,67 +7,57 @@ namespace Proyecto_FarmaControl.Models
     {
         public int Id { get; set; }
 
-        // ========================================
-        // ALMACEN
-        // ========================================
-
+        // Almacén donde se realiza el ajuste
         [Range(1, int.MaxValue,
             ErrorMessage = "Seleccione un almacén válido.")]
         public int AlmacenId { get; set; }
 
         public Almacen Almacen { get; set; } = null!;
 
-        // ========================================
-        // DOCUMENTO DEL AJUSTE
-        // ========================================
+        // Usuario que registra el ajuste
+        [Range(1, int.MaxValue)]
+        public int UsuarioId { get; set; }
 
-        [Required(ErrorMessage =
-            "El número de documento es obligatorio.")]
-        [StringLength(50)]
-        public string NumeroDocumento { get; set; }
-            = string.Empty;
+        public Usuario Usuario { get; set; } = null!;
 
-        // ========================================
-        // FECHAS
-        // ========================================
+        // Usuario que confirma el ajuste
+        public int? ConfirmadoPorUsuarioId { get; set; }
 
+        public Usuario? ConfirmadoPorUsuario { get; set; }
+
+        // Fechas
         public DateTime FechaAjuste { get; set; }
-            = DateTime.Today;
+            = DateTime.UtcNow;
 
-        public DateTime? FechaAplicacion { get; set; }
+        public DateTime? FechaConfirmacion { get; set; }
 
-        // ========================================
-        // ESTADO
-        // Borrador, Aplicado, Anulado
-        // ========================================
+        // Conteo o Correccion
+        [Required]
+        [StringLength(30)]
+        public string TipoAjuste { get; set; } = "Conteo";
 
+        // Motivo del ajuste
+        [Required(ErrorMessage =
+            "El motivo del ajuste es obligatorio.")]
+        [StringLength(150)]
+        public string Motivo { get; set; } = string.Empty;
+
+        // Borrador, Confirmado o Anulado
         [Required]
         [StringLength(20)]
         public string Estado { get; set; } = "Borrador";
 
-        // ========================================
-        // MOTIVO OBLIGATORIO
-        // ========================================
-
-        [Required(ErrorMessage =
-            "El motivo del ajuste es obligatorio.")]
-        [StringLength(200)]
-        public string Motivo { get; set; }
-            = string.Empty;
-
-        // ========================================
-        // OBSERVACIONES
-        // ========================================
-
-        [StringLength(500)]
+        // Observaciones generales
+        [StringLength(250)]
         public string? Observaciones { get; set; }
 
-        // ========================================
-        // DETALLES DEL AJUSTE
-        // ========================================
-
+        // Detalles del conteo físico
         public ICollection<DetalleAjusteInventario> Detalles
+        { get; set; } =
+            new List<DetalleAjusteInventario>();
+
+        // Movimiento generado al confirmar
+        public MovimientoInventario? MovimientoInventario
         { get; set; }
-            = new List<DetalleAjusteInventario>();
     }
 }

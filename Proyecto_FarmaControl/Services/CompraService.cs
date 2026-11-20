@@ -1,5 +1,4 @@
-﻿
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Proyecto_FarmaControl.DTOs;
@@ -184,12 +183,20 @@ namespace Proyecto_FarmaControl.Services
         // 5. RECIBIR COMPRA
         // ========================================
 
-        public async Task<CompraDto> RecibirAsync(int id)
+        public async Task<CompraDto> RecibirAsync(
+            int id,
+            int usuarioId)
         {
             if (id <= 0)
             {
                 throw new ArgumentException(
                     "El identificador de la compra no es válido.");
+            }
+
+            if (usuarioId <= 0)
+            {
+                throw new ArgumentException(
+                    "No se pudo identificar al usuario que recibe la compra.");
             }
 
             // Toda la operacion se ejecuta
@@ -331,6 +338,9 @@ namespace Proyecto_FarmaControl.Services
                     // ACTUALIZAR INVENTARIO
                     // ====================================
 
+                    var detallesMovimiento =
+                        new List<DetalleMovimiento>();
+
                     foreach (var detalle in detallesOrdenados)
                     {
                         string numero = detalle.NumeroLote!;
@@ -368,15 +378,65 @@ namespace Proyecto_FarmaControl.Services
                                     "fecha de vencimiento.");
                             }
 
-                            // Sumar existencias con
-                            // comprobacion de desbordamiento.
+                            // El costo de Lote representa el costo
+                            // promedio ponderado de las existencias
+                            // que permanecen disponibles.
+                            // El costo real de esta recepción se
+                            // conserva en DetalleCompra.
 
-                            lote.Existencias = checked(
-                                lote.Existencias +
-                                detalle.Cantidad);
+                            if (lote.Existencias < 0)
+                            {
+                                throw new InvalidOperationException(
+                                    "El lote existente tiene existencias negativas. " +
+                                    "No se puede recibir la compra hasta corregir el inventario.");
+                            }
 
-                            // El costo de la entrada
-                            // permanece en DetalleCompra.
+                            if (detalle.CostoUnitario <= 0m)
+                            {
+                                throw new ArgumentException(
+                                    "El costo unitario de la recepción debe ser mayor que cero.");
+                            }
+
+                            int existenciasAnteriores = lote.Existencias;
+
+                            int existenciasNuevas = checked(
+                                existenciasAnteriores + detalle.Cantidad);
+
+                            if (existenciasAnteriores == 0)
+                            {
+                                // Si el lote estaba agotado, el costo
+                                // de las nuevas unidades pasa a ser
+                                // el costo vigente del inventario.
+                                lote.CostoUnitario = detalle.CostoUnitario;
+                            }
+                            else
+                            {
+                                // Costo promedio ponderado móvil:
+                                // (existencias actuales * costo actual
+                                //  + cantidad recibida * nuevo costo)
+                                // / existencias totales.
+                                // Se redondea a 2 decimales porque
+                                // Lotes.CostoUnitario usa decimal(18,2).
+
+                                decimal valorExistenciasActuales = checked(
+                                    existenciasAnteriores * lote.CostoUnitario);
+
+                                decimal valorNuevaRecepcion = checked(
+                                    detalle.Cantidad * detalle.CostoUnitario);
+
+                                decimal costoPromedioPonderado =
+                                    (valorExistenciasActuales + valorNuevaRecepcion)
+                                    / existenciasNuevas;
+
+                                lote.CostoUnitario = decimal.Round(
+                                    costoPromedioPonderado,
+                                    2,
+                                    MidpointRounding.AwayFromZero);
+                            }
+
+                            // Actualizar las existencias después de
+                            // calcular el costo con la cantidad anterior.
+                            lote.Existencias = existenciasNuevas;
 
                             detalle.Lote = lote;
                         }
@@ -419,23 +479,51 @@ namespace Proyecto_FarmaControl.Services
 
                             detalle.Lote = nuevoLote;
                         }
+
+                        // Cada línea recibida genera una entrada
+                        // vinculada al lote que recibió existencias.
+                        // Se utiliza la navegación porque el lote
+                        // puede ser nuevo y todavía no tener Id.
+
+                        detallesMovimiento.Add(
+                            new DetalleMovimiento
+                            {
+                                LoteDestino = detalle.Lote,
+                                Cantidad = detalle.Cantidad
+                            });
                     }
+
+                    DateTime fechaRecepcion = DateTime.UtcNow;
+
+                    // Registrar el movimiento de entrada dentro
+                    // de la misma transacción que actualiza los lotes.
+
+                    var movimiento = new MovimientoInventario
+                    {
+                        TipoMovimiento = "EntradaCompra",
+                        AlmacenDestinoId = compra.AlmacenId,
+                        UsuarioId = usuarioId,
+                        CompraId = compra.Id,
+                        FechaMovimiento = fechaRecepcion,
+                        Motivo = "Recepción de compra",
+                        Referencia = compra.NumeroDocumento,
+                        Estado = "Confirmado",
+                        Detalles = detallesMovimiento
+                    };
+
+                    await _repository.AgregarMovimientoAsync(
+                        movimiento);
 
                     // ====================================
                     // CONFIRMAR ESTADO
                     // ====================================
 
-                    // El estado cambia dentro
-                    // de la misma transaccion
-                    // que actualiza el inventario.
+                    // El estado, el movimiento y las existencias
+                    // se guardan en una sola transacción.
 
                     compra.Estado = "Recibida";
 
-                    compra.FechaRecepcion = DateTime.UtcNow;
-
-                    // El repositorio ejecutara:
-                    // SaveChangesAsync
-                    // CommitAsync
+                    compra.FechaRecepcion = fechaRecepcion;
                 });
 
             return await ObtenerPorIdAsync(id)

@@ -303,7 +303,23 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
-        // 13. EJECUTAR TRANSACCION
+        // 13. REGISTRAR MOVIMIENTO DE INVENTARIO
+        // ========================================
+
+        public async Task AgregarMovimientoAsync(
+            MovimientoInventario movimiento)
+        {
+            ArgumentNullException.ThrowIfNull(movimiento);
+
+            // No guardar aqui. El movimiento debe confirmarse
+            // junto con la compra y las existencias.
+
+            await _context.Set<MovimientoInventario>()
+                .AddAsync(movimiento);
+        }
+
+        // ========================================
+        // 14. EJECUTAR TRANSACCION
         // ========================================
 
         public async Task EjecutarEnTransaccionAsync(

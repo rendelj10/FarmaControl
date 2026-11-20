@@ -15,7 +15,7 @@ namespace Proyecto_FarmaControl.Interfaces
         Task<VentaDto> CrearBorradorAsync(
             VentaGuardarDto dto);
 
-        Task<VentaDto> ConfirmarAsync(int id);
+        Task<VentaDto> ConfirmarAsync(int id, int usuarioId);
 
         Task<VentaDto> AnularAsync(int id);
     }
