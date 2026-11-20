@@ -1,4 +1,4 @@
-
+﻿
 using System.Security.Claims;
 using System.Text;
 
@@ -199,6 +199,16 @@ builder.Services.AddScoped<
     ILoteRepository,
     LoteRepository>();
 
+// LABORATORIOS
+builder.Services.AddScoped<
+    ILaboratorioRepository,
+    LaboratorioRepository>();
+
+// PRESENTACIONES
+builder.Services.AddScoped<
+    IPresentacionRepository,
+    PresentacionRepository>();
+
 // SUCURSALES
 builder.Services.AddScoped<
     ISucursalRepository,
@@ -274,6 +284,16 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ILoteService,
     LoteService>();
+
+// LABORATORIOS
+builder.Services.AddScoped<
+    ILaboratorioService,
+    LaboratorioService>();
+
+// PRESENTACIONES
+builder.Services.AddScoped<
+    IPresentacionService,
+    PresentacionService>();
 
 // SUCURSALES
 builder.Services.AddScoped<

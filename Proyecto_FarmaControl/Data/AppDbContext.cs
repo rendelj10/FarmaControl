@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Proyecto_FarmaControl.Models;
 
 namespace Proyecto_FarmaControl.Data
@@ -17,6 +16,10 @@ namespace Proyecto_FarmaControl.Data
         // ========================================
 
         public DbSet<Categoria> Categorias { get; set; } = null!;
+
+        public DbSet<Laboratorio> Laboratorios { get; set; } = null!;
+
+        public DbSet<Presentacion> Presentaciones { get; set; } = null!;
 
         public DbSet<Medicamento> Medicamentos { get; set; } = null!;
 
@@ -454,6 +457,58 @@ namespace Proyecto_FarmaControl.Data
                     Id = 51,
                     Name = "ajuste.anular",
                     Description = "Anular ajustes en borrador"
+                },
+
+                // LABORATORIOS
+                new Permiso
+                {
+                    Id = 52,
+                    Name = "laboratorio.ver",
+                    Description = "Consultar laboratorios"
+                },
+                new Permiso
+                {
+                    Id = 53,
+                    Name = "laboratorio.crear",
+                    Description = "Registrar laboratorios"
+                },
+                new Permiso
+                {
+                    Id = 54,
+                    Name = "laboratorio.actualizar",
+                    Description = "Actualizar laboratorios"
+                },
+                new Permiso
+                {
+                    Id = 55,
+                    Name = "laboratorio.borrar",
+                    Description = "Desactivar laboratorios"
+                },
+
+                // PRESENTACIONES
+                new Permiso
+                {
+                    Id = 56,
+                    Name = "presentacion.ver",
+                    Description = "Consultar presentaciones"
+                },
+                new Permiso
+                {
+                    Id = 57,
+                    Name = "presentacion.crear",
+                    Description = "Registrar presentaciones"
+                },
+                new Permiso
+                {
+                    Id = 58,
+                    Name = "presentacion.actualizar",
+                    Description = "Actualizar presentaciones"
+                },
+                new Permiso
+                {
+                    Id = 59,
+                    Name = "presentacion.borrar",
+                    Description = "Desactivar presentaciones"
                 }
 
             );
@@ -546,7 +601,19 @@ namespace Proyecto_FarmaControl.Data
                 new { RoleId = 2, PermissionId = 48 },
                 new { RoleId = 2, PermissionId = 49 },
                 new { RoleId = 2, PermissionId = 50 },
-                new { RoleId = 2, PermissionId = 51 }
+                new { RoleId = 2, PermissionId = 51 },
+
+                // LABORATORIOS
+                new { RoleId = 2, PermissionId = 52 },
+                new { RoleId = 2, PermissionId = 53 },
+                new { RoleId = 2, PermissionId = 54 },
+                new { RoleId = 2, PermissionId = 55 },
+
+                // PRESENTACIONES
+                new { RoleId = 2, PermissionId = 56 },
+                new { RoleId = 2, PermissionId = 57 },
+                new { RoleId = 2, PermissionId = 58 },
+                new { RoleId = 2, PermissionId = 59 }
 
             );
 
@@ -557,12 +624,35 @@ namespace Proyecto_FarmaControl.Data
 
             modelBuilder.Entity<Medicamento>(entity =>
             {
+                // Codigo interno unico del medicamento.
                 entity.HasIndex(m => m.Codigo)
                     .IsUnique();
 
+                // Precio de venta del catalogo.
+                entity.Property(m => m.PrecioVenta)
+                    .HasPrecision(18, 2)
+                    .HasDefaultValue(0m);
+
+                // Los medicamentos nuevos quedan activos por defecto.
+                entity.Property(m => m.Activo)
+                    .HasDefaultValue(true);
+
+                // Relacion obligatoria con la categoria.
                 entity.HasOne(m => m.Categoria)
                     .WithMany()
                     .HasForeignKey(m => m.CategoriaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relacion opcional con el laboratorio fabricante.
+                entity.HasOne(m => m.Laboratorio)
+                    .WithMany()
+                    .HasForeignKey(m => m.LaboratorioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Relacion opcional con el catalogo de presentaciones.
+                entity.HasOne(m => m.PresentacionCatalogo)
+                    .WithMany()
+                    .HasForeignKey(m => m.PresentacionId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -1071,6 +1161,70 @@ namespace Proyecto_FarmaControl.Data
                 entity.HasIndex(d => d.LoteOrigenId);
 
                 entity.HasIndex(d => d.LoteDestinoId);
+            });
+
+            // ========================================
+            // 23. LABORATORIOS
+            // ========================================
+
+            modelBuilder.Entity<Laboratorio>(entity =>
+            {
+                entity.ToTable("Laboratorios");
+
+                entity.Property(l => l.Nombre)
+                    .HasMaxLength(150)
+                    .IsRequired();
+
+                entity.Property(l => l.Pais)
+                    .HasMaxLength(100);
+
+                entity.Property(l => l.Contacto)
+                    .HasMaxLength(100);
+
+                entity.Property(l => l.Telefono)
+                    .HasMaxLength(30);
+
+                entity.Property(l => l.Email)
+                    .HasMaxLength(150);
+
+                entity.Property(l => l.Direccion)
+                    .HasMaxLength(250);
+
+                entity.Property(l => l.Activo)
+                    .HasDefaultValue(true);
+            });
+
+            // ========================================
+            // 24. PRESENTACIONES
+            // ========================================
+
+            modelBuilder.Entity<Presentacion>(entity =>
+            {
+                entity.ToTable("Presentaciones", table =>
+                {
+                    table.HasCheckConstraint(
+                        "CK_Presentaciones_CantidadContenido",
+                        "[CantidadContenido] IS NULL OR [CantidadContenido] > 0");
+                });
+
+                entity.Property(p => p.Nombre)
+                    .HasMaxLength(100)
+                    .IsRequired();
+
+                entity.Property(p => p.Descripcion)
+                    .HasMaxLength(250);
+
+                entity.Property(p => p.CantidadContenido)
+                    .HasPrecision(18, 3);
+
+                entity.Property(p => p.UnidadContenido)
+                    .HasMaxLength(30);
+
+                entity.Property(p => p.Activo)
+                    .HasDefaultValue(true);
+
+                entity.HasIndex(p => p.Nombre)
+                    .IsUnique();
             });
 
         }

@@ -10,13 +10,19 @@ namespace Proyecto_FarmaControl.Services
     {
         private readonly IMedicamentoRepository _repository;
         private readonly ICategoriaRepository _categoriaRepository;
+        private readonly ILaboratorioRepository _laboratorioRepository;
+        private readonly IPresentacionRepository _presentacionRepository;
 
         public MedicamentoService(
             IMedicamentoRepository repository,
-            ICategoriaRepository categoriaRepository)
+            ICategoriaRepository categoriaRepository,
+            ILaboratorioRepository laboratorioRepository,
+            IPresentacionRepository presentacionRepository)
         {
             _repository = repository;
             _categoriaRepository = categoriaRepository;
+            _laboratorioRepository = laboratorioRepository;
+            _presentacionRepository = presentacionRepository;
         }
 
         // =====================================
@@ -39,6 +45,11 @@ namespace Proyecto_FarmaControl.Services
                 Presentacion = m.Presentacion,
                 CategoriaId = m.CategoriaId,
                 CategoriaNombre = m.Categoria?.Nombre ?? string.Empty,
+                LaboratorioId = m.LaboratorioId,
+                LaboratorioNombre = m.Laboratorio?.Nombre,
+                PresentacionId = m.PresentacionId,
+                PresentacionNombre = m.PresentacionCatalogo?.Nombre,
+                PrecioVenta = m.PrecioVenta,
                 Activo = m.Activo
             }).ToList();
         }
@@ -64,7 +75,10 @@ namespace Proyecto_FarmaControl.Services
                 Concentracion = medicamento.Concentracion,
                 FormaFarmaceutica = medicamento.FormaFarmaceutica,
                 Presentacion = medicamento.Presentacion,
-                CategoriaId = medicamento.CategoriaId
+                CategoriaId = medicamento.CategoriaId,
+                LaboratorioId = medicamento.LaboratorioId,
+                PresentacionId = medicamento.PresentacionId,
+                PrecioVenta = medicamento.PrecioVenta
             };
         }
 
@@ -91,13 +105,24 @@ namespace Proyecto_FarmaControl.Services
                 return (false, error);
 
             var codigo = dto.Codigo.Trim();
-            var nombre = dto.Nombre.Trim();
 
             var categoriaError =
                 await ValidarCategoriaAsync(dto.CategoriaId);
 
             if (categoriaError != null)
                 return (false, categoriaError);
+
+            var laboratorioError =
+                await ValidarLaboratorioAsync(dto.LaboratorioId);
+
+            if (laboratorioError != null)
+                return (false, laboratorioError);
+
+            var presentacionError =
+                await ValidarPresentacionAsync(dto.PresentacionId);
+
+            if (presentacionError != null)
+                return (false, presentacionError);
 
             if (await _repository.ExisteCodigoAsync(codigo))
                 return (false,
@@ -106,12 +131,18 @@ namespace Proyecto_FarmaControl.Services
             var medicamento = new Medicamento
             {
                 Codigo = codigo,
-                Nombre = nombre,
+                Nombre = dto.Nombre.Trim(),
                 PrincipioActivo = NormalizarTexto(dto.PrincipioActivo),
                 Concentracion = NormalizarTexto(dto.Concentracion),
                 FormaFarmaceutica = NormalizarTexto(dto.FormaFarmaceutica),
+
+                // Campo antiguo conservado temporalmente.
                 Presentacion = NormalizarTexto(dto.Presentacion),
+
                 CategoriaId = dto.CategoriaId,
+                LaboratorioId = NormalizarId(dto.LaboratorioId),
+                PresentacionId = NormalizarId(dto.PresentacionId),
+                PrecioVenta = dto.PrecioVenta,
                 Activo = true
             };
 
@@ -150,6 +181,18 @@ namespace Proyecto_FarmaControl.Services
             if (categoriaError != null)
                 return (false, categoriaError);
 
+            var laboratorioError =
+                await ValidarLaboratorioAsync(dto.LaboratorioId);
+
+            if (laboratorioError != null)
+                return (false, laboratorioError);
+
+            var presentacionError =
+                await ValidarPresentacionAsync(dto.PresentacionId);
+
+            if (presentacionError != null)
+                return (false, presentacionError);
+
             if (await _repository.ExisteCodigoAsync(
                 codigo, dto.Id.Value))
             {
@@ -159,15 +202,24 @@ namespace Proyecto_FarmaControl.Services
 
             existente.Codigo = codigo;
             existente.Nombre = dto.Nombre.Trim();
+
             existente.PrincipioActivo =
                 NormalizarTexto(dto.PrincipioActivo);
+
             existente.Concentracion =
                 NormalizarTexto(dto.Concentracion);
+
             existente.FormaFarmaceutica =
                 NormalizarTexto(dto.FormaFarmaceutica);
+
+            // No eliminar el dato antiguo si no se envía uno nuevo.
             existente.Presentacion =
-                NormalizarTexto(dto.Presentacion);
+                NormalizarTexto(dto.Presentacion) ?? existente.Presentacion;
+
             existente.CategoriaId = dto.CategoriaId;
+            existente.LaboratorioId = NormalizarId(dto.LaboratorioId);
+            existente.PresentacionId = NormalizarId(dto.PresentacionId);
+            existente.PrecioVenta = dto.PrecioVenta;
 
             var actualizado =
                 await _repository.ActualizarAsync(existente);
@@ -221,6 +273,9 @@ namespace Proyecto_FarmaControl.Services
             if (string.IsNullOrWhiteSpace(dto.Nombre))
                 return "El nombre del medicamento es obligatorio.";
 
+            if (dto.PrecioVenta < 0)
+                return "El precio de venta no puede ser negativo.";
+
             return null;
         }
 
@@ -239,9 +294,52 @@ namespace Proyecto_FarmaControl.Services
             return null;
         }
 
+        private async Task<string?> ValidarLaboratorioAsync(
+            int? laboratorioId)
+        {
+            if (!laboratorioId.HasValue || laboratorioId.Value <= 0)
+                return null;
+
+            var laboratorio = await _laboratorioRepository
+                .ObtenerPorIdAsync(laboratorioId.Value);
+
+            if (laboratorio == null)
+                return "El laboratorio seleccionado no existe.";
+
+            if (!laboratorio.Activo)
+                return "El laboratorio seleccionado está inactivo.";
+
+            return null;
+        }
+
+        private async Task<string?> ValidarPresentacionAsync(
+            int? presentacionId)
+        {
+            if (!presentacionId.HasValue || presentacionId.Value <= 0)
+                return null;
+
+            var presentacion = await _presentacionRepository
+                .ObtenerPorIdAsync(presentacionId.Value);
+
+            if (presentacion == null)
+                return "La presentación seleccionada no existe.";
+
+            if (!presentacion.Activo)
+                return "La presentación seleccionada está inactiva.";
+
+            return null;
+        }
+
         // =====================================
         // NORMALIZAR CAMPOS
         // =====================================
+
+        private static int? NormalizarId(int? id)
+        {
+            return id.HasValue && id.Value > 0
+                ? id.Value
+                : null;
+        }
 
         private static string? NormalizarTexto(string? valor)
         {

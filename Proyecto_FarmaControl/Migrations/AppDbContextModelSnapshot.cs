@@ -406,6 +406,49 @@ namespace Proyecto_FarmaControl.Migrations
                     b.ToTable("DetalleVentas");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Laboratorio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Contacto")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Pais")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Laboratorios", (string)null);
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Lote", b =>
                 {
                     b.Property<int>("Id")
@@ -463,7 +506,9 @@ namespace Proyecto_FarmaControl.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Activo")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<int>("CategoriaId")
                         .HasColumnType("int");
@@ -481,14 +526,26 @@ namespace Proyecto_FarmaControl.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("LaboratorioId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<decimal>("PrecioVenta")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
                     b.Property<string>("Presentacion")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("PresentacionId")
+                        .HasColumnType("int");
 
                     b.Property<string>("PrincipioActivo")
                         .HasMaxLength(150)
@@ -500,6 +557,10 @@ namespace Proyecto_FarmaControl.Migrations
 
                     b.HasIndex("Codigo")
                         .IsUnique();
+
+                    b.HasIndex("LaboratorioId");
+
+                    b.HasIndex("PresentacionId");
 
                     b.ToTable("Medicamentos");
                 });
@@ -907,6 +968,95 @@ namespace Proyecto_FarmaControl.Migrations
                             Id = 51,
                             Description = "Anular ajustes en borrador",
                             Name = "ajuste.anular"
+                        },
+                        new
+                        {
+                            Id = 52,
+                            Description = "Consultar laboratorios",
+                            Name = "laboratorio.ver"
+                        },
+                        new
+                        {
+                            Id = 53,
+                            Description = "Registrar laboratorios",
+                            Name = "laboratorio.crear"
+                        },
+                        new
+                        {
+                            Id = 54,
+                            Description = "Actualizar laboratorios",
+                            Name = "laboratorio.actualizar"
+                        },
+                        new
+                        {
+                            Id = 55,
+                            Description = "Desactivar laboratorios",
+                            Name = "laboratorio.borrar"
+                        },
+                        new
+                        {
+                            Id = 56,
+                            Description = "Consultar presentaciones",
+                            Name = "presentacion.ver"
+                        },
+                        new
+                        {
+                            Id = 57,
+                            Description = "Registrar presentaciones",
+                            Name = "presentacion.crear"
+                        },
+                        new
+                        {
+                            Id = 58,
+                            Description = "Actualizar presentaciones",
+                            Name = "presentacion.actualizar"
+                        },
+                        new
+                        {
+                            Id = 59,
+                            Description = "Desactivar presentaciones",
+                            Name = "presentacion.borrar"
+                        });
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Presentacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<decimal?>("CantidadContenido")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UnidadContenido")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("Presentaciones", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Presentaciones_CantidadContenido", "[CantidadContenido] IS NULL OR [CantidadContenido] > 0");
                         });
                 });
 
@@ -1262,6 +1412,46 @@ namespace Proyecto_FarmaControl.Migrations
                         {
                             RoleId = 2,
                             PermissionId = 51
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 52
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 53
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 54
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 55
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 56
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 57
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 58
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 59
                         });
                 });
 
@@ -1616,7 +1806,21 @@ namespace Proyecto_FarmaControl.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Proyecto_FarmaControl.Models.Laboratorio", "Laboratorio")
+                        .WithMany()
+                        .HasForeignKey("LaboratorioId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Presentacion", "PresentacionCatalogo")
+                        .WithMany()
+                        .HasForeignKey("PresentacionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Categoria");
+
+                    b.Navigation("Laboratorio");
+
+                    b.Navigation("PresentacionCatalogo");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.MovimientoInventario", b =>
