@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -212,6 +212,16 @@ builder.Services.AddScoped<
     IMetodoPagoRepository,
     MetodoPagoRepository>();
 
+// TURNOS DE CAJA
+builder.Services.AddScoped<
+    ITurnoCajaRepository,
+    TurnoCajaRepository>();
+
+// PAGOS
+builder.Services.AddScoped<
+    IPagoRepository,
+    PagoRepository>();
+
 // SUCURSALES
 builder.Services.AddScoped<
     ISucursalRepository,
@@ -302,6 +312,16 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IMetodoPagoService,
     MetodoPagoService>();
+
+// TURNOS DE CAJA
+builder.Services.AddScoped<
+    ITurnoCajaService,
+    TurnoCajaService>();
+
+// PAGOS
+builder.Services.AddScoped<
+    IPagoService,
+    PagoService>();
 
 // SUCURSALES
 builder.Services.AddScoped<

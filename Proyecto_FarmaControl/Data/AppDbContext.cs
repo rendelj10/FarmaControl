@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Proyecto_FarmaControl.Models;
 
 namespace Proyecto_FarmaControl.Data
@@ -22,6 +22,10 @@ namespace Proyecto_FarmaControl.Data
         public DbSet<Presentacion> Presentaciones { get; set; } = null!;
 
         public DbSet<MetodoPago> MetodosPago { get; set; } = null!;
+
+        public DbSet<TurnoCaja> TurnosCaja { get; set; } = null!;
+
+        public DbSet<Pago> Pagos { get; set; } = null!;
 
         public DbSet<Medicamento> Medicamentos { get; set; } = null!;
 
@@ -537,6 +541,46 @@ namespace Proyecto_FarmaControl.Data
                     Id = 63,
                     Name = "metodopago.borrar",
                     Description = "Desactivar métodos de pago"
+                },
+
+                // TURNOS DE CAJA
+                new Permiso
+                {
+                    Id = 64,
+                    Name = "turnocaja.ver",
+                    Description = "Consultar turnos de caja"
+                },
+                new Permiso
+                {
+                    Id = 65,
+                    Name = "turnocaja.abrir",
+                    Description = "Abrir turnos de caja"
+                },
+                new Permiso
+                {
+                    Id = 66,
+                    Name = "turnocaja.cerrar",
+                    Description = "Cerrar turnos de caja"
+                },
+
+                // PAGOS
+                new Permiso
+                {
+                    Id = 67,
+                    Name = "pago.ver",
+                    Description = "Consultar pagos"
+                },
+                new Permiso
+                {
+                    Id = 68,
+                    Name = "pago.crear",
+                    Description = "Registrar pagos"
+                },
+                new Permiso
+                {
+                    Id = 69,
+                    Name = "pago.anular",
+                    Description = "Anular pagos"
                 }
 
             );
@@ -647,7 +691,17 @@ namespace Proyecto_FarmaControl.Data
                 new { RoleId = 2, PermissionId = 60 },
                 new { RoleId = 2, PermissionId = 61 },
                 new { RoleId = 2, PermissionId = 62 },
-                new { RoleId = 2, PermissionId = 63 }
+                new { RoleId = 2, PermissionId = 63 },
+
+                // TURNOS DE CAJA
+                new { RoleId = 2, PermissionId = 64 },
+                new { RoleId = 2, PermissionId = 65 },
+                new { RoleId = 2, PermissionId = 66 },
+
+                // PAGOS
+                new { RoleId = 2, PermissionId = 67 },
+                new { RoleId = 2, PermissionId = 68 },
+                new { RoleId = 2, PermissionId = 69 }
 
             );
 
@@ -1284,6 +1338,114 @@ namespace Proyecto_FarmaControl.Data
 
                 entity.HasIndex(m => m.Nombre)
                     .IsUnique();
+            });
+
+            // ========================================
+            // 26. TURNOS DE CAJA
+            // ========================================
+
+            modelBuilder.Entity<TurnoCaja>(entity =>
+            {
+                entity.ToTable("TurnosCaja", tabla =>
+                {
+                    tabla.HasCheckConstraint("CK_TurnosCaja_MontoInicial",
+                        "[MontoInicial] >= 0");
+                    tabla.HasCheckConstraint("CK_TurnosCaja_MontoEsperado",
+                        "[MontoEsperado] IS NULL OR [MontoEsperado] >= 0");
+                    tabla.HasCheckConstraint("CK_TurnosCaja_MontoContado",
+                        "[MontoContado] IS NULL OR [MontoContado] >= 0");
+                    tabla.HasCheckConstraint("CK_TurnosCaja_Estado",
+                        "[Estado] IN (N'Abierto', N'Cerrado')");
+                });
+
+                entity.HasOne(t => t.Sucursal)
+                    .WithMany()
+                    .HasForeignKey(t => t.SucursalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.UsuarioApertura)
+                    .WithMany()
+                    .HasForeignKey(t => t.UsuarioAperturaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.UsuarioCierre)
+                    .WithMany()
+                    .HasForeignKey(t => t.UsuarioCierreId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(t => t.FechaApertura)
+                    .HasColumnType("datetime2");
+                entity.Property(t => t.FechaCierre)
+                    .HasColumnType("datetime2");
+                entity.Property(t => t.MontoInicial).HasPrecision(18, 2);
+                entity.Property(t => t.MontoEsperado).HasPrecision(18, 2);
+                entity.Property(t => t.MontoContado).HasPrecision(18, 2);
+                entity.Property(t => t.Diferencia).HasPrecision(18, 2);
+                entity.Property(t => t.Estado).HasMaxLength(20).IsRequired();
+                entity.Property(t => t.Observaciones).HasMaxLength(250);
+
+                // Solo un turno abierto por usuario, también con llamadas concurrentes.
+                entity.HasIndex(t => t.UsuarioAperturaId)
+                    .IsUnique()
+                    .HasFilter("[Estado] = N'Abierto'");
+
+                entity.HasIndex(t => new { t.SucursalId, t.FechaApertura });
+            });
+
+            // ========================================
+            // 27. PAGOS
+            // ========================================
+
+            modelBuilder.Entity<Pago>(entity =>
+            {
+                entity.ToTable("Pagos", tabla =>
+                {
+                    tabla.HasCheckConstraint("CK_Pagos_DocumentoExclusivo",
+                        "([CompraId] IS NOT NULL AND [VentaId] IS NULL) OR " +
+                        "([CompraId] IS NULL AND [VentaId] IS NOT NULL)");
+                    tabla.HasCheckConstraint("CK_Pagos_Monto", "[Monto] > 0");
+                    tabla.HasCheckConstraint("CK_Pagos_Estado",
+                        "[Estado] IN (N'Registrado', N'Anulado')");
+                });
+
+                entity.HasOne(p => p.Compra)
+                    .WithMany()
+                    .HasForeignKey(p => p.CompraId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.Venta)
+                    .WithMany()
+                    .HasForeignKey(p => p.VentaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.MetodoPago)
+                    .WithMany()
+                    .HasForeignKey(p => p.MetodoPagoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.Usuario)
+                    .WithMany()
+                    .HasForeignKey(p => p.UsuarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.TurnoCaja)
+                    .WithMany()
+                    .HasForeignKey(p => p.TurnoCajaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(p => p.FechaPago).HasColumnType("datetime2");
+                entity.Property(p => p.Monto).HasPrecision(18, 2);
+                entity.Property(p => p.Referencia).HasMaxLength(100);
+                entity.Property(p => p.Estado).HasMaxLength(20).IsRequired();
+                entity.Property(p => p.Observaciones).HasMaxLength(250);
+
+                entity.HasIndex(p => p.CompraId)
+                    .HasFilter("[CompraId] IS NOT NULL");
+                entity.HasIndex(p => p.VentaId)
+                    .HasFilter("[VentaId] IS NOT NULL");
+                entity.HasIndex(p => p.TurnoCajaId);
+                entity.HasIndex(p => p.MetodoPagoId);
+                entity.HasIndex(p => p.UsuarioId);
             });
 
         }

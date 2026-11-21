@@ -676,6 +676,73 @@ namespace Proyecto_FarmaControl.Migrations
                     b.ToTable("MovimientosInventario", (string)null);
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Pago", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CompraId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("FechaPago")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MetodoPagoId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Monto")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Referencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("TurnoCajaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VentaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompraId")
+                        .HasFilter("[CompraId] IS NOT NULL");
+
+                    b.HasIndex("MetodoPagoId");
+
+                    b.HasIndex("TurnoCajaId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("VentaId")
+                        .HasFilter("[VentaId] IS NOT NULL");
+
+                    b.ToTable("Pagos", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Pagos_DocumentoExclusivo", "([CompraId] IS NOT NULL AND [VentaId] IS NULL) OR ([CompraId] IS NULL AND [VentaId] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Pagos_Estado", "[Estado] IN (N'Registrado', N'Anulado')");
+
+                            t.HasCheckConstraint("CK_Pagos_Monto", "[Monto] > 0");
+                        });
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Permiso", b =>
                 {
                     b.Property<int>("Id")
@@ -1075,6 +1142,42 @@ namespace Proyecto_FarmaControl.Migrations
                             Id = 63,
                             Description = "Desactivar métodos de pago",
                             Name = "metodopago.borrar"
+                        },
+                        new
+                        {
+                            Id = 64,
+                            Description = "Consultar turnos de caja",
+                            Name = "turnocaja.ver"
+                        },
+                        new
+                        {
+                            Id = 65,
+                            Description = "Abrir turnos de caja",
+                            Name = "turnocaja.abrir"
+                        },
+                        new
+                        {
+                            Id = 66,
+                            Description = "Cerrar turnos de caja",
+                            Name = "turnocaja.cerrar"
+                        },
+                        new
+                        {
+                            Id = 67,
+                            Description = "Consultar pagos",
+                            Name = "pago.ver"
+                        },
+                        new
+                        {
+                            Id = 68,
+                            Description = "Registrar pagos",
+                            Name = "pago.crear"
+                        },
+                        new
+                        {
+                            Id = 69,
+                            Description = "Anular pagos",
+                            Name = "pago.anular"
                         });
                 });
 
@@ -1531,6 +1634,36 @@ namespace Proyecto_FarmaControl.Migrations
                         {
                             RoleId = 2,
                             PermissionId = 63
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 64
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 65
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 66
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 67
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 68
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 69
                         });
                 });
 
@@ -1573,6 +1706,76 @@ namespace Proyecto_FarmaControl.Migrations
                         .IsUnique();
 
                     b.ToTable("Sucursales");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.TurnoCaja", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("Diferencia")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("FechaApertura")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaCierre")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("MontoContado")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MontoEsperado")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MontoInicial")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<int>("SucursalId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsuarioAperturaId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UsuarioCierreId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioAperturaId")
+                        .IsUnique()
+                        .HasFilter("[Estado] = N'Abierto'");
+
+                    b.HasIndex("UsuarioCierreId");
+
+                    b.HasIndex("SucursalId", "FechaApertura");
+
+                    b.ToTable("TurnosCaja", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TurnosCaja_Estado", "[Estado] IN (N'Abierto', N'Cerrado')");
+
+                            t.HasCheckConstraint("CK_TurnosCaja_MontoContado", "[MontoContado] IS NULL OR [MontoContado] >= 0");
+
+                            t.HasCheckConstraint("CK_TurnosCaja_MontoEsperado", "[MontoEsperado] IS NULL OR [MontoEsperado] >= 0");
+
+                            t.HasCheckConstraint("CK_TurnosCaja_MontoInicial", "[MontoInicial] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Usuario", b =>
@@ -1948,6 +2151,46 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Navigation("Venta");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.Pago", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Compra", "Compra")
+                        .WithMany()
+                        .HasForeignKey("CompraId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.MetodoPago", "MetodoPago")
+                        .WithMany()
+                        .HasForeignKey("MetodoPagoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.TurnoCaja", "TurnoCaja")
+                        .WithMany()
+                        .HasForeignKey("TurnoCajaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Venta", "Venta")
+                        .WithMany()
+                        .HasForeignKey("VentaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Compra");
+
+                    b.Navigation("MetodoPago");
+
+                    b.Navigation("TurnoCaja");
+
+                    b.Navigation("Usuario");
+
+                    b.Navigation("Venta");
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.RolePermission", b =>
                 {
                     b.HasOne("Proyecto_FarmaControl.Models.Permiso", "Permission")
@@ -1965,6 +2208,32 @@ namespace Proyecto_FarmaControl.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.TurnoCaja", b =>
+                {
+                    b.HasOne("Proyecto_FarmaControl.Models.Sucursal", "Sucursal")
+                        .WithMany()
+                        .HasForeignKey("SucursalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Usuario", "UsuarioApertura")
+                        .WithMany()
+                        .HasForeignKey("UsuarioAperturaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proyecto_FarmaControl.Models.Usuario", "UsuarioCierre")
+                        .WithMany()
+                        .HasForeignKey("UsuarioCierreId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Sucursal");
+
+                    b.Navigation("UsuarioApertura");
+
+                    b.Navigation("UsuarioCierre");
                 });
 
             modelBuilder.Entity("Proyecto_FarmaControl.Models.Usuario", b =>
