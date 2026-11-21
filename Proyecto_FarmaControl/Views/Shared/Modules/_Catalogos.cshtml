@@ -1,0 +1,18 @@
+@{
+    var tab = Context.Request.Query["tab"].ToString().ToLowerInvariant();
+    if (tab != "presentaciones") tab = "laboratorios";
+    ViewData["FcModule"] = tab;
+    ViewData["FcHeading"] = tab == "presentaciones" ? "Presentaciones" : "Laboratorios";
+    ViewData["FcDescription"] = "Administra los catálogos que se utilizan al registrar medicamentos.";
+    ViewData["FcHideHeading"] = true;
+}
+<section class="fc-page">
+    <header class="fc-page-heading">
+        <div><h1>Laboratorios y presentaciones</h1><p>Gestiona los catálogos relacionados con los medicamentos.</p></div>
+    </header>
+    <div class="fc-tabs">
+        <a asp-controller="Home" asp-action="Index" asp-route-module="catalogos" asp-route-tab="laboratorios" class="@(tab == "laboratorios" ? "active" : "")">Laboratorios</a>
+        <a asp-controller="Home" asp-action="Index" asp-route-module="catalogos" asp-route-tab="presentaciones" class="@(tab == "presentaciones" ? "active" : "")">Presentaciones</a>
+    </div>
+    @await Html.PartialAsync("~/Views/Shared/Modules/_ApiWorkspace.cshtml")
+</section>

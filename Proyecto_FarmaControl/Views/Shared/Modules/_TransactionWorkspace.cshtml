@@ -1,0 +1,69 @@
+@{
+    var key = ViewData["FcTransaction"]?.ToString() ?? string.Empty;
+    var heading = ViewData["FcHeading"]?.ToString() ?? "Operaciones";
+    var description = ViewData["FcDescription"]?.ToString() ?? "Registra y consulta las operaciones del sistema.";
+    var formTitle = ViewData["FcFormTitle"]?.ToString() ?? "Formulario de registro";
+}
+<section class="fc-page" data-fc-transaction="@key">
+    <header class="fc-page-heading">
+        <div>
+            <h1>@heading</h1>
+            <p>@description</p>
+        </div>
+    </header>
+    <section class="fc-card fc-workspace-card">
+        <div class="fc-workspace-toolbar">
+            <span class="fc-section-chip">@heading</span>
+            <div class="fc-toolbar-actions">
+                <label class="fc-search">
+                    <span class="visually-hidden">Buscar</span>
+                    <span class="fc-search-icon" aria-hidden="true">⌕</span>
+                    <input type="search" data-fc-search placeholder="Buscar..." autocomplete="off" />
+                </label>
+                <button type="button" class="btn-fc-primary" data-fc-new>＋ Nuevo registro</button>
+            </div>
+        </div>
+        <div class="fc-table-wrap">
+            <table class="fc-table">
+                <thead><tr data-fc-head></tr></thead>
+                <tbody data-fc-body><tr><td class="fc-table-loading" colspan="10">Cargando información...</td></tr></tbody>
+            </table>
+        </div>
+        <div class="fc-table-footer">
+            <span data-fc-count>Consultando registros...</span>
+            <div class="fc-pagination">
+                <button type="button" class="fc-page-button" data-fc-prev disabled>Anterior</button>
+                <span data-fc-page>1</span>
+                <button type="button" class="fc-page-button" data-fc-next disabled>Siguiente</button>
+            </div>
+        </div>
+
+        <section class="fc-form-section">
+            <div class="fc-form-heading">
+                <div><h2>@formTitle</h2><p>Registra la operación y agrega uno o más productos.</p></div>
+                <span class="fc-form-mode">Nuevo registro</span>
+            </div>
+            <form data-fc-transaction-form novalidate>
+                <div class="fc-form-grid" data-fc-main-fields></div>
+                <div class="fc-detail-editor">
+                    <div class="fc-detail-heading">
+                        <div><h3>Detalle de la operación</h3><p>Agrega los productos que forman parte del documento.</p></div>
+                    </div>
+                    <div class="fc-form-grid fc-detail-fields" data-fc-detail-fields></div>
+                    <button type="button" class="btn-fc-secondary" data-fc-add-detail>＋ Agregar al detalle</button>
+                    <div class="fc-table-wrap fc-detail-table-wrap">
+                        <table class="fc-table fc-table-compact">
+                            <thead><tr data-fc-detail-head></tr></thead>
+                            <tbody data-fc-detail-body><tr><td class="fc-empty-cell" colspan="6">Todavía no has agregado productos.</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="fc-form-actions">
+                    <button type="submit" class="btn-fc-primary">Guardar borrador</button>
+                    <button type="button" class="btn-fc-secondary" data-fc-clear>Limpiar</button>
+                </div>
+            </form>
+        </section>
+        <div class="fc-feedback" data-fc-feedback role="status" aria-live="polite"></div>
+    </section>
+</section>

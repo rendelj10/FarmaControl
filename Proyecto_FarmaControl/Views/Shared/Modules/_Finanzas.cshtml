@@ -1,0 +1,19 @@
+@{
+    var tab = Context.Request.Query["tab"].ToString().ToLowerInvariant();
+    if (tab != "pagos") tab = "metodos";
+    ViewData["FcModule"] = tab == "pagos" ? "pagos" : "metodosPago";
+    ViewData["FcHeading"] = tab == "pagos" ? "Pagos" : "Métodos de pago";
+    ViewData["FcDescription"] = "Administra los métodos de pago y consulta las transacciones registradas.";
+    ViewData["FcHideHeading"] = true;
+    ViewData["FcFormTitle"] = tab == "pagos" ? "Registrar pago" : "Formulario de registro / edición";
+}
+<section class="fc-page">
+    <header class="fc-page-heading">
+        <div><h1>Pagos y métodos de pago</h1><p>Consulta y administra las operaciones financieras de FarmaControl.</p></div>
+    </header>
+    <div class="fc-tabs">
+        <a asp-controller="Home" asp-action="Index" asp-route-module="finanzas" asp-route-tab="metodos" class="@(tab == "metodos" ? "active" : "")">Métodos de pago</a>
+        <a asp-controller="Home" asp-action="Index" asp-route-module="finanzas" asp-route-tab="pagos" class="@(tab == "pagos" ? "active" : "")">Pagos</a>
+    </div>
+    @await Html.PartialAsync("~/Views/Shared/Modules/_ApiWorkspace.cshtml")
+</section>
