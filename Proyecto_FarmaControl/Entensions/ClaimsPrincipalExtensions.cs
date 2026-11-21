@@ -14,7 +14,8 @@ namespace Proyecto_FarmaControl.Entensions
             this ClaimsPrincipal user,
             string permission)
         {
-            return user.Claims.Any(c =>
+            return user.Identity?.IsAuthenticated == true &&
+                user.Claims.Any(c =>
                 c.Type == PermissionClaimType &&
                 string.Equals(
                     c.Value,

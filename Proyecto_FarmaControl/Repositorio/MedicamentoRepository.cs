@@ -20,6 +20,8 @@ namespace Proyecto_FarmaControl.Repositorio
         {
             return await _context.Medicamentos
                 .Include(m => m.Categoria)
+                .Include(m => m.Laboratorio)
+                .Include(m => m.PresentacionCatalogo)
                 .AsNoTracking()
                 .OrderBy(m => m.Nombre)
                 .ToListAsync();
@@ -29,6 +31,8 @@ namespace Proyecto_FarmaControl.Repositorio
         {
             return await _context.Medicamentos
                 .Include(m => m.Categoria)
+                .Include(m => m.Laboratorio)
+                .Include(m => m.PresentacionCatalogo)
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
 
@@ -64,7 +68,7 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // =====================================
-        // DATATABLES - PAGINACIÓN Y BÚSQUEDA
+        // DATATABLES - PAGINACION Y BUSQUEDA
         // =====================================
 
         public async Task<DataTablesResponseDto<MedicamentoDto>>
@@ -72,12 +76,14 @@ namespace Proyecto_FarmaControl.Repositorio
         {
             var query = _context.Medicamentos
                 .Include(m => m.Categoria)
+                .Include(m => m.Laboratorio)
+                .Include(m => m.PresentacionCatalogo)
                 .AsNoTracking()
                 .AsQueryable();
 
             var recordsTotal = await query.CountAsync();
 
-            // BÚSQUEDA
+            // BUSQUEDA
             var search = request.Search?.Value?.Trim();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -93,17 +99,22 @@ namespace Proyecto_FarmaControl.Repositorio
                      m.FormaFarmaceutica.Contains(search)) ||
                     (m.Presentacion != null &&
                      m.Presentacion.Contains(search)) ||
+                    (m.Laboratorio != null &&
+                     m.Laboratorio.Nombre.Contains(search)) ||
+                    (m.PresentacionCatalogo != null &&
+                     m.PresentacionCatalogo.Nombre.Contains(search)) ||
                     m.Categoria.Nombre.Contains(search));
             }
 
             var recordsFiltered = await query.CountAsync();
 
             // ORDENAMIENTO
-            var orderColumn =
-                request.Order.FirstOrDefault()?.Column ?? 0;
+            var order =
+                request.Order.FirstOrDefault();
 
-            var orderDir =
-                request.Order.FirstOrDefault()?.Dir ?? "asc";
+            var orderColumn = order?.Column ?? 0;
+
+            var orderDir = order?.Dir ?? "asc";
 
             var columnName = request.Columns
                 .ElementAtOrDefault(orderColumn)?.Data ?? "nombre";
@@ -143,6 +154,18 @@ namespace Proyecto_FarmaControl.Repositorio
                     ? query.OrderByDescending(m => m.Presentacion)
                     : query.OrderBy(m => m.Presentacion),
 
+                "laboratorionombre" => descending
+                    ? query.OrderByDescending(m => m.Laboratorio!.Nombre)
+                    : query.OrderBy(m => m.Laboratorio!.Nombre),
+
+                "presentacionnombre" => descending
+                    ? query.OrderByDescending(m => m.PresentacionCatalogo!.Nombre)
+                    : query.OrderBy(m => m.PresentacionCatalogo!.Nombre),
+
+                "precioventa" => descending
+                    ? query.OrderByDescending(m => m.PrecioVenta)
+                    : query.OrderBy(m => m.PrecioVenta),
+
                 "categorianombre" => descending
                     ? query.OrderByDescending(m => m.Categoria.Nombre)
                     : query.OrderBy(m => m.Categoria.Nombre),
@@ -154,7 +177,7 @@ namespace Proyecto_FarmaControl.Repositorio
                 _ => query.OrderBy(m => m.Nombre)
             };
 
-            // PAGINACIÓN
+            // PAGINACION
             var start = Math.Max(0, request.Start);
 
             var length = request.Length > 0
@@ -172,9 +195,26 @@ namespace Proyecto_FarmaControl.Repositorio
                     PrincipioActivo = m.PrincipioActivo,
                     Concentracion = m.Concentracion,
                     FormaFarmaceutica = m.FormaFarmaceutica,
+
+                    // Campo antiguo
                     Presentacion = m.Presentacion,
+
                     CategoriaId = m.CategoriaId,
                     CategoriaNombre = m.Categoria.Nombre,
+
+                    // Nuevas relaciones
+                    LaboratorioId = m.LaboratorioId,
+                    LaboratorioNombre = m.Laboratorio != null
+                        ? m.Laboratorio.Nombre
+                        : null,
+
+                    PresentacionId = m.PresentacionId,
+                    PresentacionNombre = m.PresentacionCatalogo != null
+                        ? m.PresentacionCatalogo.Nombre
+                        : null,
+
+                    PrecioVenta = m.PrecioVenta,
+
                     Activo = m.Activo
                 })
                 .ToListAsync();

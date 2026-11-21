@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Proyecto_FarmaControl.Interfaces;
+using Proyecto_FarmaControl.Service;
 using Proyecto_FarmaControl.Models.settings;
 
 namespace Proyecto_FarmaControl.Middlewares
@@ -120,10 +120,9 @@ namespace Proyecto_FarmaControl.Middlewares
 
                 if (principal != null)
                 {
-                    context.User = principal;
-
-                    // Ejecutar la aplicación fuera
-                    // del bloque de validación.
+                    // No establecer HttpContext.User aquí: el middleware
+                    // oficial de autenticación debe aplicar OnTokenValidated
+                    // antes de conceder acceso a la petición.
                     await _next(context);
                     return;
                 }
@@ -149,7 +148,9 @@ namespace Proyecto_FarmaControl.Middlewares
 
             if (newTokens == null)
             {
-                await HandleInvalidToken(context);
+                // Otra petición puede haber rotado el token primero.
+                // No borrar cookies de una respuesta concurrente válida.
+                await HandleInvalidToken(context, clearCookies: false);
                 return;
             }
 
@@ -157,11 +158,9 @@ namespace Proyecto_FarmaControl.Middlewares
             // 7. VALIDAR NUEVO ACCESS TOKEN
             // =====================================
 
-            ClaimsPrincipal newPrincipal;
-
             try
             {
-                newPrincipal = handler.ValidateToken(
+                handler.ValidateToken(
                     newTokens.AccessToken,
                     validationParameters,
                     out SecurityToken validatedToken);
@@ -210,11 +209,11 @@ namespace Proyecto_FarmaControl.Middlewares
                 refreshOptions);
 
             // =====================================
-            // 9. ACTUALIZAR USUARIO AUTENTICADO
+            // 9. ENTREGAR TOKEN RENOVADO A JWTBEARER
             // =====================================
 
-            context.User = newPrincipal;
-
+            // No escribir context.User antes de UseAuthentication.
+            // Ese middleware verificará la sesión actual en SQL.
             // Compartir el token con JwtBearer.
             context.Items[RefreshedTokenKey] =
                 newTokens.AccessToken;
@@ -248,24 +247,53 @@ namespace Proyecto_FarmaControl.Middlewares
         // =====================================
 
         private static Task HandleInvalidToken(
+            HttpContext context,
+            bool clearCookies = true)
+        {
+            if (clearCookies)
+            {
+                var options = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = context.Request.IsHttps,
+                    SameSite = SameSiteMode.Strict,
+                    Path = "/"
+                };
+
+                context.Response.Cookies.Delete("access_token", options);
+                context.Response.Cookies.Delete("refresh_token", options);
+            }
+
+            return RespondUnauthenticatedAsync(context);
+        }
+
+        // Para fetch se devuelve 401, no HTML de /Auth/Login.
+        // Para navegación normal se conserva la redirección MVC.
+        public static Task RespondUnauthenticatedAsync(
             HttpContext context)
         {
-            var options = new CookieOptions
+            var request = context.Request;
+            var fetchDestination = request.Headers["Sec-Fetch-Dest"].ToString();
+            bool isFetch = string.Equals(fetchDestination, "empty",
+                StringComparison.OrdinalIgnoreCase) ||
+                request.Headers.Accept.ToString().Contains(
+                    "application/json", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(
+                    request.Headers["X-Requested-With"].ToString(),
+                    "XMLHttpRequest", StringComparison.OrdinalIgnoreCase) ||
+                request.ContentType?.Contains("application/json",
+                    StringComparison.OrdinalIgnoreCase) == true ||
+                request.Headers.ContainsKey("RequestVerificationToken");
+
+            if (isFetch)
             {
-                HttpOnly = true,
-                Secure = context.Request.IsHttps,
-                SameSite = SameSiteMode.Strict,
-                Path = "/"
-            };
-
-            context.Response.Cookies.Delete(
-                "access_token", options);
-
-            context.Response.Cookies.Delete(
-                "refresh_token", options);
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsync(
+                    "{\"success\":false,\"message\":\"Sesión expirada o no autenticada.\"}");
+            }
 
             context.Response.Redirect("/Auth/Login");
-
             return Task.CompletedTask;
         }
     }

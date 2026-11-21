@@ -1,0 +1,55 @@
+FARMACONTROL - INTEGRACION DE MOVIMIENTOS DE COMPRAS Y VENTAS
+
+CONTENIDO
+Este paquete contiene 10 archivos fuente completos del backend y un script SQL de verificacion.
+No contiene vistas, CSS, JavaScript de interfaz ni cambios de esquema.
+
+CAMBIOS
+1. Al recibir una compra se registra un movimiento TipoMovimiento = Entrada.
+2. Al confirmar una venta se registra un movimiento TipoMovimiento = Salida.
+3. Se registra el usuario autenticado mediante ClaimTypes.NameIdentifier.
+4. Cada detalle de entrada queda vinculado al lote destino.
+5. Cada detalle de salida queda vinculado al lote origen.
+6. Movimiento, estado del documento y existencias se guardan en la misma transaccion SQL.
+7. Se agregan los metodos necesarios a los contratos y repositorios existentes.
+
+INSTALACION
+1. Cerrar Visual Studio o detener la aplicacion.
+2. Hacer una copia de seguridad de la carpeta Proyecto_FarmaControl.
+3. Extraer este ZIP directamente en C:\Proyectos\FarmaControl, conservando las carpetas.
+4. Aceptar reemplazar los 10 archivos existentes.
+5. Abrir PowerShell en C:\Proyectos\FarmaControl y ejecutar:
+
+   dotnet build .\Proyecto_FarmaControl\Proyecto_FarmaControl.csproj
+
+6. Si la compilacion termina correctamente, ejecutar:
+
+   git diff --check
+   git status --short
+
+IMPORTANTE
+- No ejecutar AjustesInventario_20261120.sql otra vez.
+- No ejecutar dotnet ef database update por estos cambios: no se modifico el esquema.
+- No hacer commit ni merge hasta completar las pruebas funcionales.
+- Probar primero con compras y ventas de prueba en estado Borrador.
+- Las acciones de recibir compra y confirmar venta obtienen el ID del usuario autenticado desde el claim NameIdentifier.
+
+PRUEBAS ESPERADAS
+COMPRA:
+- Recibir un borrador.
+- Verificar que el estado cambie a Recibida.
+- Verificar que se incremente el stock de los lotes.
+- Verificar un movimiento Entrada con CompraId, UsuarioId y AlmacenDestinoId.
+- Verificar un detalle por cada lote recibido con LoteDestinoId y Cantidad.
+
+VENTA:
+- Confirmar un borrador con existencias suficientes.
+- Verificar que el estado cambie a Confirmada.
+- Verificar que se descuente el stock de los lotes.
+- Verificar un movimiento Salida con VentaId, UsuarioId y AlmacenOrigenId.
+- Verificar un detalle por cada lote descontado con LoteOrigenId y Cantidad.
+
+VERIFICACION SQL
+Despues de probar compras y ventas, abrir Verificar_Movimientos_Compras_Ventas.sql en SQL Server Management Studio y ejecutarlo sobre FarmaControlDB.
+
+La operacion debe ser atomica: si falla el registro del movimiento, tambien deben revertirse el cambio de estado y la actualizacion del inventario.

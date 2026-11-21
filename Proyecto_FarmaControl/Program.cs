@@ -1,15 +1,14 @@
-
 using System.Security.Claims;
 using System.Text;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using Proyecto_FarmaControl.Data;
-using Proyecto_FarmaControl.Interfaces;
+using Proyecto_FarmaControl.Service;
 using Proyecto_FarmaControl.Repositorio;
-using Proyecto_FarmaControl.Services;
 using Proyecto_FarmaControl.Models.settings;
 using Proyecto_FarmaControl.Middlewares;
 using Proyecto_FarmaControl.Mapping;
@@ -125,40 +124,60 @@ builder.Services
                 return Task.CompletedTask;
             },
 
+            OnTokenValidated = async context =>
+            {
+                var userIdText = context.Principal?
+                    .FindFirstValue(ClaimTypes.NameIdentifier);
+                var sessionId = context.Principal?
+                    .FindFirst(TokenService.SessionClaimType)?.Value;
+
+                if (!int.TryParse(userIdText, out int userId) ||
+                    userId <= 0)
+                {
+                    context.Fail("Sesión inválida.");
+                    return;
+                }
+
+                var users = context.HttpContext.RequestServices
+                    .GetRequiredService<IUsuarioRepository>();
+                var user = await users.GetUsuarioByIdWithPermissionAsync(
+                    userId);
+
+                if (user == null ||
+                    !TokenService.IsCurrentSession(user, sessionId))
+                {
+                    context.Fail("La sesión fue revocada o expiró.");
+                }
+            },
+
             OnChallenge = context =>
             {
                 context.HandleResponse();
-
-                context.Response.Redirect("/Auth/Login");
-
-                return Task.CompletedTask;
+                return JwtRefreshMiddleware.RespondUnauthenticatedAsync(
+                    context.HttpContext);
             }
         };
     });
 
 // ========================================
-// 4. CONFIGURACION AUTORIZACION
+// 4. CONFIGURACION DE AUTORIZACION
 // ========================================
 
 builder.Services.AddAuthorization(options =>
 {
-    // PANEL ADMINISTRATIVO
-
-    options.AddPolicy("admin.panel", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasPermission("admin.panel")));
-
-    // ACTUALIZAR PERMISOS
-
-    options.AddPolicy("permiso.actualizar", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasPermission("permiso.actualizar")));
-
-    // ELIMINAR PERMISOS
-
-    options.AddPolicy("permiso.borrar", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasPermission("permiso.borrar")));
+    // Estas políticas también usan el handler con consulta a SQL.
+    // Evitar RequireAssertion sobre claims antiguos del JWT.
+    foreach (var name in new[]
+    {
+        "admin.panel",
+        "permiso.actualizar",
+        "permiso.borrar"
+    })
+    {
+        options.AddPolicy(name, policy => policy
+            .RequireAuthenticatedUser()
+            .AddRequirements(new PermissionRequirement(name)));
+    }
 });
 
 builder.Services.AddSingleton<
@@ -189,26 +208,99 @@ builder.Services.AddAutoMapper(cfg =>
 // 7. REGISTRO DE REPOSITORIOS
 // ========================================
 
+// CATEGORIAS
 builder.Services.AddScoped<
     ICategoriaRepository,
     CategoriaRepository>();
 
+// MEDICAMENTOS
 builder.Services.AddScoped<
     IMedicamentoRepository,
     MedicamentoRepository>();
 
+// LOTES
 builder.Services.AddScoped<
     ILoteRepository,
     LoteRepository>();
 
+// LABORATORIOS
+builder.Services.AddScoped<
+    ILaboratorioRepository,
+    LaboratorioRepository>();
+
+// PRESENTACIONES
+builder.Services.AddScoped<
+    IPresentacionRepository,
+    PresentacionRepository>();
+
+// METODOS DE PAGO
+builder.Services.AddScoped<
+    IMetodoPagoRepository,
+    MetodoPagoRepository>();
+
+// TURNOS DE CAJA
+builder.Services.AddScoped<
+    ITurnoCajaRepository,
+    TurnoCajaRepository>();
+
+// PAGOS
+builder.Services.AddScoped<
+    IPagoRepository,
+    PagoRepository>();
+
+// SUCURSALES
+builder.Services.AddScoped<
+    ISucursalRepository,
+    SucursalRepository>();
+
+// ALMACENES
+builder.Services.AddScoped<
+    IAlmacenRepository,
+    AlmacenRepository>();
+
+// PROVEEDORES
+builder.Services.AddScoped<
+    IProveedorRepository,
+    ProveedorRepository>();
+
+// COMPRAS
+builder.Services.AddScoped<
+    ICompraRepository,
+    CompraRepository>();
+
+// VENTAS
+builder.Services.AddScoped<
+    IVentaRepository,
+    VentaRepository>();
+
+// AJUSTES DE INVENTARIO
+builder.Services.AddScoped<
+    IAjusteInventarioRepository,
+    AjusteInventarioRepository>();
+
+// ========================================
+// CLIENTES - NUEVO REGISTRO
+// ========================================
+
+builder.Services.AddScoped<
+    IClienteRepository,
+    ClienteRepository>();
+
+// ========================================
+// REPOSITORIOS DE SEGURIDAD
+// ========================================
+
+// USUARIOS
 builder.Services.AddScoped<
     IUsuarioRepository,
     UsuarioRepository>();
 
+// ROLES
 builder.Services.AddScoped<
     IRoleRepository,
     RolRepository>();
 
+// PERMISOS
 builder.Services.AddScoped<
     IPermissionRepository,
     PermissionRepository>();
@@ -217,30 +309,104 @@ builder.Services.AddScoped<
 // 8. REGISTRO DE SERVICIOS
 // ========================================
 
+// CATEGORIAS
 builder.Services.AddScoped<
     ICategoriaService,
     CategoriaService>();
 
+// MEDICAMENTOS
 builder.Services.AddScoped<
     IMedicamentoService,
     MedicamentoService>();
 
+// LOTES
 builder.Services.AddScoped<
     ILoteService,
     LoteService>();
 
+// LABORATORIOS
+builder.Services.AddScoped<
+    ILaboratorioService,
+    LaboratorioService>();
+
+// PRESENTACIONES
+builder.Services.AddScoped<
+    IPresentacionService,
+    PresentacionService>();
+
+// METODOS DE PAGO
+builder.Services.AddScoped<
+    IMetodoPagoService,
+    MetodoPagoService>();
+
+// TURNOS DE CAJA
+builder.Services.AddScoped<
+    ITurnoCajaService,
+    TurnoCajaService>();
+
+// PAGOS
+builder.Services.AddScoped<
+    IPagoService,
+    PagoService>();
+
+// SUCURSALES
+builder.Services.AddScoped<
+    ISucursalService,
+    SucursalService>();
+
+// ALMACENES
+builder.Services.AddScoped<
+    IAlmacenService,
+    AlmacenService>();
+
+// PROVEEDORES
+builder.Services.AddScoped<
+    IProveedorService,
+    ProveedorService>();
+
+// COMPRAS
+builder.Services.AddScoped<
+    ICompraService,
+    CompraService>();
+
+// VENTAS
+builder.Services.AddScoped<
+    IVentaService,
+    VentaService>();
+
+// AJUSTES DE INVENTARIO
+builder.Services.AddScoped<
+    IAjusteInventarioService,
+    AjusteInventarioService>();
+
+// ========================================
+// CLIENTES - NUEVO REGISTRO
+// ========================================
+
+builder.Services.AddScoped<
+    IClienteService,
+    ClienteService>();
+
+// ========================================
+// SERVICIOS DE SEGURIDAD Y SOPORTE
+// ========================================
+
+// TOKENS
 builder.Services.AddScoped<
     ITokenService,
     TokenService>();
 
+// CORREOS
 builder.Services.AddScoped<
     IEmailService,
     EmailService>();
 
+// AUTENTICACION
 builder.Services.AddScoped<
     IAuthService,
     AuthService>();
 
+// ROLES Y PERMISOS
 builder.Services.AddScoped<
     IRolePermissionService,
     RolePermissionService>();
@@ -258,6 +424,7 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+
     app.UseHsts();
 }
 
