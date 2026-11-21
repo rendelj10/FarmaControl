@@ -305,6 +305,9 @@ builder.Services.AddScoped<
     IPermissionRepository,
     PermissionRepository>();
 
+// REPORTES DE SOLO LECTURA
+builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
+
 // ========================================
 // 8. REGISTRO DE SERVICIOS
 // ========================================
@@ -386,6 +389,9 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IClienteService,
     ClienteService>();
+
+// REPORTES DE SOLO LECTURA
+builder.Services.AddScoped<IReporteService, ReporteService>();
 
 // ========================================
 // SERVICIOS DE SEGURIDAD Y SOPORTE
