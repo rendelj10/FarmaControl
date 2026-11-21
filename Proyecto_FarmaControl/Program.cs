@@ -124,13 +124,37 @@ builder.Services
                 return Task.CompletedTask;
             },
 
+            OnTokenValidated = async context =>
+            {
+                var userIdText = context.Principal?
+                    .FindFirstValue(ClaimTypes.NameIdentifier);
+                var sessionId = context.Principal?
+                    .FindFirst(TokenService.SessionClaimType)?.Value;
+
+                if (!int.TryParse(userIdText, out int userId) ||
+                    userId <= 0)
+                {
+                    context.Fail("Sesión inválida.");
+                    return;
+                }
+
+                var users = context.HttpContext.RequestServices
+                    .GetRequiredService<IUsuarioRepository>();
+                var user = await users.GetUsuarioByIdWithPermissionAsync(
+                    userId);
+
+                if (user == null ||
+                    !TokenService.IsCurrentSession(user, sessionId))
+                {
+                    context.Fail("La sesión fue revocada o expiró.");
+                }
+            },
+
             OnChallenge = context =>
             {
                 context.HandleResponse();
-
-                context.Response.Redirect("/Auth/Login");
-
-                return Task.CompletedTask;
+                return JwtRefreshMiddleware.RespondUnauthenticatedAsync(
+                    context.HttpContext);
             }
         };
     });
@@ -141,17 +165,19 @@ builder.Services
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("admin.panel", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasPermission("admin.panel")));
-
-    options.AddPolicy("permiso.actualizar", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasPermission("permiso.actualizar")));
-
-    options.AddPolicy("permiso.borrar", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasPermission("permiso.borrar")));
+    // Estas políticas también usan el handler con consulta a SQL.
+    // Evitar RequireAssertion sobre claims antiguos del JWT.
+    foreach (var name in new[]
+    {
+        "admin.panel",
+        "permiso.actualizar",
+        "permiso.borrar"
+    })
+    {
+        options.AddPolicy(name, policy => policy
+            .RequireAuthenticatedUser()
+            .AddRequirements(new PermissionRequirement(name)));
+    }
 });
 
 builder.Services.AddSingleton<

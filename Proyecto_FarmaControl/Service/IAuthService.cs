@@ -25,5 +25,7 @@ namespace Proyecto_FarmaControl.Service
 
         Task<LoginResponseDto?> RefreshAccessTokenAsync(
             string refreshToken);
+
+        Task RevokeRefreshTokenAsync(string? refreshToken);
     }
 }

@@ -116,9 +116,6 @@ namespace Proyecto_FarmaControl.Service
                         "Debe confirmar su correo electrónico.");
                 }
 
-                var accessToken =
-                    _tokenService.GenerateAccessToken(user);
-
                 var refreshToken =
                     _tokenService.GenerateRefreshToken();
 
@@ -130,6 +127,10 @@ namespace Proyecto_FarmaControl.Service
                     DateTime.UtcNow.AddDays(7);
 
                 await _userRepo.SaveAsync();
+
+                // El JWT contiene el identificador de esta sesión.
+                var accessToken =
+                    _tokenService.GenerateAccessToken(user);
 
                 return (
                     true,
@@ -318,30 +319,51 @@ namespace Proyecto_FarmaControl.Service
                     user.RefreshTokenExpiryTime.Value <= DateTime.UtcNow)
                     return null;
 
+                // La sesión permanece igual, pero el secreto rota.
+                // Se actualiza mediante comparación atómica en SQL Server.
+                string newRefreshToken;
+                try
+                {
+                    newRefreshToken = TokenService.RotateRefreshToken(
+                        refreshToken);
+                }
+                catch (InvalidOperationException)
+                {
+                    return null;
+                }
+
+                var newExpiry = DateTime.UtcNow.AddDays(7);
+
+                bool rotated = await _userRepo.RotateRefreshTokenAsync(
+                    refreshToken, newRefreshToken, newExpiry);
+                if (!rotated)
+                    return null;
+
+                // Actualizar el objeto cargado para generar el JWT.
+                // ExecuteUpdateAsync ya realizó el UPDATE en SQL Server.
+                user.RefreshToken = newRefreshToken;
+                user.RefreshTokenExpiryTime = newExpiry;
+
                 var accessToken =
                     _tokenService.GenerateAccessToken(user);
-
-                var newRefreshToken =
-                    _tokenService.GenerateRefreshToken();
-
-                user.RefreshToken = newRefreshToken;
-
-                user.RefreshTokenExpiryTime =
-                    DateTime.UtcNow.AddDays(7);
-
-                await _userRepo.SaveAsync();
 
                 return new LoginResponseDto
                 {
                     AccessToken = accessToken,
                     RefreshToken = newRefreshToken,
-
                     ExpiresAt = DateTime.UtcNow.AddMinutes(
                         _jwtSettings.TokenValidateInMinutos),
-
-                    RefreshTokenExpiresAt =
-                        user.RefreshTokenExpiryTime
+                    RefreshTokenExpiresAt = newExpiry
                 };
+            }
+
+            // REVOCAR LA SESION PRESENTADA EN LOGOUT
+            public Task RevokeRefreshTokenAsync(string? refreshToken)
+            {
+                if (string.IsNullOrWhiteSpace(refreshToken))
+                    return Task.CompletedTask;
+
+                return _userRepo.RevokeRefreshTokenAsync(refreshToken);
             }
 
             // CONSTRUIR ENLACES

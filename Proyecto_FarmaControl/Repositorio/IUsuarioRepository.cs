@@ -15,6 +15,13 @@ namespace Proyecto_FarmaControl.Repositorio
 
         Task<Usuario?> GetUsuarioByRefreshTokenAsync(string refreshToken);
 
+        Task<bool> RotateRefreshTokenAsync(
+            string oldRefreshToken,
+            string newRefreshToken,
+            DateTime newExpiry);
+
+        Task RevokeRefreshTokenAsync(string refreshToken);
+
         // REGISTRO Y AUTENTICACION
 
         Task<Usuario> CreateAsync(Usuario usuario);

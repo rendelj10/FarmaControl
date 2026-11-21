@@ -14,6 +14,7 @@ namespace Proyecto_FarmaControl.Service
 {
     public class TokenService : ITokenService
     {
+        public const string SessionClaimType = "fc_session";
         private readonly JwtSettings _jwt;
 
         public TokenService(IOptions<JwtSettings> jwtSettings)
@@ -30,6 +31,11 @@ namespace Proyecto_FarmaControl.Service
 
         public string GenerateAccessToken(Usuario usuario)
         {
+            string? sessionId = GetSessionId(usuario.RefreshToken);
+            if (sessionId == null)
+                throw new InvalidOperationException(
+                    "No hay una sesión activa válida para generar el JWT.");
+
             var claims = new List<Claim>
             {
                 new(
@@ -46,7 +52,9 @@ namespace Proyecto_FarmaControl.Service
 
                 new(
                     ClaimTypes.Role,
-                    usuario.Role?.Name ?? "Usuario")
+                    usuario.Role?.Name ?? "Usuario"),
+
+                new(SessionClaimType, sessionId)
             };
 
             // Incorporar los permisos efectivos del usuario
@@ -79,8 +87,53 @@ namespace Proyecto_FarmaControl.Service
 
         public string GenerateRefreshToken()
         {
-            return Convert.ToBase64String(
-                RandomNumberGenerator.GetBytes(64));
+            // La primera parte identifica la sesión (128 bits),
+            // la segunda es el secreto rotativo (512 bits).
+            return Convert.ToHexString(RandomNumberGenerator.GetBytes(16))
+                + "." + Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+        }
+
+        public static string RotateRefreshToken(string currentRefreshToken)
+        {
+            string? sessionId = GetSessionId(currentRefreshToken);
+            if (sessionId == null)
+                throw new InvalidOperationException(
+                    "El refresh token tiene un formato inválido.");
+
+            return sessionId + "." +
+                Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+        }
+
+        public static bool IsCurrentSession(
+            Usuario usuario,
+            string? jwtSessionId)
+        {
+            if (string.IsNullOrWhiteSpace(jwtSessionId) ||
+                !usuario.EmailConfirmed ||
+                !usuario.RefreshTokenExpiryTime.HasValue ||
+                usuario.RefreshTokenExpiryTime.Value <= DateTime.UtcNow)
+                return false;
+
+            string? storedId = GetSessionId(usuario.RefreshToken);
+            return storedId != null &&
+                string.Equals(storedId, jwtSessionId,
+                    StringComparison.Ordinal);
+        }
+
+        private static string? GetSessionId(string? refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                return null;
+
+            // Formato: 32 hex de sesión + '.' + 128 hex de secreto.
+            if (refreshToken.Length != 161 || refreshToken[32] != '.')
+                return null;
+
+            if (!refreshToken[..32].All(Uri.IsHexDigit) ||
+                !refreshToken[33..].All(Uri.IsHexDigit))
+                return null;
+
+            return refreshToken.Substring(0, 32);
         }
 
         public string GeneratePasswordResetToken()

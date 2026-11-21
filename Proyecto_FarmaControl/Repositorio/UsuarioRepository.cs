@@ -74,6 +74,51 @@ namespace Proyecto_FarmaControl.Repositorio
         }
 
         // ========================================
+        // ROTAR REFRESH TOKEN DE MANERA ATOMICA
+        // ========================================
+
+        public async Task<bool> RotateRefreshTokenAsync(
+            string oldRefreshToken,
+            string newRefreshToken,
+            DateTime newExpiry)
+        {
+            // El UPDATE condicional impide que dos peticiones
+            // renueven exitosamente el mismo refresh token.
+            int updated = await _context.Usuarios
+                .Where(u =>
+                    u.RefreshToken == oldRefreshToken &&
+                    u.RefreshTokenExpiryTime.HasValue &&
+                    u.RefreshTokenExpiryTime.Value > DateTime.UtcNow)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(u => u.RefreshToken,
+                        newRefreshToken)
+                    .SetProperty(u => u.RefreshTokenExpiryTime,
+                        (DateTime?)newExpiry));
+
+            return updated == 1;
+        }
+
+        // ========================================
+        // REVOCAR REFRESH TOKEN DE MANERA ATOMICA
+        // ========================================
+
+        public async Task RevokeRefreshTokenAsync(string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                return;
+
+            // No revoca otra sesión iniciada después, porque
+            // exige coincidencia exacta del token presentado.
+            await _context.Usuarios
+                .Where(u => u.RefreshToken == refreshToken)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(u => u.RefreshToken,
+                        (string?)null)
+                    .SetProperty(u => u.RefreshTokenExpiryTime,
+                        (DateTime?)null));
+        }
+
+        // ========================================
         // REGISTRAR USUARIO
         // ========================================
 

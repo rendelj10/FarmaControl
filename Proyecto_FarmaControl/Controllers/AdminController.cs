@@ -1,6 +1,7 @@
 ﻿
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_FarmaControl.DTOs;
 using Proyecto_FarmaControl.Entensions;
@@ -39,6 +40,20 @@ namespace Proyecto_FarmaControl.Controllers
             return dbUser != null
                 ? dbUser.EffectivePermission
                 : User.GetPermission();
+        }
+
+        // =====================================
+        // TOKEN ANTIFORGERY PARA SOLICITUDES FETCH
+        // GET: /Admin/ObtenerToken
+        // =====================================
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult ObtenerToken(
+            [FromServices] IAntiforgery antiforgery)
+        {
+            var tokens = antiforgery.GetAndStoreTokens(HttpContext);
+            return Ok(new { requestToken = tokens.RequestToken });
         }
 
         // =====================================
@@ -128,6 +143,7 @@ namespace Proyecto_FarmaControl.Controllers
 
         [Authorize(Policy = "permiso.crear")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePermission(
             [FromBody] SavePermissionDto dto)
         {
@@ -166,6 +182,7 @@ namespace Proyecto_FarmaControl.Controllers
 
         [Authorize(Policy = "permiso.actualizar")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdatePermission(
             [FromBody] SavePermissionDto dto)
         {
@@ -204,6 +221,7 @@ namespace Proyecto_FarmaControl.Controllers
 
         [Authorize(Policy = "permiso.borrar")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeletePermission(int id)
         {
             var (success, errorMessage) =
@@ -308,6 +326,7 @@ namespace Proyecto_FarmaControl.Controllers
 
         [Authorize(Policy = "rol.asignar")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignPermissionToRole(
             int roleId,
             int permissionId)
@@ -333,6 +352,7 @@ namespace Proyecto_FarmaControl.Controllers
 
         [Authorize(Policy = "rol.asignar")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemovePermissionFromRole(
             int roleId,
             int permissionId)
@@ -408,6 +428,7 @@ namespace Proyecto_FarmaControl.Controllers
 
         [Authorize(Policy = "usuario.asignar")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssingPermissionToUser(
             int userId,
             [FromBody] AssignUserPermissionDto dto)
@@ -433,6 +454,7 @@ namespace Proyecto_FarmaControl.Controllers
 
         [Authorize(Policy = "usuario.asignar")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveUserPermission(
             int userId,
             int permissionId)
@@ -458,6 +480,7 @@ namespace Proyecto_FarmaControl.Controllers
 
         [Authorize(Policy = "usuario.cambiar.rol")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateRole(
             int userId,
             [FromBody] UpdateUserRoleDto dto)
