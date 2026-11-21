@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Administración";
+    var permissions = ViewBag.Permissions as IEnumerable<string> ?? Array.Empty<string>();
+}
+<section class="fc-page">
+    <header class="fc-page-heading"><div><h1>Administración</h1><p>Gestiona los usuarios, roles y permisos de acceso al sistema.</p></div></header>
+    <div class="fc-admin-grid">
+        <a asp-controller="Admin" asp-action="Users" class="fc-admin-card"><span class="fc-admin-icon">♙</span><h2>Usuarios</h2><p>Consulta las cuentas registradas y administra sus permisos.</p><span class="fc-admin-link">Administrar usuarios →</span></a>
+        <a asp-controller="Admin" asp-action="Roles" class="fc-admin-card"><span class="fc-admin-icon">♧</span><h2>Roles</h2><p>Define los perfiles y las funciones asignadas a cada rol.</p><span class="fc-admin-link">Administrar roles →</span></a>
+        <a asp-controller="Admin" asp-action="Permissions" class="fc-admin-card"><span class="fc-admin-icon">▤</span><h2>Permisos</h2><p>Consulta y administra las acciones autorizadas en el sistema.</p><span class="fc-admin-link">Administrar permisos →</span></a>
+    </div>
+    <section class="fc-card fc-permission-summary">
+        <div class="fc-panel-heading"><div><h2>Permisos efectivos de la sesión</h2><p>Permisos reconocidos para el usuario autenticado.</p></div><span class="fc-count-pill">@permissions.Count()</span></div>
+        @if (permissions.Any())
+        {
+            <div class="fc-permission-chips">
+                @foreach (var permission in permissions.OrderBy(x => x))
+                {
+                    <span class="fc-permission-chip">@permission</span>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="fc-muted">No hay permisos disponibles para mostrar.</p>
+        }
+    </section>
+</section>

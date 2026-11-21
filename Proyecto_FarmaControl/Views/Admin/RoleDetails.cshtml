@@ -1,0 +1,36 @@
+@model Proyecto_FarmaControl.DTOs.RoleWithPermissionDto
+@{
+    ViewData["Title"] = "Permisos del rol";
+    var allPermissions = ViewBag.AllPermission as IEnumerable<Proyecto_FarmaControl.DTOs.PermissionDto> ?? Enumerable.Empty<Proyecto_FarmaControl.DTOs.PermissionDto>();
+    var assignedIds = Model.Permissions.Select(p => p.Id).ToHashSet();
+    var available = allPermissions.Where(p => !assignedIds.Contains(p.Id)).OrderBy(p => p.Name).ToList();
+}
+<section class="fc-page" data-fc-role-details>
+    <header class="fc-page-heading"><div><h1>Permisos del rol: @Model.Name</h1><p>Asigna o retira permisos para este perfil.</p></div><a asp-controller="Admin" asp-action="Roles" class="btn-fc-secondary">Volver a roles</a></header>
+    <section class="fc-card fc-form-card">
+        <h2>Asignar permiso</h2>
+        @if (available.Any())
+        {
+            <form asp-controller="Admin" asp-action="AssignPermissionToRole" method="post" class="fc-inline-form" data-admin-role-assign>
+                <input type="hidden" name="roleId" value="@Model.Id" />
+                <div class="fc-field"><label for="permissionId">Permiso disponible</label><select id="permissionId" name="permissionId" class="fc-input" required><option value="">Selecciona un permiso</option>@foreach (var permission in available) { <option value="@permission.Id">@permission.Name — @permission.Description</option> }</select></div>
+                <button type="submit" class="btn-fc-primary">Asignar permiso</button>
+            </form>
+        }
+        else { <p class="fc-muted">Todos los permisos disponibles ya están asignados a este rol.</p> }
+    </section>
+    <section class="fc-card fc-workspace-card">
+        <div class="fc-workspace-toolbar"><span class="fc-section-chip">Permisos asignados</span><span class="fc-muted">@Model.Permissions.Count permisos</span></div>
+        <div class="fc-table-wrap"><table class="fc-table"><thead><tr><th>Permiso</th><th>Descripción</th><th>Acción</th></tr></thead><tbody>
+        @if (Model.Permissions.Any())
+        {
+            foreach (var permission in Model.Permissions.OrderBy(p => p.Name))
+            {
+                <tr><td class="fc-cell-strong">@permission.Name</td><td>@permission.Description</td><td><form asp-controller="Admin" asp-action="RemovePermissionFromRole" method="post" data-admin-role-remove><input type="hidden" name="roleId" value="@Model.Id" /><input type="hidden" name="permissionId" value="@permission.Id" /><button type="submit" class="fc-action-link fc-action-danger">Retirar</button></form></td></tr>
+            }
+        }
+        else { <tr><td colspan="3" class="fc-empty-cell">Este rol no tiene permisos asignados.</td></tr> }
+        </tbody></table></div>
+    </section>
+    <div class="fc-feedback" data-admin-role-feedback role="status" aria-live="polite"></div>
+</section>
