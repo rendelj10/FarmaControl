@@ -1,14 +1,12 @@
 ﻿
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_FarmaControl.DTOs;
-using Proyecto_FarmaControl.Interfaces;
-using Proyecto_FarmaControl.Models;
+using Proyecto_FarmaControl.Service;
 
 namespace Proyecto_FarmaControl.Controllers
 {
-    [Route("api/categorias")]
-    [ApiController]
-    public class CategoriaController : ControllerBase
+    public class CategoriaController : Controller
     {
         private readonly ICategoriaService _service;
 
@@ -17,9 +15,13 @@ namespace Proyecto_FarmaControl.Controllers
             _service = service;
         }
 
-        // GET: api/categorias
+        // =====================================
+        // INDEX
+        // =====================================
+
+        [Authorize(Policy = "categoria.ver")]
         [HttpGet]
-        public async Task<IActionResult> ObtenerTodas()
+        public async Task<IActionResult> Index()
         {
             var categorias = await _service.ObtenerTodasAsync();
 
@@ -29,116 +31,234 @@ namespace Proyecto_FarmaControl.Controllers
                 Nombre = c.Nombre,
                 Descripcion = c.Descripcion,
                 Activo = c.Activo
-            });
+            }).ToList();
 
-            return Ok(resultado);
+            return View(resultado);
         }
 
-        // GET: api/categorias/1
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> ObtenerPorId(int id)
-        {
-            var categoria = await _service.ObtenerPorIdAsync(id);
+        // =====================================
+        // DATATABLES - OBTENER DATOS
+        // =====================================
 
-            if (categoria == null)
+        [Authorize(Policy = "categoria.ver")]
+        [HttpPost]
+        public async Task<IActionResult> GetData(
+            [FromForm] DataTablesRequestDto request)
+        {
+            var result = await _service.ObtenerPaginadasAsync(request);
+
+            return Ok(result);
+        }
+
+        // =====================================
+        // OBTENER CATEGORIA POR ID
+        // =====================================
+
+        [Authorize(Policy = "categoria.ver")]
+        [HttpGet]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _service.ObtenerPorIdAsync(id);
+
+            if (result == null)
                 return NotFound(new
                 {
-                    mensaje = "Categoría no encontrada."
+                    message = "Categoría no encontrada."
                 });
 
-            return Ok(new CategoriaDto
-            {
-                Id = categoria.Id,
-                Nombre = categoria.Nombre,
-                Descripcion = categoria.Descripcion,
-                Activo = categoria.Activo
-            });
+            return Ok(result);
         }
 
-        // POST: api/categorias
+        // =====================================
+        // CREAR CATEGORIA - AJAX
+        // =====================================
+
+        [Authorize(Policy = "categoria.crear")]
         [HttpPost]
-        public async Task<IActionResult> Crear(
+        public async Task<IActionResult> Create(
             [FromBody] CategoriaGuardarDto dto)
         {
-            try
-            {
-                var categoria = new Categoria
+            if (!ModelState.IsValid)
+                return BadRequest(new
                 {
-                    Nombre = dto.Nombre,
-                    Descripcion = dto.Descripcion
-                };
+                    success = false,
+                    message = "Error en los datos enviados."
+                });
 
-                await _service.CrearAsync(categoria);
+            var (success, errorMessage) =
+                await _service.CrearAsync(dto);
 
-                return CreatedAtAction(
-                    nameof(ObtenerPorId),
-                    new { id = categoria.Id },
-                    new CategoriaDto
-                    {
-                        Id = categoria.Id,
-                        Nombre = categoria.Nombre,
-                        Descripcion = categoria.Descripcion,
-                        Activo = categoria.Activo
-                    });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { mensaje = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { mensaje = ex.Message });
-            }
+            return success
+                ? Ok(new
+                {
+                    success = true,
+                    message = "Categoría creada correctamente."
+                })
+                : BadRequest(new
+                {
+                    success = false,
+                    message = errorMessage
+                });
         }
 
-        // PUT: api/categorias/1
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> Actualizar(
-            int id,
+        // =====================================
+        // ACTUALIZAR CATEGORIA - AJAX
+        // =====================================
+
+        [Authorize(Policy = "categoria.actualizar")]
+        [HttpPost]
+        public async Task<IActionResult> Update(
             [FromBody] CategoriaGuardarDto dto)
         {
-            try
-            {
-                var categoria = new Categoria
+            if (!ModelState.IsValid)
+                return BadRequest(new
                 {
-                    Id = id,
-                    Nombre = dto.Nombre,
-                    Descripcion = dto.Descripcion
-                };
+                    success = false,
+                    message = "Error en los datos enviados."
+                });
 
-                await _service.ActualizarAsync(categoria);
+            var (success, errorMessage) =
+                await _service.ActualizarAsync(dto);
 
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { mensaje = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { mensaje = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { mensaje = ex.Message });
-            }
+            return success
+                ? Ok(new
+                {
+                    success = true,
+                    message = "Categoría actualizada correctamente."
+                })
+                : BadRequest(new
+                {
+                    success = false,
+                    message = errorMessage
+                });
         }
 
-        // DELETE: api/categorias/1
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Desactivar(int id)
+        // =====================================
+        // DESACTIVAR CATEGORIA - AJAX
+        // =====================================
+
+        [Authorize(Policy = "categoria.borrar")]
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
+            var (success, errorMessage) =
                 await _service.DesactivarAsync(id);
 
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
+            return success
+                ? Ok(new
+                {
+                    success = true,
+                    message = "Categoría desactivada correctamente."
+                })
+                : BadRequest(new
+                {
+                    success = false,
+                    message = errorMessage
+                });
+        }
+
+        // =====================================
+        // FORMULARIOS RAZOR TEMPORALES
+        // Se conservan mientras se integra
+        // la nueva interfaz AJAX.
+        // =====================================
+
+        [Authorize(Policy = "categoria.crear")]
+        [HttpGet]
+        public IActionResult Crear()
+        {
+            return View(new CategoriaGuardarDto());
+        }
+
+        [Authorize(Policy = "categoria.crear")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Crear(
+            CategoriaGuardarDto dto)
+        {
+            if (!ModelState.IsValid)
+                return View(dto);
+
+            var (success, errorMessage) =
+                await _service.CrearAsync(dto);
+
+            if (!success)
             {
-                return NotFound(new { mensaje = ex.Message });
+                ModelState.AddModelError(
+                    string.Empty,
+                    errorMessage ?? "No se pudo registrar la categoría.");
+
+                return View(dto);
             }
+
+            TempData["Mensaje"] =
+                "Categoría registrada correctamente.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [Authorize(Policy = "categoria.actualizar")]
+        [HttpGet]
+        public async Task<IActionResult> Editar(int id)
+        {
+            var dto = await _service.ObtenerPorIdAsync(id);
+
+            if (dto == null)
+                return NotFound();
+
+            ViewData["Id"] = id;
+
+            return View(dto);
+        }
+
+        [Authorize(Policy = "categoria.actualizar")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Editar(
+            int id,
+            CategoriaGuardarDto dto)
+        {
+            ViewData["Id"] = id;
+            dto.Id = id;
+
+            if (!ModelState.IsValid)
+                return View(dto);
+
+            var (success, errorMessage) =
+                await _service.ActualizarAsync(dto);
+
+            if (!success)
+            {
+                if (errorMessage == "La categoría no existe.")
+                    return NotFound();
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    errorMessage ?? "No se pudo actualizar la categoría.");
+
+                return View(dto);
+            }
+
+            TempData["Mensaje"] =
+                "Categoría actualizada correctamente.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [Authorize(Policy = "categoria.borrar")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Desactivar(int id)
+        {
+            var (success, errorMessage) =
+                await _service.DesactivarAsync(id);
+
+            TempData[success ? "Mensaje" : "Error"] =
+                success
+                    ? "Categoría desactivada correctamente."
+                    : errorMessage;
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
-    

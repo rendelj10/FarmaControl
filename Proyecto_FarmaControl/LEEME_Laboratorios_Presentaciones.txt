@@ -1,0 +1,57 @@
+FarmaControl - Módulos backend de Laboratorios y Presentaciones
+
+CONTENIDO
+- Modelos: Laboratorio y Presentacion.
+- DTOs de consulta y guardado.
+- Repositorios e interfaces.
+- Servicios e interfaces.
+- Controladores MVC con acciones JSON/AJAX.
+- Registro de dependencias en Program.cs.
+- DbSet, configuración Fluent API y permisos de administrador en AppDbContext.cs.
+
+IMPORTANTE
+1. Este paquete está preparado sobre el estado de FarmaControl(6).zip más el paquete FarmaControl_movimientos_corregidos.zip entregados en esta conversación.
+2. No modifica el Diccionario de Datos v1.0.
+3. No incluye Views ni acciones Index: el compañero está desarrollando la interfaz. Los controladores exponen acciones MVC para AJAX, sin rutas /api.
+4. No se agregan todavía LaboratorioId, PresentacionId ni PrecioVenta a Medicamento. Esa integración se hará en la siguiente etapa, respetando el orden de migración del diccionario.
+5. La desactivación es lógica (Activo=false), no elimina físicamente registros.
+
+INSTALACIÓN
+1. Cierra la aplicación si está ejecutándose.
+2. Extrae este ZIP en la raíz del repositorio, donde está Proyecto_FarmaControl.slnx. Conserva la estructura de carpetas y reemplaza AppDbContext.cs y Program.cs cuando Windows lo solicite.
+3. Desde PowerShell, en C:\Proyectos\FarmaControl, ejecuta:
+
+   dotnet build .\Proyecto_FarmaControl.slnx
+
+4. Si compila correctamente, crea la migración:
+
+   dotnet ef migrations add AddLaboratoriosYPresentaciones --project .\Proyecto_FarmaControl\Proyecto_FarmaControl.csproj --startup-project .\Proyecto_FarmaControl\Proyecto_FarmaControl.csproj
+
+5. Revisa que la migración cree las tablas Laboratorios y Presentaciones, el índice único de Presentaciones.Nombre, la restricción CantidadContenido > 0 cuando tenga valor y los permisos 52-59 asignados al rol Administrador.
+6. Ejecuta el script Verificar_Laboratorios_Presentaciones.sql en SSMS para comprobar tablas, columnas, índice, restricción y permisos.
+7. Aplica la migración:
+
+   dotnet ef database update --project .\Proyecto_FarmaControl\Proyecto_FarmaControl.csproj --startup-project .\Proyecto_FarmaControl\Proyecto_FarmaControl.csproj
+
+8. Ejecuta la aplicación y comparte el resultado de build/migración. Después haremos pruebas de endpoints desde la consola del navegador, sin esperar la interfaz.
+
+ACCIONES MVC
+Laboratorio:
+- GET  /Laboratorio/GetAll
+- GET  /Laboratorio/GetActivos
+- GET  /Laboratorio/GetById?id=1
+- POST /Laboratorio/GetData
+- POST /Laboratorio/Create
+- POST /Laboratorio/Update?id=1
+- POST /Laboratorio/Delete?id=1
+
+Presentacion:
+- GET  /Presentacion/GetAll
+- GET  /Presentacion/GetActivas
+- GET  /Presentacion/GetById?id=1
+- POST /Presentacion/GetData
+- POST /Presentacion/Create
+- POST /Presentacion/Update?id=1
+- POST /Presentacion/Delete?id=1
+
+Los POST de escritura requieren el token antifalsificación, igual que los módulos actuales.
