@@ -21,6 +21,8 @@ namespace Proyecto_FarmaControl.Data
 
         public DbSet<Presentacion> Presentaciones { get; set; } = null!;
 
+        public DbSet<MetodoPago> MetodosPago { get; set; } = null!;
+
         public DbSet<Medicamento> Medicamentos { get; set; } = null!;
 
         public DbSet<Lote> Lotes { get; set; } = null!;
@@ -509,6 +511,32 @@ namespace Proyecto_FarmaControl.Data
                     Id = 59,
                     Name = "presentacion.borrar",
                     Description = "Desactivar presentaciones"
+                },
+
+                // METODOS DE PAGO
+                new Permiso
+                {
+                    Id = 60,
+                    Name = "metodopago.ver",
+                    Description = "Consultar métodos de pago"
+                },
+                new Permiso
+                {
+                    Id = 61,
+                    Name = "metodopago.crear",
+                    Description = "Registrar métodos de pago"
+                },
+                new Permiso
+                {
+                    Id = 62,
+                    Name = "metodopago.actualizar",
+                    Description = "Actualizar métodos de pago"
+                },
+                new Permiso
+                {
+                    Id = 63,
+                    Name = "metodopago.borrar",
+                    Description = "Desactivar métodos de pago"
                 }
 
             );
@@ -613,7 +641,13 @@ namespace Proyecto_FarmaControl.Data
                 new { RoleId = 2, PermissionId = 56 },
                 new { RoleId = 2, PermissionId = 57 },
                 new { RoleId = 2, PermissionId = 58 },
-                new { RoleId = 2, PermissionId = 59 }
+                new { RoleId = 2, PermissionId = 59 },
+
+                // METODOS DE PAGO
+                new { RoleId = 2, PermissionId = 60 },
+                new { RoleId = 2, PermissionId = 61 },
+                new { RoleId = 2, PermissionId = 62 },
+                new { RoleId = 2, PermissionId = 63 }
 
             );
 
@@ -1224,6 +1258,31 @@ namespace Proyecto_FarmaControl.Data
                     .HasDefaultValue(true);
 
                 entity.HasIndex(p => p.Nombre)
+                    .IsUnique();
+            });
+
+            // ========================================
+            // 25. METODOS DE PAGO
+            // ========================================
+
+            modelBuilder.Entity<MetodoPago>(entity =>
+            {
+                entity.ToTable("MetodosPago");
+
+                entity.Property(m => m.Nombre)
+                    .HasMaxLength(50)
+                    .IsRequired();
+
+                entity.Property(m => m.Descripcion)
+                    .HasMaxLength(150);
+
+                entity.Property(m => m.RequiereReferencia)
+                    .HasDefaultValue(false);
+
+                entity.Property(m => m.Activo)
+                    .HasDefaultValue(true);
+
+                entity.HasIndex(m => m.Nombre)
                     .IsUnique();
             });
 

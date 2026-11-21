@@ -565,6 +565,41 @@ namespace Proyecto_FarmaControl.Migrations
                     b.ToTable("Medicamentos");
                 });
 
+            modelBuilder.Entity("Proyecto_FarmaControl.Models.MetodoPago", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("RequiereReferencia")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("MetodosPago", (string)null);
+                });
+
             modelBuilder.Entity("Proyecto_FarmaControl.Models.MovimientoInventario", b =>
                 {
                     b.Property<int>("Id")
@@ -1016,6 +1051,30 @@ namespace Proyecto_FarmaControl.Migrations
                             Id = 59,
                             Description = "Desactivar presentaciones",
                             Name = "presentacion.borrar"
+                        },
+                        new
+                        {
+                            Id = 60,
+                            Description = "Consultar métodos de pago",
+                            Name = "metodopago.ver"
+                        },
+                        new
+                        {
+                            Id = 61,
+                            Description = "Registrar métodos de pago",
+                            Name = "metodopago.crear"
+                        },
+                        new
+                        {
+                            Id = 62,
+                            Description = "Actualizar métodos de pago",
+                            Name = "metodopago.actualizar"
+                        },
+                        new
+                        {
+                            Id = 63,
+                            Description = "Desactivar métodos de pago",
+                            Name = "metodopago.borrar"
                         });
                 });
 
@@ -1452,6 +1511,26 @@ namespace Proyecto_FarmaControl.Migrations
                         {
                             RoleId = 2,
                             PermissionId = 59
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 60
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 61
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 62
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            PermissionId = 63
                         });
                 });
 

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_FarmaControl.DTOs;
-using Proyecto_FarmaControl.Interfaces;
+using Proyecto_FarmaControl.Service;
 
 namespace Proyecto_FarmaControl.Controllers
 {

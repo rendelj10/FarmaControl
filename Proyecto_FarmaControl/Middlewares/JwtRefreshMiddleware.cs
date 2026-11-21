@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Proyecto_FarmaControl.Interfaces;
+using Proyecto_FarmaControl.Service;
 using Proyecto_FarmaControl.Models.settings;
 
 namespace Proyecto_FarmaControl.Middlewares

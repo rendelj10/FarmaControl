@@ -1,5 +1,4 @@
-﻿
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,9 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using Proyecto_FarmaControl.Data;
-using Proyecto_FarmaControl.Interfaces;
+using Proyecto_FarmaControl.Service;
 using Proyecto_FarmaControl.Repositorio;
-using Proyecto_FarmaControl.Services;
 using Proyecto_FarmaControl.Models.settings;
 using Proyecto_FarmaControl.Middlewares;
 using Proyecto_FarmaControl.Mapping;
@@ -209,6 +207,11 @@ builder.Services.AddScoped<
     IPresentacionRepository,
     PresentacionRepository>();
 
+// METODOS DE PAGO
+builder.Services.AddScoped<
+    IMetodoPagoRepository,
+    MetodoPagoRepository>();
+
 // SUCURSALES
 builder.Services.AddScoped<
     ISucursalRepository,
@@ -294,6 +297,11 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IPresentacionService,
     PresentacionService>();
+
+// METODOS DE PAGO
+builder.Services.AddScoped<
+    IMetodoPagoService,
+    MetodoPagoService>();
 
 // SUCURSALES
 builder.Services.AddScoped<
