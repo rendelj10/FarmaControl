@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "Ajustes de inventario";
+}
+<section class="fc-page" data-fc-adjustment>
+    <header class="fc-page-heading"><div><h1>Inventario y lotes</h1><p>Registra conteos y correcciones de existencias mediante ajustes controlados.</p></div></header>
+    <div class="fc-tabs">
+        <a asp-controller="Lote" asp-action="Index">Lotes</a>
+        <a href="#" class="is-disabled" aria-disabled="true">Movimientos</a>
+        <a asp-controller="AjusteInventario" asp-action="Index" class="active">Ajustes</a>
+    </div>
+    <section class="fc-card fc-workspace-card">
+        <div class="fc-workspace-toolbar">
+            <span class="fc-section-chip">Ajustes de inventario</span>
+            <div class="fc-toolbar-actions">
+                <label class="fc-search"><span class="visually-hidden">Buscar</span><span class="fc-search-icon">⌕</span><input type="search" data-fc-search placeholder="Buscar..." /></label>
+                <button type="button" class="btn-fc-primary" data-fc-new>＋ Nuevo ajuste</button>
+            </div>
+        </div>
+        <div class="fc-table-wrap"><table class="fc-table"><thead><tr data-fc-head></tr></thead><tbody data-fc-body><tr><td class="fc-table-loading" colspan="8">Cargando ajustes...</td></tr></tbody></table></div>
+        <div class="fc-table-footer"><span data-fc-count></span><div class="fc-pagination"><button type="button" class="fc-page-button" data-fc-prev disabled>Anterior</button><span data-fc-page>1</span><button type="button" class="fc-page-button" data-fc-next disabled>Siguiente</button></div></div>
+        <section class="fc-form-section">
+            <div class="fc-form-heading"><div><h2>Formulario de registro de ajuste</h2><p>El ajuste se guardará como borrador hasta su confirmación.</p></div></div>
+            <form data-fc-adjustment-form novalidate>
+                <div class="fc-form-grid" data-fc-adjustment-main></div>
+                <div class="fc-detail-editor">
+                    <div class="fc-detail-heading"><div><h3>Detalle del conteo</h3><p>Selecciona el lote y registra la cantidad física observada.</p></div></div>
+                    <div class="fc-form-grid" data-fc-adjustment-detail></div>
+                    <button type="button" class="btn-fc-secondary" data-fc-adjustment-add>＋ Agregar lote</button>
+                    <div class="fc-table-wrap fc-detail-table-wrap"><table class="fc-table fc-table-compact"><thead><tr><th>Lote</th><th>Cantidad física</th><th>Observación</th><th></th></tr></thead><tbody data-fc-adjustment-details><tr><td colspan="4" class="fc-empty-cell">No hay lotes agregados.</td></tr></tbody></table></div>
+                </div>
+                <div class="fc-form-actions"><button type="submit" class="btn-fc-primary">Guardar borrador</button><button type="button" class="btn-fc-secondary" data-fc-adjustment-clear>Limpiar</button></div>
+            </form>
+        </section>
+        <div class="fc-feedback" data-fc-feedback role="status" aria-live="polite"></div>
+    </section>
+</section>
