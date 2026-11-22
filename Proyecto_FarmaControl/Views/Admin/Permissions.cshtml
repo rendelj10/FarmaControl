@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Permisos";
+    var canCreate = ViewBag.CanCreate as bool? ?? false;
+    var canUpdate = ViewBag.CanUpdate as bool? ?? false;
+    var canDelete = ViewBag.CanDelete as bool? ?? false;
+}
+<section class="fc-page" data-fc-admin-permissions data-can-create="@canCreate.ToString().ToLowerInvariant()" data-can-update="@canUpdate.ToString().ToLowerInvariant()" data-can-delete="@canDelete.ToString().ToLowerInvariant()">
+    <header class="fc-page-heading"><div><h1>Administración de permisos</h1><p>Consulta y administra los permisos disponibles en el sistema.</p></div><a asp-controller="Admin" asp-action="Index" class="btn-fc-secondary">Volver a administración</a></header>
+    <section class="fc-card fc-workspace-card">
+        <div class="fc-workspace-toolbar"><span class="fc-section-chip">Permisos registrados</span><div class="fc-toolbar-actions"><label class="fc-search"><span class="visually-hidden">Buscar</span><span class="fc-search-icon">⌕</span><input type="search" data-admin-permission-search placeholder="Buscar..." /></label></div></div>
+        <div class="fc-table-wrap"><table class="fc-table"><thead><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Acciones</th></tr></thead><tbody data-admin-permission-body><tr><td colspan="4" class="fc-table-loading">Cargando permisos...</td></tr></tbody></table></div>
+        <div class="fc-table-footer"><span data-admin-permission-count></span></div>
+    </section>
+    @if (canCreate || canUpdate)
+    {
+        <section class="fc-card fc-form-card">
+            <h2>Formulario de permiso</h2>
+            <form data-admin-permission-form>
+                <input type="hidden" name="Id" />
+                <div class="fc-form-grid">
+                    <div class="fc-field"><label for="permissionName">Nombre técnico</label><input id="permissionName" name="Name" class="fc-input" maxlength="100" required placeholder="Ej. categoria.crear" /></div>
+                    <div class="fc-field"><label for="permissionDescription">Descripción</label><input id="permissionDescription" name="Descripcion" class="fc-input" maxlength="250" placeholder="Descripción del permiso" /></div>
+                </div>
+                <div class="fc-form-actions"><button type="submit" class="btn-fc-primary">Guardar permiso</button><button type="button" class="btn-fc-secondary" data-admin-permission-clear>Limpiar</button></div>
+            </form>
+        </section>
+    }
+    <div class="fc-feedback" data-admin-permission-feedback role="status" aria-live="polite"></div>
+</section>

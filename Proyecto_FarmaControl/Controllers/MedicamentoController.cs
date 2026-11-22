@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Proyecto_FarmaControl.DTOs;
-using Proyecto_FarmaControl.Interfaces;
-using Proyecto_FarmaControl.Services;
+using Proyecto_FarmaControl.Service;
 
 namespace Proyecto_FarmaControl.Controllers
 {
@@ -12,13 +11,19 @@ namespace Proyecto_FarmaControl.Controllers
     {
         private readonly IMedicamentoService _service;
         private readonly ICategoriaService _categoriaService;
+        private readonly ILaboratorioService _laboratorioService;
+        private readonly IPresentacionService _presentacionService;
 
         public MedicamentoController(
             IMedicamentoService service,
-            ICategoriaService categoriaService)
+            ICategoriaService categoriaService,
+            ILaboratorioService laboratorioService,
+            IPresentacionService presentacionService)
         {
             _service = service;
             _categoriaService = categoriaService;
+            _laboratorioService = laboratorioService;
+            _presentacionService = presentacionService;
         }
 
         // =====================================
@@ -69,7 +74,7 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // =====================================
-        // OBTENER CATEGORÍAS ACTIVAS
+        // OBTENER CATEGORIAS ACTIVAS
         // =====================================
 
         [Authorize(Policy = "medicamento.ver")]
@@ -85,6 +90,52 @@ namespace Proyecto_FarmaControl.Controllers
                 {
                     id = c.Id,
                     nombre = c.Nombre
+                })
+                .ToList();
+
+            return Ok(resultado);
+        }
+
+        // =====================================
+        // OBTENER LABORATORIOS ACTIVOS
+        // =====================================
+
+        [Authorize(Policy = "medicamento.ver")]
+        [HttpGet]
+        public async Task<IActionResult> GetLaboratorios()
+        {
+            var laboratorios =
+                await _laboratorioService.ObtenerTodosAsync();
+
+            var resultado = laboratorios
+                .Where(l => l.Activo)
+                .Select(l => new
+                {
+                    id = l.Id,
+                    nombre = l.Nombre
+                })
+                .ToList();
+
+            return Ok(resultado);
+        }
+
+        // =====================================
+        // OBTENER PRESENTACIONES ACTIVAS
+        // =====================================
+
+        [Authorize(Policy = "medicamento.ver")]
+        [HttpGet]
+        public async Task<IActionResult> GetPresentaciones()
+        {
+            var presentaciones =
+                await _presentacionService.ObtenerTodasAsync();
+
+            var resultado = presentaciones
+                .Where(p => p.Activo)
+                .Select(p => new
+                {
+                    id = p.Id,
+                    nombre = p.Nombre
                 })
                 .ToList();
 
@@ -180,14 +231,14 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // =====================================
-        // FORMULARIOS RAZOR TEMPORALES
+        // FORMULARIO CREAR
         // =====================================
 
         [Authorize(Policy = "medicamento.crear")]
         [HttpGet]
         public async Task<IActionResult> Crear()
         {
-            await CargarCategoriasAsync();
+            await CargarCatalogosAsync();
 
             return View(new MedicamentoGuardarDto());
         }
@@ -200,7 +251,11 @@ namespace Proyecto_FarmaControl.Controllers
         {
             if (!ModelState.IsValid)
             {
-                await CargarCategoriasAsync(dto.CategoriaId);
+                await CargarCatalogosAsync(
+                    dto.CategoriaId,
+                    dto.LaboratorioId,
+                    dto.PresentacionId);
+
                 return View(dto);
             }
 
@@ -213,7 +268,10 @@ namespace Proyecto_FarmaControl.Controllers
                     string.Empty,
                     errorMessage ?? "No se pudo registrar el medicamento.");
 
-                await CargarCategoriasAsync(dto.CategoriaId);
+                await CargarCatalogosAsync(
+                    dto.CategoriaId,
+                    dto.LaboratorioId,
+                    dto.PresentacionId);
 
                 return View(dto);
             }
@@ -223,6 +281,10 @@ namespace Proyecto_FarmaControl.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        // =====================================
+        // FORMULARIO EDITAR
+        // =====================================
 
         [Authorize(Policy = "medicamento.actualizar")]
         [HttpGet]
@@ -235,7 +297,10 @@ namespace Proyecto_FarmaControl.Controllers
 
             ViewData["Id"] = id;
 
-            await CargarCategoriasAsync(dto.CategoriaId);
+            await CargarCatalogosAsync(
+                dto.CategoriaId,
+                dto.LaboratorioId,
+                dto.PresentacionId);
 
             return View(dto);
         }
@@ -252,7 +317,11 @@ namespace Proyecto_FarmaControl.Controllers
 
             if (!ModelState.IsValid)
             {
-                await CargarCategoriasAsync(dto.CategoriaId);
+                await CargarCatalogosAsync(
+                    dto.CategoriaId,
+                    dto.LaboratorioId,
+                    dto.PresentacionId);
+
                 return View(dto);
             }
 
@@ -268,7 +337,10 @@ namespace Proyecto_FarmaControl.Controllers
                     string.Empty,
                     errorMessage ?? "No se pudo actualizar el medicamento.");
 
-                await CargarCategoriasAsync(dto.CategoriaId);
+                await CargarCatalogosAsync(
+                    dto.CategoriaId,
+                    dto.LaboratorioId,
+                    dto.PresentacionId);
 
                 return View(dto);
             }
@@ -278,6 +350,10 @@ namespace Proyecto_FarmaControl.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        // =====================================
+        // DESACTIVAR
+        // =====================================
 
         [Authorize(Policy = "medicamento.borrar")]
         [HttpPost]
@@ -296,20 +372,71 @@ namespace Proyecto_FarmaControl.Controllers
         }
 
         // =====================================
-        // CARGAR CATEGORÍAS PARA FORMULARIOS
+        // CARGAR CATALOGOS PARA FORMULARIOS
         // =====================================
 
-        private async Task CargarCategoriasAsync(
-            int? categoriaSeleccionada = null)
+        private async Task CargarCatalogosAsync(
+            int? categoriaSeleccionada = null,
+            int? laboratorioSeleccionado = null,
+            int? presentacionSeleccionada = null)
         {
+            // CATEGORIAS
+
             var categorias =
                 await _categoriaService.ObtenerTodasAsync();
 
             ViewBag.Categorias = new SelectList(
-                categorias.Where(c => c.Activo),
+                categorias.Where(c =>
+                    c.Activo || c.Id == categoriaSeleccionada),
                 "Id",
                 "Nombre",
                 categoriaSeleccionada);
+
+            // LABORATORIOS
+
+            var laboratorios =
+                await _laboratorioService.ObtenerTodosAsync();
+
+            var opcionesLaboratorios = laboratorios
+                .Where(l =>
+                    l.Activo || l.Id == laboratorioSeleccionado)
+                .Select(l => new SelectListItem
+                {
+                    Value = l.Id.ToString(),
+                    Text = l.Activo
+                        ? l.Nombre
+                        : $"{l.Nombre} (Inactivo)"
+                })
+                .ToList();
+
+            ViewBag.Laboratorios = new SelectList(
+                opcionesLaboratorios,
+                "Value",
+                "Text",
+                laboratorioSeleccionado);
+
+            // PRESENTACIONES
+
+            var presentaciones =
+                await _presentacionService.ObtenerTodasAsync();
+
+            var opcionesPresentaciones = presentaciones
+                .Where(p =>
+                    p.Activo || p.Id == presentacionSeleccionada)
+                .Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Activo
+                        ? p.Nombre
+                        : $"{p.Nombre} (Inactiva)"
+                })
+                .ToList();
+
+            ViewBag.Presentaciones = new SelectList(
+                opcionesPresentaciones,
+                "Value",
+                "Text",
+                presentacionSeleccionada);
         }
     }
 }

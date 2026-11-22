@@ -1,0 +1,134 @@
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService Permisos
+@{
+    ViewData["Title"] = "Ventas de mostrador";
+    var puedeCrear = (await Permisos.AuthorizeAsync(User, "venta.crear")).Succeeded;
+    var puedeConfirmar = (await Permisos.AuthorizeAsync(User, "venta.confirmar")).Succeeded;
+    var puedeAnular = (await Permisos.AuthorizeAsync(User, "venta.anular")).Succeeded;
+    var puedeCobrar = (await Permisos.AuthorizeAsync(User, "pago.crear")).Succeeded;
+}
+<link rel="stylesheet" href="~/css/fc-pos.css" asp-append-version="true" />
+<section class="fc-page fc-pos" data-fc-pos
+         data-can-create="@(puedeCrear ? "true" : "false")"
+         data-can-confirm="@(puedeConfirmar ? "true" : "false")"
+         data-can-cancel="@(puedeAnular ? "true" : "false")"
+         data-can-pay="@(puedeCobrar ? "true" : "false")">
+    <form id="fc-pos-csrf" hidden>@Html.AntiForgeryToken()</form>
+    <header class="fc-page-heading">
+        <div>
+            <h1>Ventas de mostrador</h1>
+            <p>Busca el medicamento, indica la cantidad y registra la venta. El inventario se descuenta al confirmar.</p>
+        </div>
+        @if (puedeCobrar)
+        {
+            <a asp-controller="Home" asp-action="Index" asp-route-module="finanzas" asp-route-tab="pagos" class="btn-fc-secondary">Ir a cobros</a>
+        }
+    </header>
+
+    <div class="fc-pos-alert" data-pos-message role="status" aria-live="polite" hidden></div>
+
+    @if (puedeCrear)
+    {
+        <div class="fc-pos-grid">
+            <section class="fc-card fc-pos-panel">
+                <div class="fc-pos-section-heading">
+                    <div><h2>Nueva venta</h2><p>Atención rápida al público</p></div>
+                    <span class="fc-pos-label">Mostrador</span>
+                </div>
+
+                <div class="fc-pos-settings">
+                    <label class="fc-pos-field">
+                        <span>Cliente</span>
+                        <select id="pos-cliente" class="fc-input"><option value="">Cargando clientes…</option></select>
+                        <small data-pos-client-help>Se seleccionará Consumidor final cuando exista en Clientes.</small>
+                    </label>
+                    <label class="fc-pos-field" data-pos-warehouse-wrap>
+                        <span>Almacén de la sucursal</span>
+                        <select id="pos-almacen" class="fc-input"><option value="">Cargando almacenes…</option></select>
+                        <small>Con un solo almacén activo se selecciona automáticamente.</small>
+                    </label>
+                </div>
+
+                <div class="fc-pos-search-wrap">
+                    <label for="pos-buscar">Buscar medicamento por nombre o código</label>
+                    <input id="pos-buscar" class="fc-input fc-pos-search" autocomplete="off" placeholder="Ej. Paracetamol 500 mg" />
+                    <div class="fc-pos-suggestions" data-pos-suggestions hidden></div>
+                </div>
+
+                <div class="fc-pos-selected" data-pos-selected hidden>
+                    <div class="fc-pos-product-details">
+                        <strong data-pos-medicine-name>Medicamento</strong>
+                        <span data-pos-medicine-info></span>
+                        <span data-pos-stock></span>
+                    </div>
+                    <div class="fc-pos-item-price" data-pos-price>—</div>
+                </div>
+
+                <div class="fc-pos-add-row">
+                    <label class="fc-pos-field fc-pos-qty">
+                        <span>Cantidad</span>
+                        <input type="number" id="pos-cantidad" class="fc-input" min="1" step="1" value="1" />
+                    </label>
+                    <button type="button" class="btn-fc-primary fc-pos-add-btn" data-pos-add disabled>＋ Agregar producto</button>
+                </div>
+                <p class="fc-pos-tip">El sistema elige primero los lotes disponibles con vencimiento más próximo. No permite vender lotes vencidos.</p>
+            </section>
+
+            <section class="fc-card fc-pos-panel fc-pos-cart-panel">
+                <div class="fc-pos-section-heading">
+                    <div><h2>Productos de la venta</h2><p>El precio se toma del catálogo de medicamentos</p></div>
+                    <span class="fc-pos-counter" data-pos-items>0</span>
+                </div>
+                <div class="fc-table-wrap">
+                    <table class="fc-table fc-pos-table">
+                        <thead><tr><th>Medicamento</th><th>Cant.</th><th>Precio</th><th>Subtotal</th><th></th></tr></thead>
+                        <tbody data-pos-cart><tr><td colspan="5" class="fc-empty-cell">Agregá un medicamento para comenzar.</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="fc-pos-total-row"><span>Total de la venta</span><strong data-pos-total>C$ 0.00</strong></div>
+                <details class="fc-pos-advanced">
+                    <summary>Datos administrativos (opcionales)</summary>
+                    <div class="fc-pos-advanced-fields">
+                        <label class="fc-pos-field"><span>Número de documento</span><input id="pos-documento" class="fc-input" maxlength="50" required /><small>Generado automáticamente. Se puede modificar.</small></label>
+                        <label class="fc-pos-field"><span>Fecha</span><input type="date" id="pos-fecha" class="fc-input" required /></label>
+                        <label class="fc-pos-field fc-pos-observations"><span>Observaciones</span><textarea id="pos-observaciones" class="fc-input" rows="2" maxlength="500"></textarea></label>
+                    </div>
+                </details>
+                @if (puedeConfirmar)
+                {
+                    <label class="fc-pos-confirm-choice"><input type="checkbox" id="pos-auto-confirm" checked /> Confirmar al registrar y descontar existencias</label>
+                }
+                else
+                {
+                    <p class="fc-pos-tip">Tu perfil puede preparar la venta; un usuario autorizado debe confirmarla.</p>
+                }
+                <div class="fc-pos-submit-actions">
+                    <button type="button" class="btn-fc-primary" data-pos-save>Registrar venta</button>
+                    <button type="button" class="btn-fc-secondary" data-pos-clear>Vaciar venta</button>
+                </div>
+                <p class="fc-pos-tip">El cobro se registra aparte en <strong>Pagos y métodos de pago</strong>. Registrar la venta no significa que ya esté pagada.</p>
+            </section>
+        </div>
+    }
+    else
+    {
+        <section class="fc-card fc-pos-panel"><h2>Consulta de ventas</h2><p>Tu rol permite consultar ventas, pero no registrar productos. El Vendedor prepara y confirma ventas; el Cajero gestiona los cobros.</p></section>
+    }
+
+    <section class="fc-card fc-pos-panel fc-pos-history">
+        <div class="fc-pos-section-heading">
+            <div><h2>Historial de ventas</h2><p>Las ventas pendientes deben confirmarse antes de descontar inventario.</p></div>
+            <button type="button" class="btn-fc-secondary" data-pos-reload>Actualizar</button>
+        </div>
+        <label class="fc-pos-history-search"><span class="visually-hidden">Buscar ventas</span><input type="search" class="fc-input" placeholder="Buscar por documento, cliente o estado" data-pos-history-search /></label>
+        <div class="fc-table-wrap">
+            <table class="fc-table">
+                <thead><tr><th>ID</th><th>Documento</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody data-pos-history><tr><td colspan="7" class="fc-empty-cell">Cargando ventas…</td></tr></tbody>
+            </table>
+        </div>
+        <div class="fc-pos-footer"><span data-pos-count></span><div class="fc-pagination"><button type="button" class="fc-page-button" data-pos-prev>Anterior</button><span data-pos-page>1 / 1</span><button type="button" class="fc-page-button" data-pos-next>Siguiente</button></div></div>
+    </section>
+</section>
+@section Scripts {
+    <script src="~/js/fc-pos.js" asp-append-version="true"></script>
+}

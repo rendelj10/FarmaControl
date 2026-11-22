@@ -1,0 +1,17 @@
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService ViewAuth
+@{
+    ViewData["Title"] = "Inventario y lotes";
+    ViewData["FcModule"] = "lotes";
+    ViewData["FcHeading"] = "Lotes";
+    ViewData["FcDescription"] = "Consulta las existencias por medicamento, lote y almacén.";
+    ViewData["FcHideHeading"] = true;
+}
+<section class="fc-page">
+    <header class="fc-page-heading"><div><h1>Inventario y lotes</h1><p>Controla las existencias, movimientos y ajustes de inventario.</p></div></header>
+    <div class="fc-tabs">
+        <a asp-controller="Lote" asp-action="Index" class="active">Lotes</a>
+        <a asp-controller="Movimiento" asp-action="Index">Movimientos</a>
+        @if ((await ViewAuth.AuthorizeAsync(User, "ajuste.ver")).Succeeded) { <a asp-controller="AjusteInventario" asp-action="Index">Ajustes</a> }
+    </div>
+    @await Html.PartialAsync("~/Views/Shared/Modules/_ApiWorkspace.cshtml")
+</section>

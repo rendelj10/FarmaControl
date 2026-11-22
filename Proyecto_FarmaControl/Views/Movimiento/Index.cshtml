@@ -1,0 +1,19 @@
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService ViewAuth
+@{
+    ViewData["Title"] = "Movimientos de inventario";
+}
+<section class="fc-page">
+    <header class="fc-page-heading"><div><h1>Inventario y lotes</h1><p>Historial de entradas, salidas y ajustes registrados.</p></div></header>
+    <div class="fc-tabs">
+        <a asp-controller="Lote" asp-action="Index">Lotes</a>
+        <a asp-controller="Movimiento" asp-action="Index" class="active" aria-current="page">Movimientos</a>
+        @if ((await ViewAuth.AuthorizeAsync(User, "ajuste.ver")).Succeeded)
+        {
+            <a asp-controller="AjusteInventario" asp-action="Index">Ajustes</a>
+        }
+    </div>
+    @await Html.PartialAsync("~/Views/Shared/Modules/_MovementWorkspace.cshtml")
+</section>
+@section Scripts {
+    <script src="~/js/fc-movimientos.js" asp-append-version="true"></script>
+}

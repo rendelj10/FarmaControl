@@ -11,7 +11,9 @@ namespace Proyecto_FarmaControl.DTOs
 
         public string NumeroLote { get; set; } = string.Empty;
 
-        public string Almacen { get; set; } = string.Empty;
+        public int AlmacenId { get; set; }
+
+        public string AlmacenNombre { get; set; } = string.Empty;
 
         public int CantidadInicial { get; set; }
 

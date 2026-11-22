@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Sucursales y almacenes";
+    ViewData["FcModule"] = "almacenes";
+    ViewData["FcHeading"] = "Almacenes";
+    ViewData["FcDescription"] = "Administra los almacenes asociados a cada sucursal.";
+    ViewData["FcHideHeading"] = true;
+}
+<section class="fc-page">
+    <header class="fc-page-heading"><div><h1>Sucursales y almacenes</h1><p>Gestiona las ubicaciones físicas de la farmacia.</p></div></header>
+    <div class="fc-tabs">
+        <a asp-controller="Sucursal" asp-action="Index">Sucursales</a>
+        <a asp-controller="Almacen" asp-action="Index" class="active">Almacenes</a>
+    </div>
+    @await Html.PartialAsync("~/Views/Shared/Modules/_ApiWorkspace.cshtml")
+</section>

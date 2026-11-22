@@ -1,50 +1,224 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService MenuAuth
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var currentModule = Context.Request.Query["module"].ToString().ToLowerInvariant();
+    var isAuthPage = currentController.Equals("Auth", StringComparison.OrdinalIgnoreCase);
+    var isDashboard = currentController.Equals("Home", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(currentModule);
+    var isCategories = currentController.Equals("Categoria", StringComparison.OrdinalIgnoreCase);
+    var isMedicines = currentController.Equals("Medicamento", StringComparison.OrdinalIgnoreCase);
+    var isInventory = currentController.Equals("Lote", StringComparison.OrdinalIgnoreCase) || currentController.Equals("AjusteInventario", StringComparison.OrdinalIgnoreCase);
+    var isPurchases = currentController.Equals("Compra", StringComparison.OrdinalIgnoreCase);
+    var isSales = currentController.Equals("Venta", StringComparison.OrdinalIgnoreCase);
+    var isSuppliers = currentController.Equals("Proveedor", StringComparison.OrdinalIgnoreCase);
+    var isClients = currentController.Equals("Cliente", StringComparison.OrdinalIgnoreCase);
+    var isCatalogs = currentModule == "catalogos";
+    var isBranches = currentController.Equals("Sucursal", StringComparison.OrdinalIgnoreCase) || currentController.Equals("Almacen", StringComparison.OrdinalIgnoreCase);
+    var isFinance = currentModule == "finanzas";
+    var isCash = currentModule == "caja" || currentController.Equals("TurnoCaja", StringComparison.OrdinalIgnoreCase);
+    var isReports = currentModule == "reportes" || currentController.Equals("Reporte", StringComparison.OrdinalIgnoreCase);
+    var isAdmin = currentController.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+
+    // Las opciones se muestran según el rol y los permisos efectivos (consultados
+    // al backend en cada solicitud). Ocultar enlaces no reemplaza la autorización
+    // de los controladores.
+    var isSignedIn = User.Identity?.IsAuthenticated == true;
+    var adminRole = isSignedIn && User.IsInRole("Administrador");
+    var sellerRole = isSignedIn && User.IsInRole("Vendedor");
+    var cashierRole = isSignedIn && User.IsInRole("Cajero");
+
+    var canAdminPanel = adminRole && (await MenuAuth.AuthorizeAsync(User, "admin.panel")).Succeeded;
+    var canMedicines = (adminRole || sellerRole || cashierRole) && (await MenuAuth.AuthorizeAsync(User, "medicamento.ver")).Succeeded;
+    var canCategories = adminRole && (await MenuAuth.AuthorizeAsync(User, "categoria.ver")).Succeeded;
+    var canInventory = (adminRole || sellerRole) && (await MenuAuth.AuthorizeAsync(User, "lote.ver")).Succeeded;
+    var canPurchases = adminRole && (await MenuAuth.AuthorizeAsync(User, "compra.ver")).Succeeded;
+    var canSales = (adminRole || sellerRole || cashierRole) && (await MenuAuth.AuthorizeAsync(User, "venta.ver")).Succeeded;
+    var canSuppliers = adminRole && (await MenuAuth.AuthorizeAsync(User, "proveedor.ver")).Succeeded;
+    var canClients = (adminRole || sellerRole) && (await MenuAuth.AuthorizeAsync(User, "cliente.ver")).Succeeded;
+    var canCatalogs = adminRole && ((await MenuAuth.AuthorizeAsync(User, "laboratorio.ver")).Succeeded || (await MenuAuth.AuthorizeAsync(User, "presentacion.ver")).Succeeded);
+    var canBranches = adminRole && ((await MenuAuth.AuthorizeAsync(User, "sucursal.ver")).Succeeded || (await MenuAuth.AuthorizeAsync(User, "almacen.ver")).Succeeded);
+    var canFinance = (adminRole || sellerRole || cashierRole) && ((await MenuAuth.AuthorizeAsync(User, "pago.ver")).Succeeded || (await MenuAuth.AuthorizeAsync(User, "metodopago.ver")).Succeeded);
+    var canCash = (adminRole || sellerRole || cashierRole) && (await MenuAuth.AuthorizeAsync(User, "turnocaja.ver")).Succeeded;
+    var canReports = canAdminPanel;
+}
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Proyecto_FarmaControl</title>
-    <script type="importmap"></script>
+    <meta name="theme-color" content="#17364D" />
+    <title>@ViewData["Title"] - FarmaControl</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/fc-reportes.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Proyecto_FarmaControl.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Proyecto_FarmaControl</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+<body class="@(isAuthPage ? "auth-layout" : "app-layout")">
+@if (!isAuthPage)
+{
+    <div class="app-shell">
+        <aside class="sidebar" id="appSidebar" aria-label="Menú principal">
+            <div class="sidebar-brand">
+                <a asp-controller="Home" asp-action="Index" class="brand-link" aria-label="FarmaControl, ir al Dashboard">
+                    <span class="brand-logo-wrap">
+                        <img src="~/images/farmacontrol-logo.png" alt="FarmaControl" class="brand-logo" />
+                    </span>
+                    <span class="brand-copy">
+                        <strong>FarmaControl</strong>
+                        <small>Sistema de gestión farmacéutica</small>
+                    </span>
+                </a>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Proyecto_FarmaControl - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <div class="sidebar-section-label">MENÚ PRINCIPAL</div>
+
+            <nav class="sidebar-nav">
+                @if (isSignedIn)
+                {
+                    <a asp-controller="Home" asp-action="Index" class="sidebar-link @(isDashboard ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/crecimiento-de-las-ganancias.png" alt="" /></span>
+                        <span>Dashboard</span>
+                    </a>
+                }
+                @if (canMedicines)
+                {
+                    <a asp-controller="Medicamento" asp-action="Index" class="sidebar-link @(isMedicines ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/medicamento.png" alt="" /></span>
+                        <span>Medicamentos</span>
+                    </a>
+                }
+                @if (canCategories)
+                {
+                    <a asp-controller="Categoria" asp-action="Index" class="sidebar-link @(isCategories ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/categorias.png" alt="" /></span>
+                        <span>Categorías</span>
+                    </a>
+                }
+                @if (canInventory)
+                {
+                    <a asp-controller="Lote" asp-action="Index" class="sidebar-link @(isInventory ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/inventario.png" alt="" /></span>
+                        <span>Inventario y lotes</span>
+                    </a>
+                }
+                @if (canPurchases)
+                {
+                    <a asp-controller="Compra" asp-action="Index" class="sidebar-link @(isPurchases ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/carro-de-la-carretilla.png" alt="" /></span>
+                        <span>Compras</span>
+                    </a>
+                }
+                @if (canSales)
+                {
+                    <a asp-controller="Venta" asp-action="Index" class="sidebar-link @(isSales ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/etiqueta-de-precio.png" alt="" /></span>
+                        <span>Ventas</span>
+                    </a>
+                }
+                @if (canSuppliers)
+                {
+                    <a asp-controller="Proveedor" asp-action="Index" class="sidebar-link @(isSuppliers ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/proveedor.png" alt="" /></span>
+                        <span>Proveedores</span>
+                    </a>
+                }
+                @if (canClients)
+                {
+                    <a asp-controller="Cliente" asp-action="Index" class="sidebar-link @(isClients ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/clientes.png" alt="" /></span>
+                        <span>Clientes</span>
+                    </a>
+                }
+                @if (canCatalogs)
+                {
+                    <a asp-controller="Home" asp-action="Index" asp-route-module="catalogos" class="sidebar-link @(isCatalogs ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/cientifico.png" alt="" /></span>
+                        <span>Laboratorios y presentaciones</span>
+                    </a>
+                }
+                @if (canBranches)
+                {
+                    <a asp-controller="Sucursal" asp-action="Index" class="sidebar-link @(isBranches ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/inventario.png" alt="" /></span>
+                        <span>Sucursales y almacenes</span>
+                    </a>
+                }
+                @if (canFinance)
+                {
+                    <a asp-controller="Home" asp-action="Index" asp-route-module="finanzas" class="sidebar-link @(isFinance ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/etiqueta-de-precio.png" alt="" /></span>
+                        <span>Pagos y métodos de pago</span>
+                    </a>
+                }
+                @if (canCash)
+                {
+                    <a asp-controller="Home" asp-action="Index" asp-route-module="caja" class="sidebar-link @(isCash ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/carro-de-la-carretilla.png" alt="" /></span>
+                        <span>Caja y turnos</span>
+                    </a>
+                }
+                @if (canReports)
+                {
+                    <a asp-controller="Reporte" asp-action="Index" class="sidebar-link @(isReports ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/crecimiento-de-las-ganancias.png" alt="" /></span>
+                        <span>Reportes</span>
+                    </a>
+                }
+                @if (canAdminPanel)
+                {
+                    <a asp-controller="Admin" asp-action="Index" class="sidebar-link @(isAdmin ? "active" : string.Empty)">
+                        <span class="sidebar-icon"><img src="~/images/icons/categorias.png" alt="" /></span>
+                        <span>Administración</span>
+                    </a>
+                }
+            </nav>
+
+            <div class="sidebar-footer">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form asp-controller="Auth" asp-action="Logout" method="post" class="logout-form">
+                        <button type="submit" class="sidebar-logout">
+                            <span aria-hidden="true">↪</span> Cerrar sesión
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-controller="Auth" asp-action="Login" class="sidebar-logout">Iniciar sesión</a>
+                }
+            </div>
+        </aside>
+
+        <button type="button" class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Cerrar menú"></button>
+
+        <div class="app-main">
+            <header class="mobile-header">
+                <button type="button" class="mobile-menu-button" id="sidebarToggle" aria-label="Abrir menú" aria-controls="appSidebar" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <a asp-controller="Home" asp-action="Index" class="mobile-brand">FarmaControl</a>
+                <span class="mobile-header-caption">Sistema de gestión</span>
+            </header>
+            <main role="main" class="app-content">
+                @RenderBody()
+            </main>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    </div>
+}
+else
+{
+    <main role="main" class="auth-content">
+        @RenderBody()
+    </main>
+}
+
+<form id="fc-antiforgery-token" class="d-none" aria-hidden="true">
+    @Html.AntiForgeryToken()
+</form>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script src="~/js/fc-reportes.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

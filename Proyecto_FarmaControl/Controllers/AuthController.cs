@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_FarmaControl.DTOs;
-using Proyecto_FarmaControl.Interfaces;
+using Proyecto_FarmaControl.Service;
 
 namespace Proyecto_FarmaControl.Controllers
 {
@@ -279,8 +279,14 @@ namespace Proyecto_FarmaControl.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
+            // La revocación se registra antes de borrar las cookies.
+            // Los JWT de la misma sesión quedan invalidados por el
+            // identificador de sesión comprobado en OnTokenValidated.
+            await _service.RevokeRefreshTokenAsync(
+                Request.Cookies["refresh_token"]);
+
             var options = new CookieOptions
             {
                 HttpOnly = true,

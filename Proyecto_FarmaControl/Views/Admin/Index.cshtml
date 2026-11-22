@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Administración";
+    var permissions = ViewBag.Permissions as IEnumerable<string> ?? Array.Empty<string>();
+}
+<section class="fc-page">
+    <header class="fc-page-heading"><div><h1>Administración</h1><p>Gestiona los usuarios, roles y permisos de acceso al sistema.</p></div></header>
+    <div class="fc-admin-grid">
+        @if (permissions.Contains("usuario.ver", StringComparer.OrdinalIgnoreCase))
+        {
+            <a asp-controller="Admin" asp-action="Users" class="fc-admin-card"><span class="fc-admin-icon">♙</span><h2>Usuarios</h2><p>Consulta las cuentas registradas y administra sus permisos.</p><span class="fc-admin-link">Administrar usuarios →</span></a>
+        }
+        @if (permissions.Contains("rol.ver", StringComparer.OrdinalIgnoreCase))
+        {
+            <a asp-controller="Admin" asp-action="Roles" class="fc-admin-card"><span class="fc-admin-icon">♧</span><h2>Roles</h2><p>Define los perfiles y las funciones asignadas a cada rol.</p><span class="fc-admin-link">Administrar roles →</span></a>
+        }
+        @if (permissions.Contains("permiso.ver", StringComparer.OrdinalIgnoreCase))
+        {
+            <a asp-controller="Admin" asp-action="Permissions" class="fc-admin-card"><span class="fc-admin-icon">▤</span><h2>Permisos</h2><p>Consulta y administra las acciones autorizadas en el sistema.</p><span class="fc-admin-link">Administrar permisos →</span></a>
+        }
+    </div>
+    <section class="fc-card fc-permission-summary">
+        <div class="fc-panel-heading">
+            <div><h2>Perfiles de acceso</h2><p>Los usuarios heredan sus funciones automáticamente del rol asignado.</p></div>
+        </div>
+        <div class="fc-admin-grid" style="margin-top: 1rem;">
+            <div class="fc-admin-card">
+                <h2>Administrador</h2>
+                <p>Gestiona la farmacia, las compras, el inventario, los pagos y la seguridad.</p>
+            </div>
+            <div class="fc-admin-card">
+                <h2>Cajero</h2>
+                <p>Consulta ventas, registra pagos y administra turnos y cierres de caja.</p>
+            </div>
+            <div class="fc-admin-card">
+                <h2>Vendedor</h2>
+                <p>Consulta existencias, registra clientes y confirma ventas.</p>
+            </div>
+        </div>
+        <p class="fc-muted" style="margin-top: 1rem;">Los permisos técnicos continúan protegidos en el servidor, pero no es necesario asignarlos uno por uno a cada usuario.</p>
+    </section>
+</section>

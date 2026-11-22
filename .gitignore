@@ -371,3 +371,4 @@ FodyWeavers.xsd
 
 # Archivos de respaldo
 *.respaldo.*
+/Proyecto_FarmaControl/Migrations/
