@@ -35,7 +35,7 @@
         pagos: {
             title: "Pagos por período", subtitle: "Total: únicamente pagos registrados.",
             totalLabel: "Total pagado", url: "/Reporte/Pagos", amount: true,
-            columns: [ ["fecha", "Fecha", "date"], ["referencia", "Referencia"],
+            columns: [ ["fecha", "Fecha y hora (Nicaragua)", "utcDateTime"], ["referencia", "Referencia"],
                 ["relacionado", "Método"], ["descripcion", "Origen"],
                 ["estado", "Estado", "status"], ["monto", "Monto (C$)", "money"] ]
         },
@@ -53,13 +53,24 @@
     const money = value => value == null ? "—" : "C$ " + Number(value).toLocaleString("es-NI", {minimumFractionDigits:2,maximumFractionDigits:2});
     const date = value => {
         if (!value) return "—";
-        const d = new Date(value);
-        return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString("es-NI", {timeZone:"UTC"});
+        const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return match ? `${match[3]}/${match[2]}/${match[1]}` : String(value);
+    };
+    const localTime = value => {
+        if (!value) return "—";
+        const raw = String(value).trim();
+        const iso = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw) ? raw : raw + "Z";
+        const d = new Date(iso);
+        return Number.isNaN(d.getTime()) ? raw : new Intl.DateTimeFormat("es-NI", {
+            timeZone: "America/Managua", day:"2-digit", month:"2-digit", year:"numeric",
+            hour:"numeric", minute:"2-digit", hour12:true
+        }).format(d);
     };
     const cellText = (row, col) => {
         const [key,,format] = col; const value = row?.[key];
         if (format === "money") return money(value);
         if (format === "date") return date(value);
+        if (format === "utcDateTime") return localTime(value);
         if (format === "int") return value == null ? "—" : Number(value).toLocaleString("es-NI");
         return value == null || value === "" ? "—" : String(value);
     };
@@ -151,7 +162,10 @@
         const blob = new Blob(["\uFEFF", csv], {type:"text/csv;charset=utf-8"});
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a"); a.href = url;
-        a.download = `FarmaControl_${selected}_${new Date().toISOString().slice(0,10)}.csv`;
+        const dia = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/Managua", day: "2-digit", month: "2-digit", year: "numeric"
+        }).formatToParts(new Date()).map(p => [p.type, p.value]));
+        a.download = `FarmaControl_${selected}_${dia.year}-${dia.month}-${dia.day}.csv`;
         document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     });
     tabs[0].setAttribute("aria-pressed", "true");

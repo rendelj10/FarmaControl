@@ -12,10 +12,35 @@
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     })[character]);
 
+    // Fechas comerciales (sin hora): conservar el día exacto registrado,
+    // incluso si el navegador o la computadora están en otra zona horaria.
     const dateValue = value => {
         if (!value) return "—";
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? escapeHtml(value) : date.toLocaleDateString("es-NI");
+        const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+        return escapeHtml(value);
+    };
+
+    // El backend guarda aperturas, cierres, pagos y movimientos en UTC.
+    // Los campos SQL Server datetime suelen llegar como ISO sin Z: se interpretan explícitamente como UTC.
+    const dateTimeManagua = value => {
+        if (!value) return "—";
+        const raw = String(value).trim();
+        const iso = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw) ? raw : raw + "Z";
+        const date = new Date(iso);
+        if (Number.isNaN(date.getTime())) return escapeHtml(raw);
+        return new Intl.DateTimeFormat("es-NI", {
+            timeZone: "America/Managua", day: "2-digit", month: "2-digit", year: "numeric",
+            hour: "numeric", minute: "2-digit", hour12: true
+        }).format(date);
+    };
+
+    // Campos de tipo date representan días comerciales en Managua, no marcas de tiempo UTC.
+    const todayManagua = () => {
+        const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/Managua", year: "numeric", month: "2-digit", day: "2-digit"
+        }).formatToParts(new Date()).map(p => [p.type, p.value]));
+        return `${parts.year}-${parts.month}-${parts.day}`;
     };
 
     const moneyValue = value => {
@@ -111,6 +136,7 @@
         if (column.format === "boolean") return value ? "Sí" : "No";
         if (column.format === "currency") return escapeHtml(moneyValue(value));
         if (column.format === "date") return dateValue(value);
+        if (column.format === "datetimeUtc") return dateTimeManagua(value);
         if (column.format === "number") return value === null || value === undefined ? "—" : escapeHtml(Number(value).toLocaleString("es-NI"));
         if (value === null || value === undefined || value === "") return "—";
         return escapeHtml(value);
@@ -379,7 +405,7 @@
             controller: "Pago", createAction: "Create", noEdit: true,
             columns: [
                 { key: "documento", label: "Documento" }, { key: "metodoPagoNombre", label: "Método de pago" },
-                { key: "fechaPago", label: "Fecha", format: "date" }, { key: "monto", label: "Monto", format: "currency" },
+                { key: "fechaPago", label: "Fecha y hora", format: "datetimeUtc" }, { key: "monto", label: "Monto", format: "currency" },
                 { key: "referencia", label: "Referencia" }, { key: "estado", label: "Estado", format: "status" },
                 { key: "usuarioNombre", label: "Registrado por" }
             ],
@@ -387,7 +413,7 @@
                 { name: "compraId", label: "ID de compra (opcional)", type: "number", min: 1 },
                 { name: "ventaId", label: "ID de venta (opcional)", type: "number", min: 1 },
                 { name: "metodoPagoId", label: "Método de pago", type: "select", required: true, source: { url: "/MetodoPago/GetActivos", labelKey: "nombre" } },
-                { name: "turnoCajaId", label: "ID del turno de caja (opcional)", type: "number", min: 1 },
+                { name: "turnoCajaId", label: "ID de turno de caja (se completa si hay uno abierto)", type: "number", min: 1 },
                 { name: "monto", label: "Monto", type: "number", required: true, min: .01, step: "0.01" },
                 { name: "referencia", label: "Referencia", maxLength: 100 },
                 { name: "observaciones", label: "Observaciones", type: "textarea", full: true, maxLength: 250 }
@@ -434,12 +460,23 @@
 
         const activeFields = editing => editing && config.fieldsEdit ? config.fieldsEdit : config.fields;
 
+        async function completeTurnoAbierto() {
+            if (key !== "pagos") return;
+            const input = form?.elements.namedItem("turnoCajaId");
+            if (!input || input.value) return;
+            try {
+                const turno = await api("/TurnoCaja/MiTurnoAbierto");
+                if (turno?.id > 0 && !input.value) input.value = String(turno.id);
+            } catch { /* No hay turno abierto o el usuario no tiene acceso; el campo permanece opcional. */ }
+        }
+
         async function resetForm() {
             currentRecord = null;
             if (form) form.reset();
             const idInput = form?.elements.namedItem("__fcId");
             if (idInput) idInput.value = "";
             await renderFields(fieldsContainer, config.fields, key, false, {});
+            await completeTurnoAbierto();
             const mode = $("[data-fc-mode]", root);
             if (mode) mode.textContent = "Nuevo registro";
             feedback(root, "");
@@ -537,6 +574,7 @@
         }
 
         await renderFields(fieldsContainer, config.fields, key, false, {});
+        await completeTurnoAbierto();
         setTableHead(root, config.columns, true);
         await loadRows();
         $("[data-fc-new]", root)?.addEventListener("click", async () => {
@@ -557,14 +595,14 @@
             columns: [
                 { key: "numeroDocumento", label: "N.º documento" }, { key: "proveedorNombre", label: "Proveedor" },
                 { key: "almacenNombre", label: "Almacén" }, { key: "fechaCompra", label: "Fecha compra", format: "date" },
-                { key: "fechaRecepcion", label: "Recepción", format: "date" }, { key: "total", label: "Total", format: "currency" },
+                { key: "fechaRecepcion", label: "Recepción (Nicaragua)", format: "datetimeUtc" }, { key: "total", label: "Total", format: "currency" },
                 { key: "estado", label: "Estado", format: "status" }
             ],
             mainFields: [
                 { name: "proveedorId", label: "Proveedor", type: "select", required: true, source: { url: "/Proveedor/GetActivos", labelKeys: ["codigo", "razonSocial"] } },
                 { name: "almacenId", label: "Almacén destino", type: "select", required: true, source: { url: "/Almacen/GetActivos", labelKeys: ["codigo", "nombre"] } },
                 { name: "numeroDocumento", label: "Número de documento", required: true, maxLength: 50 },
-                { name: "fechaCompra", label: "Fecha de compra", type: "date", required: true, defaultValue: new Date().toISOString().slice(0, 10) },
+                { name: "fechaCompra", label: "Fecha de compra", type: "date", required: true, defaultValue: todayManagua() },
                 { name: "observaciones", label: "Observaciones", type: "textarea", full: true, maxLength: 500 }
             ],
             detailFields: [
@@ -595,7 +633,7 @@
                 { name: "clienteId", label: "Cliente", type: "select", required: true, source: { url: "/Cliente/GetActivos", labelKey: "nombre" } },
                 { name: "almacenId", label: "Almacén", type: "select", required: true, source: { url: "/Almacen/GetActivos", labelKeys: ["codigo", "nombre"] } },
                 { name: "numeroDocumento", label: "Número de documento", required: true, maxLength: 50 },
-                { name: "fechaVenta", label: "Fecha de venta", type: "date", required: true, defaultValue: new Date().toISOString().slice(0, 10) },
+                { name: "fechaVenta", label: "Fecha de venta", type: "date", required: true, defaultValue: todayManagua() },
                 { name: "observaciones", label: "Observaciones", type: "textarea", full: true, maxLength: 500 }
             ],
             detailFields: [
@@ -779,7 +817,7 @@
         const fields = [
             { name: "almacenId", label: "Almacén", type: "select", required: true, source: { url: "/Almacen/GetActivos", labelKeys: ["codigo", "nombre"] } },
             { name: "tipoAjuste", label: "Tipo de ajuste", type: "select", required: true, options: [{ id: "Conteo", nombre: "Conteo" }, { id: "Correccion", nombre: "Corrección" }], source: { valueKey: "id", labelKey: "nombre" } },
-            { name: "fechaAjuste", label: "Fecha del ajuste", type: "date", required: true, defaultValue: new Date().toISOString().slice(0, 10) },
+            { name: "fechaAjuste", label: "Fecha del ajuste", type: "date", required: true, defaultValue: todayManagua() },
             { name: "motivo", label: "Motivo", required: true, maxLength: 250 },
             { name: "observaciones", label: "Observaciones", type: "textarea", full: true, maxLength: 500 }
         ];
@@ -909,8 +947,10 @@
         await renderFields(openFields, openDefs, "turno-open", false, {});
         await renderFields(closeFields, closeDefs, "turno-close", false, {});
         const columns = [
+            { key: "id", label: "ID turno", format: "number" },
             { key: "sucursalNombre", label: "Sucursal" }, { key: "usuarioAperturaNombre", label: "Usuario" },
-            { key: "fechaApertura", label: "Fecha apertura", format: "date" }, { key: "fechaCierre", label: "Fecha cierre", format: "date" },
+            { key: "fechaApertura", label: "Apertura (Nicaragua)", format: "datetimeUtc" },
+            { key: "fechaCierre", label: "Cierre (Nicaragua)", format: "datetimeUtc" },
             { key: "montoInicial", label: "Monto inicial", format: "currency" }, { key: "montoEsperado", label: "Monto esperado", format: "currency" },
             { key: "montoContado", label: "Monto contado", format: "currency" }, { key: "diferencia", label: "Diferencia", format: "currency" },
             { key: "estado", label: "Estado", format: "status" }
@@ -921,14 +961,18 @@
             try {
                 const shift = await api("/TurnoCaja/MiTurnoAbierto");
                 openShiftId = shift.id;
+                const idLabel = $("[data-fc-shift-id]", root);
+                if (idLabel) idLabel.textContent = `Turno #${shift.id}`;
                 $("[data-fc-shift-state]", root).innerHTML = statusPill(shift.estado);
                 $("[data-fc-shift-opening]", root).textContent = moneyValue(shift.montoInicial);
                 $("[data-fc-shift-branch]", root).textContent = shift.sucursalNombre || "—";
-                $("[data-fc-shift-date]", root).textContent = dateValue(shift.fechaApertura);
+                $("[data-fc-shift-date]", root).textContent = dateTimeManagua(shift.fechaApertura);
                 openForm.hidden = true;
                 closeForm.hidden = false;
             } catch (error) {
                 openShiftId = null;
+                const idLabel = $("[data-fc-shift-id]", root);
+                if (idLabel) idLabel.textContent = "—";
                 $("[data-fc-shift-state]", root).textContent = "Sin turno abierto";
                 $("[data-fc-shift-opening]", root).textContent = "—";
                 $("[data-fc-shift-branch]", root).textContent = "—";
@@ -1035,14 +1079,15 @@
         const activeLots = rows("lotes").filter(item => item.activo !== false);
         setKpi("lotes", data.lotes ? activeLots.length : "—");
 
-        const today = new Date();
-        const soon = new Date(today);
-        soon.setDate(soon.getDate() + 90);
+        const today = todayManagua();
+        const limit = new Date(`${today}T12:00:00Z`);
+        limit.setUTCDate(limit.getUTCDate() + 90);
+        const soon = limit.toISOString().slice(0, 10);
         const upcoming = rows("lotes").filter(item => {
             if (item.activo === false || !item.fechaVencimiento) return false;
-            const date = new Date(item.fechaVencimiento);
+            const date = String(item.fechaVencimiento).slice(0, 10);
             return date >= today && date <= soon;
-        }).sort((a, b) => new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento));
+        }).sort((a, b) => String(a.fechaVencimiento).localeCompare(String(b.fechaVencimiento)));
         setKpi("vencimientos", data.lotes ? upcoming.length : "—");
 
         const alertTarget = $("[data-fc-alerts]", root);

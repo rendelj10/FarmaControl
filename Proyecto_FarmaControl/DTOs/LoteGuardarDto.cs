@@ -26,7 +26,7 @@ namespace Proyecto_FarmaControl.DTOs
         public decimal CostoUnitario { get; set; }
 
         [DataType(DataType.Date)]
-        public DateTime FechaIngreso { get; set; } = DateTime.Today;
+        public DateTime FechaIngreso { get; set; } = Proyecto_FarmaControl.Utilidades.FechaNicaragua.Hoy;
 
         [DataType(DataType.Date)]
         public DateTime FechaVencimiento { get; set; }

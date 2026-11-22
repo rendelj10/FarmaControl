@@ -311,7 +311,7 @@ namespace Proyecto_FarmaControl.Service
                         }
 
                         if (detalle.FechaVencimiento.Value.Date
-                            <= DateTime.Today)
+                            <= Proyecto_FarmaControl.Utilidades.FechaNicaragua.Hoy)
                         {
                             throw new InvalidOperationException(
                                 "No se pueden recibir " +
@@ -466,7 +466,7 @@ namespace Proyecto_FarmaControl.Service
                                     detalle.CostoUnitario,
 
                                 FechaIngreso =
-                                    DateTime.Today,
+                                    Proyecto_FarmaControl.Utilidades.FechaNicaragua.Hoy,
 
                                 FechaVencimiento =
                                     vencimiento,

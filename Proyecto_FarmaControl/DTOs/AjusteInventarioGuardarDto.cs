@@ -25,7 +25,7 @@ namespace Proyecto_FarmaControl.DTOs
         // FECHA DEL AJUSTE
 
         public DateTime FechaAjuste { get; set; }
-            = DateTime.UtcNow;
+            = Proyecto_FarmaControl.Utilidades.FechaNicaragua.Hoy;
 
         // MOTIVO DEL AJUSTE
 

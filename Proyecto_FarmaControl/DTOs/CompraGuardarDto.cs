@@ -38,7 +38,7 @@ namespace Proyecto_FarmaControl.DTOs
         [Required(ErrorMessage = "La fecha de compra es obligatoria.")]
         [DataType(DataType.Date)]
         public DateTime FechaCompra { get; set; }
-            = DateTime.Today;
+            = Proyecto_FarmaControl.Utilidades.FechaNicaragua.Hoy;
 
         // ========================================
         // OBSERVACIONES
