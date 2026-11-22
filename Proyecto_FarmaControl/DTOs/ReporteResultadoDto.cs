@@ -3,6 +3,10 @@ namespace Proyecto_FarmaControl.DTOs
     public class ReporteFilaDto
     {
         public int Id { get; set; }
+        // Identificadores opcionales para enlazar los movimientos con su operación origen.
+        public int? VentaId { get; set; }
+        public int? CompraId { get; set; }
+        public int? AjusteInventarioId { get; set; }
         public DateTime Fecha { get; set; }
         public string Referencia { get; set; } = string.Empty;
         public string Relacionado { get; set; } = string.Empty;

@@ -1,12 +1,30 @@
-<section class="fc-card fc-reports-workspace" data-fc-movement-root>
-    <div class="fc-report-header"><div><h2>Movimientos de inventario</h2><p>Consulta histórica de los movimientos registrados en SQL Server.</p></div></div>
-    <form class="fc-report-filters" data-fc-report-form>
-        <label>Desde <input type="date" class="fc-input" name="desde" /></label>
-        <label>Hasta <input type="date" class="fc-input" name="hasta" /></label>
+<section class="fc-card fcm-workspace" data-fc-movement-root aria-label="Consulta de movimientos de inventario">
+    <div class="fcm-heading">
+        <div>
+            <h2>Movimientos de inventario</h2>
+            <p>Revisá las entradas, salidas y ajustes de medicamentos. Cada movimiento indica qué operación lo generó.</p>
+        </div>
+    </div>
+    <form class="fcm-filters" data-fc-report-form>
+        <label>Desde <input type="date" name="desde" class="fc-input" /></label>
+        <label>Hasta <input type="date" name="hasta" class="fc-input" /></label>
+        <label class="fcm-search-label">Buscar operación o documento
+            <input type="search" name="buscar" class="fc-input" placeholder="Ej.: 11 o POS-2026" autocomplete="off" />
+        </label>
         <button class="btn-fc-primary" type="submit">Consultar</button>
         <button class="btn-fc-secondary" type="button" data-fc-report-export disabled>Exportar CSV</button>
     </form>
-    <div class="fc-report-stats"><div><small>Registros</small><strong data-fc-report-count>—</strong></div><div><small>Unidades involucradas</small><strong data-fc-report-total>—</strong></div></div>
-    <div class="fc-table-wrap"><table class="fc-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Referencia</th><th>Origen → destino</th><th>Estado</th><th>Unidades</th></tr></thead><tbody data-fc-report-body><tr><td colspan="6" class="fc-empty-cell">Consultando movimientos...</td></tr></tbody></table></div>
-    <p class="fc-muted" data-fc-report-notice></p><div class="fc-feedback" data-fc-report-feedback role="status"></div>
+    <div class="fcm-metrics" aria-label="Resumen de movimientos">
+        <div><span>Movimientos mostrados</span><strong data-fc-report-count>—</strong></div>
+        <div><span>Unidades involucradas</span><strong data-fc-report-total>—</strong></div>
+    </div>
+    <div class="fcm-table-scroll">
+        <table class="fcm-table">
+            <thead><tr><th>Fecha y hora (Nicaragua)</th><th>Tipo</th><th>Operación</th><th>Documento</th><th>Origen → destino</th><th>Estado</th><th>Unidades</th></tr></thead>
+            <tbody data-fc-report-body><tr><td colspan="7" class="fc-empty-cell">Consultando movimientos...</td></tr></tbody>
+        </table>
+    </div>
+    <p class="fcm-note">Las unidades involucradas son cantidades registradas en operaciones; no representan el inventario actual. Horarios de Nicaragua (UTC−6).</p>
+    <p class="fcm-note" data-fc-report-notice></p>
+    <div class="fc-feedback" data-fc-report-feedback role="status" aria-live="polite"></div>
 </section>

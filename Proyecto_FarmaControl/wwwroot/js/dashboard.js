@@ -175,13 +175,10 @@
             let date;
 
             // Evita desfases de zona horaria en fechas sin hora.
-            if (
-                typeof value === "string"
-                && /^\d{4}-\d{2}-\d{2}$/.test(value)
-            ) {
-                const [year, month, day] = value.split("-").map(Number);
-
-                date = new Date(year, month - 1, day);
+            if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+                const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+                // Fechas comerciales sin hora: no convertir la medianoche UTC.
+                date = new Date(Date.UTC(year, month - 1, day, 12));
             } else {
                 date = new Date(value);
             }
@@ -195,9 +192,7 @@
             if (!date) return "Fecha no disponible";
 
             return new Intl.DateTimeFormat("es-NI", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
+                timeZone: "UTC", day: "2-digit", month: "short", year: "numeric"
             }).format(date);
         }
 
@@ -237,11 +232,13 @@
             const response = result.data;
             const lots = getRows(response);
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
+            // La fecha de vencimiento se evalúa por día comercial de Nicaragua.
+            const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+                timeZone: "America/Managua", day: "2-digit", month: "2-digit", year: "numeric"
+            }).formatToParts(new Date()).map(p => [p.type, p.value]));
+            const today = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), 12));
             const limit = new Date(today);
-            limit.setDate(limit.getDate() + 90);
+            limit.setUTCDate(limit.getUTCDate() + 90);
 
             const upcoming = lots
                 .filter(lot => {
@@ -252,7 +249,7 @@
 
                     if (active === false || !expiry) return false;
 
-                    expiry.setHours(0, 0, 0, 0);
+                    expiry.setUTCHours(12, 0, 0, 0);
 
                     return expiry >= today && expiry <= limit;
                 })

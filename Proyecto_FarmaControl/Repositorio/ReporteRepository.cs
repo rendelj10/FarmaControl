@@ -60,8 +60,11 @@ namespace Proyecto_FarmaControl.Repositorio
         public async Task<ReporteResultadoDto> PagosAsync(DateTime? desde, DateTime? hasta, int limite)
         {
             var q = _db.Pagos.AsNoTracking().AsQueryable();
-            if (desde.HasValue) q = q.Where(x => x.FechaPago >= desde.Value.Date);
-            if (hasta.HasValue) q = q.Where(x => x.FechaPago < hasta.Value.Date.AddDays(1));
+            // SQL Server guarda FechaPago en UTC. Se convierten los límites desde el día civil de Managua (UTC-6).
+            DateTime? inicioUtc = desde?.Date.AddHours(6);
+            DateTime? finExclusivoUtc = hasta?.Date.AddDays(1).AddHours(6);
+            if (inicioUtc.HasValue) q = q.Where(x => x.FechaPago >= inicioUtc.Value);
+            if (finExclusivoUtc.HasValue) q = q.Where(x => x.FechaPago < finExclusivoUtc.Value);
             return new ReporteResultadoDto
             {
                 Limite = limite,
@@ -106,8 +109,11 @@ namespace Proyecto_FarmaControl.Repositorio
         public async Task<ReporteResultadoDto> MovimientosAsync(DateTime? desde, DateTime? hasta, int limite)
         {
             var q = _db.MovimientosInventario.AsNoTracking().AsQueryable();
-            if (desde.HasValue) q = q.Where(x => x.FechaMovimiento >= desde.Value.Date);
-            if (hasta.HasValue) q = q.Where(x => x.FechaMovimiento < hasta.Value.Date.AddDays(1));
+            // Los movimientos se almacenan en UTC; filtrar según días civiles en Managua (UTC-6).
+            DateTime? inicioUtc = desde?.Date.AddHours(6);
+            DateTime? finExclusivoUtc = hasta?.Date.AddDays(1).AddHours(6);
+            if (inicioUtc.HasValue) q = q.Where(x => x.FechaMovimiento >= inicioUtc.Value);
+            if (finExclusivoUtc.HasValue) q = q.Where(x => x.FechaMovimiento < finExclusivoUtc.Value);
             return new ReporteResultadoDto
             {
                 Limite = limite,
@@ -119,6 +125,8 @@ namespace Proyecto_FarmaControl.Repositorio
                     .Take(limite).Select(x => new ReporteFilaDto
                     {
                         Id = x.Id, Fecha = x.FechaMovimiento,
+                        VentaId = x.VentaId, CompraId = x.CompraId,
+                        AjusteInventarioId = x.AjusteInventarioId,
                         Referencia = x.Referencia ?? "",
                         Relacionado = x.TipoMovimiento,
                         Descripcion = (x.AlmacenOrigen != null ? x.AlmacenOrigen.Nombre : "—")

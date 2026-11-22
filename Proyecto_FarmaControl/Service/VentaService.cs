@@ -123,7 +123,7 @@ namespace Proyecto_FarmaControl.Service
                         "o al almacén de la venta.");
                 }
 
-                if (lote.FechaVencimiento.Date <= DateTime.Today)
+                if (lote.FechaVencimiento.Date <= Proyecto_FarmaControl.Utilidades.FechaNicaragua.Hoy)
                 {
                     throw new InvalidOperationException(
                         "No se pueden vender lotes vencidos.");
@@ -332,7 +332,7 @@ namespace Proyecto_FarmaControl.Service
                             "medicamento o al almacén.");
                     }
 
-                    if (lote.FechaVencimiento.Date <= DateTime.Today)
+                    if (lote.FechaVencimiento.Date <= Proyecto_FarmaControl.Utilidades.FechaNicaragua.Hoy)
                     {
                         throw new InvalidOperationException(
                             "No se pueden confirmar ventas " +

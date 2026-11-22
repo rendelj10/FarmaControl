@@ -12,7 +12,11 @@
     const state = { clients: [], warehouses: [], selectedMedicine: null, lots: [], cart: new Map(), page: 0, count: 0, busy: false, medicineSeq: 0, searchTimer: null };
     const pesos = value => `C$ ${Number(value || 0).toLocaleString("es-NI", {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     const escape = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[ch]));
-    const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+    const nowManagua = () => Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
+        timeZone: "America/Managua", year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+    }).formatToParts(new Date()).map(p => [p.type, p.value]));
+    const today = () => { const p = nowManagua(); return `${p.year}-${p.month}-${p.day}`; };
     const readDate = value => String(value || "").slice(0, 10);
     const showDate = value => { const d = readDate(value); return /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d.slice(8,10)}/${d.slice(5,7)}/${d.slice(0,4)}` : "—"; };
     const currentWarehouse = () => Number($("#pos-almacen")?.value || 0);
@@ -27,8 +31,8 @@
         if (message) area.scrollIntoView({block:"nearest",behavior:"smooth"});
     }
     function makeDocument() {
-        const d = new Date();
-        const h = `${String(d.getHours()).padStart(2,"0")}${String(d.getMinutes()).padStart(2,"0")}${String(d.getSeconds()).padStart(2,"0")}`;
+        const d = nowManagua();
+        const h = `${d.hour}${d.minute}${d.second}`;
         const random = new Uint32Array(1);
         if (window.crypto?.getRandomValues) window.crypto.getRandomValues(random);
         else random[0] = Math.floor(Math.random() * 999999);

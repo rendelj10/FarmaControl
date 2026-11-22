@@ -37,7 +37,7 @@ namespace Proyecto_FarmaControl.DTOs
         [Required]
         [DataType(DataType.Date)]
         public DateTime FechaVenta { get; set; }
-            = DateTime.Today;
+            = Proyecto_FarmaControl.Utilidades.FechaNicaragua.Hoy;
 
         // ========================================
         // OBSERVACIONES

@@ -1,0 +1,26 @@
+/* FarmaControl: historial de movimientos. Estilos aislados del resto de la interfaz. */
+.fcm-workspace { padding: 24px; }
+.fcm-heading h2 { color: #17364d; font-size: 22px; font-weight: 750; margin: 0 0 6px; }
+.fcm-heading p { margin: 0 0 22px; color: #718394; line-height: 1.5; }
+.fcm-filters { display:flex; align-items:end; flex-wrap:wrap; gap:12px; margin-bottom:18px; }
+.fcm-filters label { display:flex; flex-direction:column; gap:6px; min-width:150px; color:#213747; font-weight:650; }
+.fcm-filters .fcm-search-label { flex:1 1 260px; }
+.fcm-filters input { width:100%; min-height:43px; border:1px solid #dce4ea; padding:9px 12px; border-radius:9px; }
+.fcm-filters button { min-height:43px; }
+.fcm-metrics { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:15px; margin-bottom:20px; }
+.fcm-metrics > div { display:flex; flex-direction:column; align-items:flex-start; gap:6px; padding:18px 20px; background:#f4f7f9; border:1px solid #e6edf0; border-radius:12px; }
+.fcm-metrics span { color:#718394; font-size:13px; }
+.fcm-metrics strong { display:block; font-size:26px; color:#128a7d; font-weight:750; line-height:1.25; }
+.fcm-table-scroll { max-width:100%; overflow-x:auto; }
+.fcm-table { width:100%; min-width:940px; border-collapse:collapse; font-size:13px; }
+.fcm-table thead th { padding:13px 12px; background:#edf3f6; color:#233b4b; text-align:left; white-space:nowrap; }
+.fcm-table thead th:first-child { border-radius:9px 0 0 9px; }
+.fcm-table thead th:last-child { border-radius:0 9px 9px 0; }
+.fcm-table tbody tr { border-bottom:1px solid #e5ebef; }
+.fcm-table tbody tr:hover { background:#f8fbfc; }
+.fcm-table tbody td { padding:13px 12px; color:#435969; vertical-align:top; }
+.fcm-table td.fcm-emph { color:#163a4d; font-weight:700; }
+.fcm-type { display:inline-block; padding:4px 9px; border-radius:999px; background:#e7f4f1; color:#127b71; font-weight:650; white-space:nowrap; }
+.fcm-note { margin:12px 0 0; font-size:12px; color:#73879a; line-height:1.5; }
+.fcm-table .fc-empty-cell { padding:25px 12px; text-align:center; }
+@media(max-width:700px) { .fcm-workspace{padding:15px;} .fcm-metrics{grid-template-columns:1fr;} .fcm-filters label{min-width:100%;} }
