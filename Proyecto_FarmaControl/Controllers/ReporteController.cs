@@ -6,7 +6,7 @@ namespace Proyecto_FarmaControl.Controllers
 {
     // Las acciones de consulta reutilizan permisos de lectura existentes.
     // No se requieren tablas, migraciones ni permisos nuevos.
-    [Authorize]
+    [Authorize(Roles = "Administrador")]
     public class ReporteController : Controller
     {
         private readonly IReporteService _service;

@@ -1,102 +1,403 @@
-
 @model Proyecto_FarmaControl.DTOs.LoginRequestDto
 
 @{
     ViewData["Title"] = "Iniciar sesión";
 }
 
-<div class="container mt-5" style="max-width: 450px;">
-    <div class="card shadow p-4">
-        <h2 class="text-center mb-4">FarmaControl</h2>
-        <h5 class="text-center mb-4">Iniciar sesión</h5>
+<div class="auth-page">
+    <section class="auth-card">
 
+        <!-- IDENTIDAD DE FARMACONTROL -->
+        <div class="auth-brand">
+            <span class="auth-logo-wrap">
+                <img src="~/images/farmacontrol-logo.png"
+                     alt="FarmaControl" />
+            </span>
+
+            <h1>FarmaControl</h1>
+            <p>Sistema de gestión farmacéutica</p>
+        </div>
+
+        <!-- TITULO -->
+        <div class="auth-heading">
+            <h2>Iniciar sesión</h2>
+            <p>Ingresa tus credenciales para continuar</p>
+        </div>
+
+        <!-- MENSAJES DEL SISTEMA -->
         @if (TempData["Mensaje"] != null)
         {
-            <div class="alert alert-success">
+            <div class="fc-alert fc-alert-success" role="status">
                 @TempData["Mensaje"]
             </div>
         }
 
+        @if (TempData["Error"] != null)
+        {
+            <div class="fc-alert fc-alert-danger" role="alert">
+                @TempData["Error"]
+            </div>
+        }
+
+        <!-- FORMULARIO DE INICIO DE SESION -->
         <form asp-controller="Auth"
               asp-action="Login"
-              method="post">
+              method="post"
+              class="auth-form">
 
             <div asp-validation-summary="ModelOnly"
-                 class="text-danger mb-3"></div>
-
-            <div class="mb-3">
-                <label asp-for="Email"
-                       class="form-label">Correo electrónico</label>
-
-                <input asp-for="Email"
-                       class="form-control"
-                       placeholder="Ingrese su correo" />
-
-                <span asp-validation-for="Email"
-                      class="text-danger"></span>
+                 class="fc-validation-summary">
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Password"
-                       class="form-label">Contraseña</label>
+            <!-- CORREO -->
+            <div class="fc-field">
+                <label asp-for="Email">
+                    Correo electrónico
+                </label>
+
+                <input asp-for="Email"
+                       class="fc-input"
+                       type="email"
+                       autocomplete="username"
+                       placeholder="nombre@correo.com"
+                       autofocus />
+
+                <span asp-validation-for="Email"
+                      class="text-danger">
+                </span>
+            </div>
+
+            <!-- CONTRASEÑA -->
+            <div class="fc-field">
+                <label asp-for="Password">
+                    Contraseña
+                </label>
 
                 <input asp-for="Password"
+                       class="fc-input"
                        type="password"
-                       class="form-control"
-                       placeholder="Ingrese su contraseña" />
+                       autocomplete="current-password"
+                       placeholder="Ingresa tu contraseña" />
 
                 <span asp-validation-for="Password"
-                      class="text-danger"></span>
+                      class="text-danger">
+                </span>
+            </div>
+
+            <!-- RECUPERAR CONTRASEÑA -->
+            <div class="auth-forgot">
+                <a asp-controller="Auth"
+                   asp-action="ForgotPassword">
+                    ¿Olvidaste tu contraseña?
+                </a>
             </div>
 
             <button type="submit"
-                    class="btn btn-primary w-100">
-                Iniciar sesión
+                    class="btn-fc-primary auth-submit">
+                Entrar
             </button>
+
         </form>
 
-        <div class="text-center mt-3">
+        <div class="auth-divider"></div>
+
+        <!-- REGISTRO -->
+        <p class="auth-register">
+            ¿No tienes una cuenta?
             <a asp-controller="Auth"
                asp-action="Register">
                 Crear una cuenta
-
-                <div class="text-center mt-2">
-                    <a asp-controller="Auth"
-                       asp-action="ForgotPassword">
-                        ¿Olvidaste tu contraseña?
-                    </a>
-                </div>
-
-                
-                <div class="mt-3">
-                    <form asp-controller="Auth"
-                          asp-action="ResendConfirmationEmail"
-                          method="post">
-
-                        <div class="mb-2">
-                            <label class="form-label">
-                                ¿No has confirmado tu correo?
-                            </label>
-
-                            <input type="email"
-                                   name="Email"
-                                   class="form-control"
-                                   value="@Model.Email"
-                                   placeholder="Ingrese su correo electrónico"
-                                   required />
-                        </div>
-
-                        <button type="submit"
-                                class="btn btn-outline-primary w-100">
-                            Reenviar correo de confirmación
-                        </button>
-                    </form>
-                </div>
-
             </a>
-        </div>
-    </div>
+        </p>
+
+        <!-- REENVIAR CONFIRMACION -->
+        <details class="auth-resend">
+            <summary>
+                ¿No has confirmado tu correo?
+            </summary>
+
+            <form asp-controller="Auth"
+                  asp-action="ResendConfirmationEmail"
+                  method="post">
+
+                <div class="fc-field">
+                    <label for="resendEmail">
+                        Correo electrónico
+                    </label>
+
+                    <input id="resendEmail"
+                           type="email"
+                           name="Email"
+                           value="@Model.Email"
+                           class="fc-input"
+                           placeholder="nombre@correo.com"
+                           required />
+                </div>
+
+                <button type="submit"
+                        class="btn-fc-secondary auth-submit">
+                    Reenviar correo de confirmación
+                </button>
+            </form>
+        </details>
+
+    </section>
+
+    <footer class="auth-footer">
+        FarmaControl © @DateTime.Now.Year
+    </footer>
 </div>
+
+<!-- ESTILOS DE LA PANTALLA LOGIN -->
+<style>
+    .auth-page {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .auth-card {
+        width: min(100%, 430px);
+        padding: 30px 35px 26px;
+        background: #FFFFFF;
+        border: 1px solid #DFE7EC;
+        border-radius: 13px;
+        box-shadow: 0 14px 35px rgba(23,54,77,.07);
+    }
+
+    .auth-brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .auth-logo-wrap {
+        display: grid;
+        width: 58px;
+        height: 58px;
+        place-items: center;
+        overflow: hidden;
+        background: var(--fc-navy);
+        border-radius: 13px;
+    }
+
+        .auth-logo-wrap img {
+            width: 49px;
+            height: 49px;
+            object-fit: contain;
+        }
+
+    .auth-brand h1 {
+        margin: 12px 0 0;
+        color: var(--fc-navy);
+        font-size: 23px;
+        font-weight: 800;
+    }
+
+    .auth-brand p {
+        margin: 3px 0 0;
+        color: var(--fc-muted);
+        font-size: 11px;
+    }
+
+    .auth-heading {
+        margin: 28px 0 20px;
+        text-align: center;
+    }
+
+        .auth-heading h2 {
+            margin: 0;
+            color: var(--fc-text);
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .auth-heading p {
+            margin: 6px 0 0;
+            color: var(--fc-muted);
+            font-size: 11px;
+        }
+
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+        .auth-form .fc-field {
+            gap: 7px;
+        }
+
+            .auth-form .fc-field label {
+                font-size: 11px;
+            }
+
+    .auth-card .fc-field {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+        .auth-card .fc-field label {
+            color: #2A4052;
+            font-weight: 750;
+        }
+
+    .auth-card .fc-input {
+        display: block;
+        width: 100%;
+        min-height: 43px;
+        padding: 9px 11px;
+        color: var(--fc-text);
+        background: #FFFFFF;
+        border: 1px solid var(--fc-border);
+        border-radius: 6px;
+        outline: 0;
+        font-size: 12px;
+    }
+
+        .auth-card .fc-input:focus {
+            border-color: var(--fc-teal);
+            box-shadow: 0 0 0 3px rgba(21,155,140,.1);
+        }
+
+    .auth-card .text-danger {
+        color: #B13E45;
+        font-size: 10px;
+    }
+
+    .fc-validation-summary:empty {
+        display: none;
+    }
+
+    .fc-validation-summary:not(:empty) {
+        padding: 10px 12px;
+        margin-bottom: 14px;
+        color: #A53C43;
+        background: #FFF0F0;
+        border: 1px solid #F4D1D2;
+        border-radius: 7px;
+        font-size: 11px;
+    }
+
+    .fc-alert {
+        padding: 10px 12px;
+        margin-bottom: 13px;
+        border-radius: 7px;
+        font-size: 11px;
+    }
+
+    .fc-alert-success {
+        color: #0A786B;
+        background: #E6F5F1;
+        border: 1px solid #C9EAE2;
+    }
+
+    .fc-alert-danger {
+        color: #A83D42;
+        background: #FFF0F0;
+        border: 1px solid #F1D0D1;
+    }
+
+    .auth-forgot {
+        margin-top: -5px;
+        text-align: right;
+        font-size: 10.5px;
+    }
+
+        .auth-forgot a,
+        .auth-register a {
+            color: var(--fc-teal);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+            .auth-forgot a:hover,
+            .auth-register a:hover {
+                text-decoration: underline;
+            }
+
+    .btn-fc-primary,
+    .btn-fc-secondary {
+        display: inline-flex;
+        min-height: 37px;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 15px;
+        border-radius: 7px;
+        font-size: 12px;
+        font-weight: 750;
+        cursor: pointer;
+    }
+
+    .btn-fc-primary {
+        color: #FFFFFF;
+        background: var(--fc-teal);
+        border: 1px solid var(--fc-teal);
+    }
+
+        .btn-fc-primary:hover {
+            color: #FFFFFF;
+            background: #117F74;
+        }
+
+    .btn-fc-secondary {
+        color: #65798A;
+        background: #FFFFFF;
+        border: 1px solid var(--fc-border);
+    }
+
+    .auth-submit {
+        width: 100%;
+        min-height: 43px;
+        margin-top: 3px;
+    }
+
+    .auth-divider {
+        height: 1px;
+        margin: 20px 0 16px;
+        background: #E9EEF1;
+    }
+
+    .auth-register {
+        margin: 0;
+        color: var(--fc-muted);
+        text-align: center;
+        font-size: 10.5px;
+    }
+
+    .auth-resend {
+        margin-top: 14px;
+        color: var(--fc-muted);
+        text-align: center;
+        font-size: 10.5px;
+    }
+
+        .auth-resend summary {
+            cursor: pointer;
+            list-style-position: inside;
+        }
+
+        .auth-resend form {
+            padding-top: 14px;
+            text-align: left;
+        }
+
+    .auth-footer {
+        margin-top: 18px;
+        color: #94A2AD;
+        font-size: 10px;
+        text-align: center;
+    }
+
+    @@media (max-width: 575px) {
+        .auth-card {
+            padding: 25px 20px 22px;
+        }
+    }
+</style>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

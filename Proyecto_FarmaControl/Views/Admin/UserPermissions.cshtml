@@ -1,0 +1,60 @@
+@model Proyecto_FarmaControl.DTOs.UserPermissionDto
+@{
+    ViewData["Title"] = "Permisos del usuario";
+    var allPermissions = ViewBag.AllPermissions as IEnumerable<Proyecto_FarmaControl.DTOs.PermissionDto> ?? Enumerable.Empty<Proyecto_FarmaControl.DTOs.PermissionDto>();
+    var allRoles = ViewBag.AllRoles as IEnumerable<Proyecto_FarmaControl.DTOs.RoleWithPermissionDto> ?? Enumerable.Empty<Proyecto_FarmaControl.DTOs.RoleWithPermissionDto>();
+    var canChangeRole = ViewBag.CanChangerRole as bool? ?? false;
+}
+<section class="fc-page" data-fc-user-permissions data-user-id="@Model.UserId">
+    <header class="fc-page-heading"><div><h1>Permisos de usuario</h1><p>@Model.UserName · @Model.Email</p></div><a asp-controller="Admin" asp-action="Users" class="btn-fc-secondary">Volver a usuarios</a></header>
+    <section class="fc-card fc-form-card">
+        <h2>Rol asignado</h2>
+        @if (canChangeRole)
+        {
+            <form data-admin-user-role-form class="fc-inline-form">
+                <input type="hidden" name="userId" value="@Model.UserId" />
+                <div class="fc-field"><label for="userRole">Rol</label><select id="userRole" name="RolId" class="fc-input">
+                    @foreach (var role in allRoles)
+                    {
+                        if (role.Id == Model.RoleId)
+                        {
+                            <option value="@role.Id" selected>@role.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@role.Id">@role.Name</option>
+                        }
+                    }
+                </select></div>
+                <button type="submit" class="btn-fc-primary">Actualizar rol</button>
+            </form>
+        }
+        else { <p class="fc-muted">Rol actual: <strong>@Model.RoleName</strong></p> }
+    </section>
+    <section class="fc-card fc-workspace-card">
+        <div class="fc-workspace-toolbar"><span class="fc-section-chip">Permisos efectivos</span><span class="fc-muted">@Model.EffectivePermission.Count permisos</span></div>
+        <div class="fc-permission-chips">@foreach (var permission in Model.EffectivePermission.OrderBy(x => x)) { <span class="fc-permission-chip">@permission</span> }</div>
+    </section>
+    <section class="fc-card fc-workspace-card">
+        <div class="fc-workspace-toolbar"><span class="fc-section-chip">Excepciones individuales</span></div>
+        <div class="fc-table-wrap"><table class="fc-table"><thead><tr><th>Permiso</th><th>Estado individual</th><th>Acción</th></tr></thead><tbody>
+        @foreach (var permission in Model.DirectPermission.OrderBy(p => p.PermissionName))
+        {
+            <tr><td class="fc-cell-strong">@permission.PermissionName</td><td><span class="fc-status-pill @(permission.IsGranted ? "is-active" : "is-inactive")">@(permission.IsGranted ? "Concedido" : "Denegado")</span></td><td><form asp-controller="Admin" asp-action="RemoveUserPermission" method="post" data-admin-user-remove><input type="hidden" name="userId" value="@Model.UserId" /><input type="hidden" name="permissionId" value="@permission.PermissionId" /><button type="submit" class="fc-action-link fc-action-danger">Retirar excepción</button></form></td></tr>
+        }
+        @if (!Model.DirectPermission.Any()) { <tr><td colspan="3" class="fc-empty-cell">No hay excepciones individuales para este usuario.</td></tr> }
+        </tbody></table></div>
+    </section>
+    <section class="fc-card fc-form-card">
+        <h2>Asignar excepción individual</h2>
+        <form data-admin-user-permission-form>
+            <input type="hidden" name="userId" value="@Model.UserId" />
+            <div class="fc-form-grid">
+                <div class="fc-field"><label for="directPermissionId">Permiso</label><select id="directPermissionId" name="PermissionId" class="fc-input" required><option value="">Selecciona un permiso</option>@foreach (var permission in allPermissions.OrderBy(p => p.Name)) { <option value="@permission.Id">@permission.Name</option> }</select></div>
+                <div class="fc-field"><label for="directPermissionState">Resultado</label><select id="directPermissionState" name="IsGranted" class="fc-input"><option value="true">Conceder</option><option value="false">Denegar</option></select></div>
+            </div>
+            <div class="fc-form-actions"><button type="submit" class="btn-fc-primary">Guardar excepción</button></div>
+        </form>
+    </section>
+    <div class="fc-feedback" data-admin-user-feedback role="status" aria-live="polite"></div>
+</section>

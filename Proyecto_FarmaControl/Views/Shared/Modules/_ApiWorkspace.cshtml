@@ -1,0 +1,98 @@
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService ModuleAccess
+@{
+    var moduleKey = ViewData["FcModule"]?.ToString() ?? string.Empty;
+    var heading = ViewData["FcHeading"]?.ToString() ?? ViewData["Title"]?.ToString() ?? "Gestión";
+    var description = ViewData["FcDescription"]?.ToString() ?? "Consulta y administra la información del sistema.";
+    var hideHeading = ViewData["FcHideHeading"] as bool? ?? false;
+    var formTitle = ViewData["FcFormTitle"]?.ToString() ?? "Formulario de registro / edición";
+    var prefix = moduleKey switch
+    {
+        "categorias" => "categoria", "medicamentos" => "medicamento",
+        "laboratorios" => "laboratorio", "presentaciones" => "presentacion",
+        "sucursales" => "sucursal", "almacenes" => "almacen", "lotes" => "lote",
+        "proveedores" => "proveedor", "clientes" => "cliente",
+        "metodosPago" => "metodopago", "pagos" => "pago", _ => ""
+    };
+    var canCreate = prefix != "" && (await ModuleAccess.AuthorizeAsync(User, $"{prefix}.crear")).Succeeded;
+    var canUpdate = prefix != "" && (await ModuleAccess.AuthorizeAsync(User, $"{prefix}.actualizar")).Succeeded;
+    var deletePerm = prefix == "pago" ? "pago.anular" : $"{prefix}.borrar";
+    var canDelete = prefix != "" && (await ModuleAccess.AuthorizeAsync(User, deletePerm)).Succeeded;
+}
+<section class="fc-page" data-fc-module="@moduleKey" data-fc-can-update="@(canUpdate ? "true" : "false")" data-fc-can-delete="@(canDelete ? "true" : "false")">
+    @if (!hideHeading)
+    {
+        <header class="fc-page-heading">
+            <div>
+                <h1>@heading</h1>
+                <p>@description</p>
+            </div>
+        </header>
+    }
+
+    <section class="fc-card fc-workspace-card">
+        <div class="fc-workspace-toolbar">
+            <span class="fc-section-chip">@heading</span>
+            <div class="fc-toolbar-actions">
+                <label class="fc-search">
+                    <span class="visually-hidden">Buscar</span>
+                    <span class="fc-search-icon" aria-hidden="true">⌕</span>
+                    <input type="search" data-fc-search placeholder="Buscar..." autocomplete="off" />
+                </label>
+                @if (canCreate)
+                {
+                    <button type="button" class="btn-fc-primary" data-fc-new>
+                        <span aria-hidden="true">＋</span> Nuevo registro
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="fc-table-wrap">
+            <table class="fc-table">
+                <thead><tr data-fc-head></tr></thead>
+                <tbody data-fc-body>
+                    <tr><td class="fc-table-loading" colspan="10">Cargando información...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="fc-table-footer">
+            <span data-fc-count>Consultando registros...</span>
+            <div class="fc-pagination">
+                <button type="button" class="fc-page-button" data-fc-prev disabled>Anterior</button>
+                <span data-fc-page>1</span>
+                <button type="button" class="fc-page-button" data-fc-next disabled>Siguiente</button>
+            </div>
+        </div>
+
+        @if (canCreate || canUpdate)
+        {
+        <section class="fc-form-section" id="fc-form-section">
+            <div class="fc-form-heading">
+                <div>
+                    <h2>@formTitle</h2>
+                    <p>Completa los campos y guarda los cambios.</p>
+                </div>
+                <span class="fc-form-mode" data-fc-mode>Nuevo registro</span>
+            </div>
+            <form data-fc-form novalidate>
+                <input type="hidden" name="__fcId" value="" />
+                <div class="fc-form-grid" data-fc-fields></div>
+                <div class="fc-form-actions">
+                    <button type="submit" class="btn-fc-primary">
+                        <span aria-hidden="true">✓</span> Guardar
+                    </button>
+                    <button type="button" class="btn-fc-secondary" data-fc-cancel>Cancelar</button>
+                </div>
+            </form>
+        </section>
+        }
+        <div class="fc-feedback" data-fc-feedback role="status" aria-live="polite"></div>
+    </section>
+</section>
+
+<style>
+    [data-fc-can-update="false"] [data-fc-action="edit"],
+    [data-fc-can-delete="false"] [data-fc-action="delete"],
+    [data-fc-can-delete="false"] [data-fc-action="anular"] { display:none !important; }
+</style>

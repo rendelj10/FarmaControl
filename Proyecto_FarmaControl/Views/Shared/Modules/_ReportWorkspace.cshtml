@@ -1,0 +1,62 @@
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService ReportAuth
+@{
+    var isAdmin = User.Identity?.IsAuthenticated == true
+        && User.IsInRole("Administrador")
+        && (await ReportAuth.AuthorizeAsync(User, "admin.panel")).Succeeded;
+    var canVentas = isAdmin && (await ReportAuth.AuthorizeAsync(User, "venta.ver")).Succeeded;
+    var canCompras = isAdmin && (await ReportAuth.AuthorizeAsync(User, "compra.ver")).Succeeded;
+    var canPagos = isAdmin && (await ReportAuth.AuthorizeAsync(User, "pago.ver")).Succeeded;
+    var canLotes = isAdmin && (await ReportAuth.AuthorizeAsync(User, "lote.ver")).Succeeded;
+}
+<section class="fc-page fcr" data-fcr-root>
+    <header class="fc-page-heading">
+        <div>
+            <h1>Reportes</h1>
+            <p>Consultá ventas, compras, pagos y existencias sin modificar los registros.</p>
+        </div>
+    </header>
+    @if (!isAdmin)
+    {
+        <div class="fcr-note fcr-note-error" role="alert">Acceso reservado al Administrador.</div>
+    }
+    else if (!canVentas && !canCompras && !canPagos && !canLotes)
+    {
+        <div class="fcr-note fcr-note-error" role="alert">Tu cuenta no tiene permisos de consulta para los reportes.</div>
+    }
+    else
+    {
+        <div class="fcr-note">Los totales suman ventas confirmadas, compras recibidas y pagos registrados. Los borradores y anulaciones se muestran como referencia, pero no se suman.</div>
+        <div class="fcr-tabs" role="group" aria-label="Tipo de reporte">
+            @if (canVentas) { <button type="button" data-fcr-type="ventas">Ventas</button> }
+            @if (canCompras) { <button type="button" data-fcr-type="compras">Compras</button> }
+            @if (canPagos) { <button type="button" data-fcr-type="pagos">Pagos</button> }
+            @if (canLotes) { <button type="button" data-fcr-type="lotes">Existencias y vencimientos</button> }
+        </div>
+        <section class="fcr-card" aria-label="Resultados de reportes">
+            <div class="fcr-header">
+                <div>
+                    <h2 data-fcr-title>Reporte</h2>
+                    <p data-fcr-subtitle>Información consultada desde SQL Server.</p>
+                </div>
+            </div>
+            <form class="fcr-filters" data-fcr-form>
+                <label data-fcr-dates>Desde <input type="date" name="desde" /></label>
+                <label data-fcr-dates>Hasta <input type="date" name="hasta" /></label>
+                <button type="submit" class="fcr-primary">Consultar</button>
+                <button type="button" class="fcr-secondary" data-fcr-export disabled>Exportar CSV</button>
+            </form>
+            <div class="fcr-stats">
+                <div><span>Registros</span><strong data-fcr-count>—</strong></div>
+                <div><span data-fcr-total-label>Total</span><strong data-fcr-total>—</strong></div>
+            </div>
+            <div class="fcr-table-scroll">
+                <table class="fcr-table">
+                    <thead><tr data-fcr-head></tr></thead>
+                    <tbody data-fcr-body><tr><td>Cargando...</td></tr></tbody>
+                </table>
+            </div>
+            <p class="fcr-note-small" data-fcr-note></p>
+            <div class="fcr-feedback" data-fcr-feedback role="status" aria-live="polite"></div>
+        </section>
+    }
+</section>

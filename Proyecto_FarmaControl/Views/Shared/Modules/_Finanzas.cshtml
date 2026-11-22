@@ -1,0 +1,54 @@
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService ViewAuth
+@{
+    var tab = Context.Request.Query["tab"].ToString().ToLowerInvariant();
+    var ventaIdParam = Context.Request.Query["ventaId"].ToString();
+    var ventaIdValido = int.TryParse(ventaIdParam, out var ventaId) && ventaId > 0;
+    var canPayments = (await ViewAuth.AuthorizeAsync(User, "pago.ver")).Succeeded;
+    var canMethods = (await ViewAuth.AuthorizeAsync(User, "metodopago.ver")).Succeeded;
+    if (tab != "pagos" && tab != "metodos") tab = canPayments ? "pagos" : "metodos";
+    if (tab == "metodos" && !canMethods) tab = "pagos";
+    if (tab == "pagos" && !canPayments) tab = "metodos";
+    ViewData["FcModule"] = tab == "pagos" ? "pagos" : "metodosPago";
+    ViewData["FcHeading"] = tab == "pagos" ? "Pagos" : "Métodos de pago";
+    ViewData["FcDescription"] = "Administra los métodos de pago y consulta las transacciones registradas.";
+    ViewData["FcHideHeading"] = true;
+    ViewData["FcFormTitle"] = tab == "pagos" ? "Registrar pago" : "Formulario de registro / edición";
+}
+<section class="fc-page">
+    <header class="fc-page-heading">
+        <div><h1>Pagos y métodos de pago</h1><p>Consulta y administra las operaciones financieras de FarmaControl.</p></div>
+    </header>
+    <div class="fc-tabs">
+        @if (canMethods) { <a asp-controller="Home" asp-action="Index" asp-route-module="finanzas" asp-route-tab="metodos" class="@(tab == "metodos" ? "active" : "")">Métodos de pago</a> }
+        @if (canPayments) { <a asp-controller="Home" asp-action="Index" asp-route-module="finanzas" asp-route-tab="pagos" class="@(tab == "pagos" ? "active" : "")">Pagos</a> }
+    </div>
+    @if (tab == "pagos" && ventaIdValido)
+    {
+        <p class="fc-notice fc-notice-info">Cobro de la venta ID <strong>@ventaId</strong>. Verificá el monto pendiente antes de registrar el pago.</p>
+    }
+    @await Html.PartialAsync("~/Views/Shared/Modules/_ApiWorkspace.cshtml")
+    @if (tab == "pagos" && ventaIdValido)
+    {
+        <script>
+            (() => {
+                const ventaId = @ventaId;
+                const fill = () => {
+                    const field = document.querySelector('[data-fc-module="pagos"] input[name="ventaId"]');
+                    if (!field) return false;
+                    field.value = String(ventaId);
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                    const compra = document.querySelector('[data-fc-module="pagos"] input[name="compraId"]');
+                    if (compra) compra.value = '';
+                    return true;
+                };
+                document.addEventListener('DOMContentLoaded', () => {
+                    if (fill()) return;
+                    const container = document.querySelector('[data-fc-module="pagos"]');
+                    if (!container) return;
+                    const observer = new MutationObserver(() => { if (fill()) observer.disconnect(); });
+                    observer.observe(container, { childList: true, subtree: true });
+                });
+            })();
+        </script>
+    }
+</section>

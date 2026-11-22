@@ -1,0 +1,35 @@
+/* Módulo de Reportes, estilos aislados de los demás módulos */
+.fcr { max-width: 1460px; margin: 0 auto; }
+.fcr .fcr-note { border: 1px solid #cfe4e0; background: #effaf8; color: #315f59; padding: 14px 17px; border-radius: 11px; margin-bottom: 16px; line-height: 1.5; }
+.fcr .fcr-note-error { background: #fff2f2; color: #a33c3c; border-color: #f3cece; }
+.fcr .fcr-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 20px; }
+.fcr .fcr-tabs button { border: 1px solid transparent; background: #f1f5f7; color: #426071; padding: 11px 16px; font-weight: 650; border-radius: 9px; cursor: pointer; }
+.fcr .fcr-tabs button[aria-pressed="true"] { background: #dff4ef; color: #087f75; }
+.fcr .fcr-tabs button:focus-visible, .fcr button:focus-visible, .fcr input:focus-visible { outline: 3px solid #85d3c6; outline-offset: 2px; }
+.fcr .fcr-card { background: #fff; border: 1px solid #e2e8ee; border-radius: 18px; padding: 24px; box-shadow: 0 10px 26px rgba(22,50,70,.04); }
+.fcr .fcr-header h2 { font-size: 1.25rem; font-weight: 750; color: #17364d; margin-bottom: 5px; }
+.fcr .fcr-header p { color: #73879a; margin-bottom: 18px; }
+.fcr .fcr-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 20px; }
+.fcr .fcr-filters label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; min-width: 165px; }
+.fcr .fcr-filters input { width: 100%; border: 1px solid #d9e3ea; border-radius: 9px; min-height: 41px; padding: 9px 11px; font: inherit; color: #203344; background: #fff; }
+.fcr .fcr-primary,.fcr .fcr-secondary { min-height: 41px; border-radius: 9px; padding: 9px 16px; font-weight: 700; cursor: pointer; }
+.fcr .fcr-primary { background: #159b8c; color: white; border: 1px solid #159b8c; }
+.fcr .fcr-secondary { background: white; color: #24636b; border: 1px solid #d3e0e6; }
+.fcr button:disabled { opacity: .55; cursor: not-allowed; }
+.fcr .fcr-stats { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-bottom: 19px; }
+.fcr .fcr-stats > div { display:flex; flex-direction:column; gap: 5px; background: #f5f8fa; border: 1px solid #eaf0f3; border-radius: 11px; padding: 16px; }
+.fcr .fcr-stats span { font-size: .91rem; color:#6f8190; }
+.fcr .fcr-stats strong { font-size:1.55rem; color:#148b7e; }
+.fcr .fcr-table-scroll { max-width:100%; overflow-x:auto; }
+.fcr .fcr-table { border-collapse: collapse; width:100%; min-width:700px; font-size:.94rem; }
+.fcr .fcr-table th { background: #edf3f6; color:#29495b; padding: 12px; text-align:left; white-space:nowrap; }
+.fcr .fcr-table th:first-child { border-radius: 8px 0 0 8px; }
+.fcr .fcr-table td { padding: 12px; border-bottom: 1px solid #e5ebef; color:#435b6b; }
+.fcr .fcr-table tbody tr:hover { background: #f8fbfc; }
+.fcr .fcr-status { background:#edf2f5; color:#415868; padding: 5px 9px; border-radius:50px; display:inline-block; font-size:.83rem; font-weight:650; }
+.fcr .fcr-status-confirmed { background:#e1f7ea; color:#127344; }
+.fcr .fcr-status-draft { background:#fff2d8; color:#93600b; }
+.fcr .fcr-status-cancelled { background:#f6e9eb; color:#8d4052; }
+.fcr .fcr-note-small { color:#718394; font-size:.88rem; margin-top:14px; }
+.fcr .fcr-feedback { color:#ad3648; font-weight:600; margin-top:10px; }
+@media(max-width:700px) { .fcr .fcr-card { padding: 15px; } .fcr .fcr-stats { grid-template-columns:1fr; } .fcr .fcr-filters label { flex:1 1 150px; } }

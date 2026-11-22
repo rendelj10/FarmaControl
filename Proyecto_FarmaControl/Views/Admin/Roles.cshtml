@@ -1,0 +1,29 @@
+@model List<Proyecto_FarmaControl.DTOs.RoleWithPermissionDto>
+@{
+    ViewData["Title"] = "Roles";
+}
+<section class="fc-page">
+    <header class="fc-page-heading"><div><h1>Administración de roles</h1><p>Define perfiles de acceso y consulta sus permisos asociados.</p></div><a asp-controller="Admin" asp-action="Index" class="btn-fc-secondary">Volver a administración</a></header>
+    @if (TempData["Success"] != null) { <div class="fc-alert fc-alert-success">@TempData["Success"]</div> }
+    @if (ViewBag.CreateError != null) { <div class="fc-alert fc-alert-danger">@ViewBag.CreateError</div> }
+    <section class="fc-card fc-workspace-card">
+        <div class="fc-workspace-toolbar"><span class="fc-section-chip">Roles registrados</span><span class="fc-muted">@((Model?.Count ?? 0)) roles</span></div>
+        <div class="fc-table-wrap"><table class="fc-table"><thead><tr><th>ID</th><th>Nombre del rol</th><th>Permisos asignados</th><th>Acciones</th></tr></thead><tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var role in Model)
+            {
+                <tr><td>@role.Id</td><td class="fc-cell-strong">@role.Name</td><td>@role.Permissions.Count</td><td><a asp-action="RoleDetails" asp-route-id="@role.Id" class="fc-action-link">Ver permisos</a></td></tr>
+            }
+        }
+        else { <tr><td colspan="4" class="fc-empty-cell">No hay roles registrados.</td></tr> }
+        </tbody></table></div>
+    </section>
+    <section class="fc-card fc-form-card">
+        <h2>Crear nuevo rol</h2>
+        <form asp-controller="Admin" asp-action="CreateRole" method="post" class="fc-inline-form">
+            <div class="fc-field"><label for="roleName">Nombre del rol</label><input id="roleName" name="Name" class="fc-input" maxlength="50" required placeholder="Ej. Supervisor" /></div>
+            <button type="submit" class="btn-fc-primary">Crear rol</button>
+        </form>
+    </section>
+</section>
