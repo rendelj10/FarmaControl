@@ -1,5 +1,7 @@
+
 @{
     var module = Context.Request.Query["module"].ToString().ToLowerInvariant();
+
     ViewData["Title"] = module switch
     {
         "catalogos" => "Laboratorios y presentaciones",
@@ -9,6 +11,7 @@
         _ => "Dashboard"
     };
 }
+
 @if (module == "catalogos")
 {
     @await Html.PartialAsync("~/Views/Shared/Modules/_Catalogos.cshtml")
@@ -28,27 +31,101 @@ else if (module == "reportes")
 else
 {
     <section class="fc-page" data-fc-dashboard>
+
         <header class="fc-page-heading">
-            <div><h1>Dashboard</h1><p>Resumen general de la actividad de FarmaControl.</p></div>
-            <span class="fc-date-label">@DateTime.Now.ToString("dd/MM/yyyy")</span>
+            <div>
+                <h1>Dashboard</h1>
+                <p>Resumen general de la actividad de FarmaControl.</p>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="fc-date-label">
+                    @DateTime.Now.ToString("dd/MM/yyyy")
+                </span>
+
+                <button type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        data-fc-refresh>
+                    Actualizar
+                </button>
+            </div>
         </header>
 
-        <div class="fc-dashboard-summary">
-            <article class="fc-summary-card"><span class="fc-summary-label">Medicamentos</span><strong class="fc-summary-value" data-fc-kpi="medicamentos">—</strong><span class="fc-summary-foot">Registros disponibles</span></article>
-            <article class="fc-summary-card"><span class="fc-summary-label">Categorías</span><strong class="fc-summary-value" data-fc-kpi="categorias">—</strong><span class="fc-summary-foot">Clasificaciones registradas</span></article>
-            <article class="fc-summary-card"><span class="fc-summary-label">Lotes activos</span><strong class="fc-summary-value" data-fc-kpi="lotes">—</strong><span class="fc-summary-foot">Lotes habilitados</span></article>
-            <article class="fc-summary-card"><span class="fc-summary-label">Vencimientos próximos</span><strong class="fc-summary-value" data-fc-kpi="vencimientos">—</strong><span class="fc-summary-foot">Próximos 90 días</span></article>
-        </div>
+        <p class="small text-muted mb-3"
+           data-fc-dashboard-status
+           role="status"
+           aria-live="polite">
+            Preparando información...
+        </p>
 
-        <div class="fc-dashboard-panels">
-            <section class="fc-card fc-dashboard-panel">
-                <header class="fc-panel-heading"><div><h2>Actividad reciente</h2><p>Últimas compras y ventas registradas.</p></div></header>
-                <div class="fc-activity-list" data-fc-activity><div class="fc-empty-state">Consultando actividad...</div></div>
-            </section>
-            <section class="fc-card fc-dashboard-panel">
-                <header class="fc-panel-heading"><div><h2>Alertas de inventario</h2><p>Lotes con vencimiento cercano.</p></div></header>
-                <div class="fc-alert-list" data-fc-alerts><div class="fc-empty-state">Consultando vencimientos...</div></div>
-            </section>
-        </div>
+        <section class="fc-dashboard-summary">
+
+            <article class="fc-summary-card">
+                <span class="fc-summary-label">Medicamentos</span>
+                <strong class="fc-summary-value" data-fc-kpi="medicamentos">—</strong>
+                <span class="fc-summary-foot">Registros disponibles</span>
+            </article>
+
+            <article class="fc-summary-card">
+                <span class="fc-summary-label">Categorías</span>
+                <strong class="fc-summary-value" data-fc-kpi="categorias">—</strong>
+                <span class="fc-summary-foot">Clasificaciones registradas</span>
+            </article>
+
+            <article class="fc-summary-card">
+                <span class="fc-summary-label">Lotes activos</span>
+                <strong class="fc-summary-value" data-fc-kpi="lotes">—</strong>
+                <span class="fc-summary-foot">Lotes registrados</span>
+            </article>
+
+            <article class="fc-summary-card">
+                <span class="fc-summary-label">Vencimientos próximos</span>
+                <strong class="fc-summary-value" data-fc-kpi="vencimientos">—</strong>
+                <span class="fc-summary-foot">Próximos 90 días</span>
+            </article>
+
+        </section>
+
+        <section class="fc-dashboard-panels">
+
+            <article class="fc-card fc-dashboard-panel">
+                <header class="fc-panel-heading">
+                    <div>
+                        <h2>Actividad reciente</h2>
+                        <p>Últimas compras y ventas registradas.</p>
+                    </div>
+                </header>
+
+                <div class="fc-activity-list" data-fc-activity aria-live="polite">
+                    <div class="fc-empty-state">
+                        Consultando actividad...
+                    </div>
+                </div>
+            </article>
+
+            <article class="fc-card fc-dashboard-panel">
+                <header class="fc-panel-heading">
+                    <div>
+                        <h2>Alertas de inventario</h2>
+                        <p>Lotes con vencimiento cercano.</p>
+                    </div>
+                </header>
+
+                <div class="fc-alert-list" data-fc-alerts aria-live="polite">
+                    <div class="fc-empty-state">
+                        Consultando vencimientos...
+                    </div>
+                </div>
+            </article>
+
+        </section>
+
     </section>
+}
+
+@section Scripts {
+    @if (string.IsNullOrWhiteSpace(module))
+    {
+        <script src="~/js/dashboard.js" asp-append-version="true"></script>
+    }
 }
